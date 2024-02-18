@@ -8,5 +8,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   create_window(hInstance, 400, 300); 
   while (window.running) {
     poll_events();
+    swap_buffers();
   }
 }

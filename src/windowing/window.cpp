@@ -6,6 +6,7 @@
 #include <Windowsx.h>
 #include <wingdi.h>
 #include <winuser.h>
+#include <GL/gl.h>
 
 #ifndef UNICODE
 #define UNICODE
@@ -108,6 +109,8 @@ void create_window(HINSTANCE h_instance, int width, int height) {
 
   HDC gl_device_context = wglGetCurrentDC();
   inu_assert(gl_device_context == device_context, "opengl device context not the same as the window's\n");
+
+  glClearColor(1.f, 0.f, 0.f, 0.f);
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {
@@ -140,4 +143,10 @@ void poll_events() {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
+}
+
+void swap_buffers() {
+  glClear(GL_COLOR_BUFFER_BIT);
+  HDC gl_device_context = wglGetCurrentDC();
+  SwapBuffers(gl_device_context);
 }

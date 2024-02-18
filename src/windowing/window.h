@@ -18,3 +18,4 @@ struct window_t {
 
 void create_window(HINSTANCE h_instance, int width, int height);
 void poll_events();
+void swap_buffers();
