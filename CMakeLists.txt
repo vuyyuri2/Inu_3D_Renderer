@@ -29,6 +29,10 @@ function(configure_project)
         PUBLIC src
     )
 
+    target_link_libraries(${PROJECT_NAME}
+        opengl32
+    )
+
 endfunction()
 
 
