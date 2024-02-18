@@ -1,3 +1,4 @@
+#pragma once
 
 // actual Win32 include
 #include <windows.h>

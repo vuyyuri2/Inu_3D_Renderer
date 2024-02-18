@@ -3,10 +3,12 @@
 #include "utils/log.h"
 
 #include <iostream>
+
 #include <Windowsx.h>
 #include <wingdi.h>
 #include <winuser.h>
-#include <GL/gl.h>
+
+#include "gfx/gfx.h"
 
 #ifndef UNICODE
 #define UNICODE
@@ -109,6 +111,9 @@ void create_window(HINSTANCE h_instance, int width, int height) {
 
   HDC gl_device_context = wglGetCurrentDC();
   inu_assert(gl_device_context == device_context, "opengl device context not the same as the window's\n");
+
+  GLenum err = glewInit();
+  inu_assert(err == GLEW_OK, glewGetErrorString(err));
 
   glClearColor(1.f, 0.f, 0.f, 0.f);
 }

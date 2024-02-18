@@ -18,6 +18,9 @@ function(configure_project)
         src/main.cpp
 
         src/windowing/window.cpp
+
+        src/gfx/gfx.cpp
+        src/gfx/opengl/glew.c
     )
 
     add_executable(${PROJECT_NAME} 
@@ -27,6 +30,8 @@ function(configure_project)
 
     target_include_directories(${PROJECT_NAME} 
         PUBLIC src
+        PUBLIC src/gfx/opengl
+        PUBLIC src/gfx/opengl/GL
     )
 
     target_link_libraries(${PROJECT_NAME}
