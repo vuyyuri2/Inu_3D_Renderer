@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <stdint.h>
 
 #include "utils/vectors.h"
+#include "utils/log.h"
 
 struct vertex_t {
   vec3 positon; 
