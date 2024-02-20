@@ -1,6 +1,7 @@
 #include "gltf.h"
 
 #include <ctype.h>
+#include <unordered_set>
 
 #include "utils/log.h"
 
@@ -19,6 +20,8 @@ static std::vector<gltf_mesh_t> gltf_meshes;
 static std::vector<gltf_buffer_t> gltf_buffers;
 static std::vector<gltf_buffer_view_t> gltf_buffer_views;
 static std::vector<gltf_accessor_t> gltf_accessors; 
+
+static char folder_path[256];
 
 void gltf_skip_section() {
   // skip logic
@@ -257,7 +260,7 @@ gltf_primitive_t gltf_parse_primitive() {
     } else if (key == "indices") {
       prim.indicies_accessor_idx = gltf_parse_integer();
     } else if (key == "mode") {
-      prim.mode = gltf_parse_integer();
+      prim.mode = static_cast<GLTF_PRIMITIVE_MODE>(gltf_parse_integer());
     } else if (key == "material") {
       prim.material_idx = gltf_parse_integer();
     } else {
@@ -393,7 +396,7 @@ void gltf_parse_accessor() {
     } else if (key == "byteOffset") {
       accessor.byte_offset = gltf_parse_integer();
     } else if (key == "componentType") {
-      accessor.component_type = gltf_parse_integer();
+      accessor.component_type = static_cast<ACC_COMPONENT_TYPE>(gltf_parse_integer());
     } else if (key == "count") {
       accessor.count = gltf_parse_integer();
     } else if (key == "type") {
@@ -437,7 +440,7 @@ void gltf_parse_buffer_view() {
     } else if (key == "byteStride") {
       buffer_view.byte_stride = gltf_parse_integer();
     } else if (key == "target") {
-      buffer_view.target = gltf_parse_integer();
+      buffer_view.target = static_cast<BUFFER_VIEW_TARGET>(gltf_parse_integer());
     }
     if (gltf_peek() == ',') gltf_eat();
   }
@@ -472,7 +475,7 @@ void gltf_parse_section() {
   std::string key = gltf_parse_string();
 #endif
 
-  inu_assert(gltf_peek() == ':', "colon is not seen");
+  inu_assert(gltf_peek() == ':', "colon is not seen"); 
   gltf_eat();
 
   if (key == "asset") {
@@ -542,8 +545,77 @@ void gltf_preprocess(const char* filepath) {
   offset = 0;
 }
 
+void* gltf_read_accessor_data(int accessor_idx) {
+  inu_assert(accessor_idx != -1);
+  gltf_accessor_t& acc = gltf_accessors[accessor_idx];
+  gltf_buffer_view_t& buffer_view = gltf_buffer_views[acc.buffer_view_idx];
+  
+  int size_of_component = 0;
+  switch (acc.component_type) {
+    case ACC_COMPONENT_TYPE::BYTE: {
+      size_of_component = sizeof(char);
+      break;
+    }
+    case ACC_COMPONENT_TYPE::UNSIGNED_BYTE: {
+      size_of_component = sizeof(unsigned char);
+      break;
+    }
+  case ACC_COMPONENT_TYPE::SHORT: {
+      size_of_component = sizeof(short);
+      break;
+    }
+  case ACC_COMPONENT_TYPE::UNSIGNED_SHORT: {
+      size_of_component = sizeof(unsigned short);
+      break;
+    }
+  case ACC_COMPONENT_TYPE::UNSIGNED_INT: {
+      size_of_component = sizeof(unsigned int);
+      break;
+    }
+  case ACC_COMPONENT_TYPE::FLOAT: {
+      size_of_component = sizeof(float);
+      break;
+    }
+  }
+
+  int size_of_element = 0;
+  if (acc.type == "SCALAR") {
+    size_of_element = size_of_component;
+  } else if (acc.type == "VEC3") {
+    size_of_element = size_of_component * 3; 
+  }
+
+  int size_of_acc_data = size_of_element * acc.count;
+
+  inu_assert(size_of_acc_data <= buffer_view.byte_length);
+  char* data = (char*)malloc(size_of_acc_data);
+
+  gltf_buffer_t& buffer = gltf_buffers[buffer_view.gltf_buffer_index];
+  char buffer_uri_full_path[256]{};
+  sprintf(buffer_uri_full_path, "%s\\%s", folder_path, buffer.uri.c_str());
+
+  FILE* uri_file = fopen(buffer_uri_full_path, "r");
+  inu_assert(uri_file, "uri file does not exist");
+
+  int start_offset = acc.byte_offset + buffer_view.byte_offset;
+  fseek(uri_file, start_offset, SEEK_SET);
+
+  for (int i = 0; i < size_of_acc_data; i++) {
+    data[i] = fgetc(uri_file);
+  }
+  
+  fclose(uri_file);
+  
+  return (void*)data;
+}
+
 void gltf_load_file(const char* filepath, mesh_t& mesh) {
+
+
+  // 1. preprocess step
   gltf_preprocess(filepath);
+
+  // 2. load meta data step
   inu_assert('{' == gltf_peek(), "initial character is not opening curly brace");
   gltf_eat();
 
@@ -553,4 +625,25 @@ void gltf_load_file(const char* filepath, mesh_t& mesh) {
 
   free(data);
   data = NULL;
+
+  // 3. load into internal format/ load raw data
+  const char* last_slash = strrchr(filepath, '\\');
+  memset(folder_path, 0, 256);
+  memcpy(folder_path, filepath, last_slash - filepath);
+  for (gltf_mesh_t& gltf_mesh : gltf_meshes) {
+    for (gltf_primitive_t& prim : gltf_mesh.primitives) {
+      if (prim.indicies_accessor_idx != -1) {
+        void* index_data = gltf_read_accessor_data(prim.indicies_accessor_idx);
+      }
+      if (prim.attribs.normals_accessor_idx != -1) {
+        void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
+      }
+      if (prim.attribs.positions_accessor_idx != -1) {
+        void* positions_data = gltf_read_accessor_data(prim.attribs.positions_accessor_idx);
+      }
+    }
+  }
+
+  // 4. store objects in internal node hierarchy
+    
 }

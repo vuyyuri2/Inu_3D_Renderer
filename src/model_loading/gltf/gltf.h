@@ -19,11 +19,21 @@ struct gltf_attributes_t {
   int positions_accessor_idx = -1;
 };
 
+enum class GLTF_PRIMITIVE_MODE {
+  POINTS = 0,
+  LINES,
+  LINE_LOOP,
+  LINE_STRIP,
+  TRIANGLES,
+  TRIANGLE_STRIP,
+  TRIANGLE_FAN
+};
+
 struct gltf_primitive_t {
   int indicies_accessor_idx = -1;
   int material_idx = -1;
   // gpu topology type
-  int mode = -1;
+  GLTF_PRIMITIVE_MODE mode = GLTF_PRIMITIVE_MODE::TRIANGLES;
   gltf_attributes_t attribs;
 };
 
@@ -37,18 +47,34 @@ struct gltf_buffer_t {
   std::string uri;
 };
 
+enum class BUFFER_VIEW_TARGET {
+  NONE = 0,
+  ARRAY_BUFFER = 34962,
+  ELEMENT_ARRAY_BUFFER = 34963
+};
+
 struct gltf_buffer_view_t {
   int gltf_buffer_index = -1;
   int byte_offset = -1;
   int byte_length = -1;
-  int target = -1;
+  BUFFER_VIEW_TARGET target = BUFFER_VIEW_TARGET::NONE;
+  // will need to look into later on when this value becomes more important
   int byte_stride = 1; 
+};
+
+enum class ACC_COMPONENT_TYPE {
+  BYTE = 5120,
+  UNSIGNED_BYTE = 5121,
+  SHORT = 5122,
+  UNSIGNED_SHORT = 5123,
+  UNSIGNED_INT = 5125,
+  FLOAT = 5126
 };
 
 struct gltf_accessor_t {
   int buffer_view_idx = -1;
   int byte_offset = -1;
-  int component_type = -1;
+  ACC_COMPONENT_TYPE component_type = ACC_COMPONENT_TYPE::BYTE;
   int count = -1;
   std::string type;
 };
