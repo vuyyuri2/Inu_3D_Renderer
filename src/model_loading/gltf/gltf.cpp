@@ -98,18 +98,7 @@ void gltf_parse_scene() {
   inu_assert(gltf_peek() == '{');
   gltf_eat();
   while (gltf_peek() != '}') {
-#if 0
-    inu_assert(gltf_peek() == '\"');
-    gltf_eat();
-    char* key_start = data + offset;
-    while (gltf_peek() != '\"') {
-      gltf_eat();
-    }
-    gltf_eat();
-    data[offset-1] = 0;
-#else
     std::string key = gltf_parse_string();
-#endif
 
     if (key == "nodes") {
       // get the root nodes
@@ -143,18 +132,7 @@ void gltf_parse_node() {
 
   while (gltf_peek() != '}') {
 
-#if 0
-    inu_assert(gltf_peek() == '\"');
-    gltf_eat();
-    char* key_start = data + offset;
-    while (gltf_peek() != '\"') {
-      gltf_eat();
-    }
-    gltf_eat();
-    data[offset-1] = 0;
-#else
     std::string key = gltf_parse_string();
-#endif
 
     inu_assert(gltf_peek() == ':');
     gltf_eat();
@@ -164,24 +142,8 @@ void gltf_parse_node() {
       node.child_node_idxs = gltf_parse_integer_array();
       if (gltf_peek() == ',') gltf_eat();
     } else if (key == "mesh") {
-#if 0
-      char* mesh_idx_str = data + offset;
-      while (gltf_peek() != '}' && gltf_peek() != ',') {
-        gltf_eat();
-      }
-      if (gltf_peek() == ',') {
-        gltf_eat();
-        data[offset-1] = 0;
-        node.gltf_mesh_handle = atoi(mesh_idx_str);
-      } else {
-        data[offset] = 0;
-        node.gltf_mesh_handle = atoi(mesh_idx_str);
-        data[offset] = '}';
-      }
-#else
       node.gltf_mesh_handle = gltf_parse_integer();
       if (gltf_peek() == ',') gltf_eat();
-#endif
     } else {
       gltf_skip_section();
     }
@@ -293,17 +255,8 @@ void gltf_parse_mesh() {
   gltf_eat();
 
   while (gltf_peek() != '}') {
-#if 0
-    char* key_start = data + offset;
-    while (gltf_peek() != '\"') {
-      gltf_eat();
-    }
-    gltf_eat();
-    data[offset-1] = 0;
-#else
-    std::string key = gltf_parse_string();
-#endif
 
+    std::string key = gltf_parse_string();
     inu_assert(gltf_peek() == ':');
     gltf_eat();
 
@@ -462,18 +415,7 @@ void gltf_parse_buffer_views_section() {
 
 void gltf_parse_section() {
 
-#if 0
-  inu_assert(gltf_peek() == '\"');
-  gltf_eat();
-  char* key_start = data + offset;
-  while (gltf_peek() != '\"') {
-    gltf_eat();
-  }
-  gltf_eat();
-  data[offset-1] = 0;
-#else
   std::string key = gltf_parse_string();
-#endif
 
   inu_assert(gltf_peek() == ':', "colon is not seen"); 
   gltf_eat();

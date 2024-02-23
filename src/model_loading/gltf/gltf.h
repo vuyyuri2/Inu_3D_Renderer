@@ -54,7 +54,6 @@ enum class BUFFER_VIEW_TARGET {
 };
 
 struct gltf_buffer_view_t {
-  int gltf_buffer_index = -1;
   int byte_offset = -1;
   int byte_length = -1;
   BUFFER_VIEW_TARGET target = BUFFER_VIEW_TARGET::NONE;
@@ -86,6 +85,51 @@ std::vector<int> gltf_parse_integer_array();
 gltf_primitive_t gltf_parse_primitive();
 std::vector<gltf_primitive_t> gltf_parse_primitives_section();
 gltf_attributes_t gltf_parse_attribs();
+
+/*
+ gltf sections
+
+  asset
+  scene
+  scenes --
+    nodes --
+  nodes
+    children --
+    matrix
+    mesh --
+  meshes --
+    primitives --
+      attributes --
+        normal --
+        position --
+      indices --
+      mode --
+      material --
+    name --
+  accessors
+    bufferView --
+    byteOffset --
+    componentType --
+    count --
+    max
+    min
+    type --
+  materials
+    pbrMetallicRoughness
+      baseColorFactor
+      metallicFactor
+    name
+  bufferViews --
+    buffer --
+    byteOffset --
+    byteLength --
+    target --
+    byteStride --
+  buffers --
+    byteLength --
+    uri --
+
+ */
 
 void gltf_skip_section();
 void gltf_parse_scenes_section();
