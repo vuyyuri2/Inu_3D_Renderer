@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "utils/log.h"
+#include "../model_internal.h"
 
 /*
  https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/README.md#showcase
@@ -576,16 +577,32 @@ void gltf_load_file(const char* filepath, mesh_t& mesh) {
     for (gltf_primitive_t& prim : gltf_mesh.primitives) {
       if (prim.indicies_accessor_idx != -1) {
         void* index_data = gltf_read_accessor_data(prim.indicies_accessor_idx);
+        gltf_accessor_t& acc = gltf_accessors[accessor_idx];
+        if (acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_INT) {
+          unsigned int* uint_pos_data = static_cast<unsigned int*>(positions_data);
+          for (int i = 0; i < acc.count; i++) {
+            mesh.indicies.push_back(uint_pos_data[i]);
+          }
+        }
       }
       if (prim.attribs.normals_accessor_idx != -1) {
         void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
       }
       if (prim.attribs.positions_accessor_idx != -1) {
         void* positions_data = gltf_read_accessor_data(prim.attribs.positions_accessor_idx);
+        gltf_accessor_t& acc = gltf_accessors[accessor_idx];
+        if (acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
+          float* float_pos_data = static_cast<float*>(positions_data);
+          for (int i = 0; i < acc.count; i++) {
+            vertex_t vert;
+            vert.position = float_pos_data[i];
+            mesh.vertices.push_back(vert);
+          }
+        }
       }
     }
   }
 
   // 4. store objects in internal node hierarchy
-    
+   
 }
