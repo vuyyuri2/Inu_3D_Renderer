@@ -1,6 +1,12 @@
 #include "gfx.h"
 
 #include <stddef.h>
+#include <stdlib.h>
+#include <string>
+#include <stdexcept>
+
+#include "utils/general.h"
+#include "utils/vectors.h"
 
 // VBO
 vbo_t create_vbo(const float* vertices, const int data_size) {
@@ -78,11 +84,11 @@ void unbind_vao() {
 	glBindVertexArray(0);
 }
 
-void vao_enable_attribute(vao_t& vao, const vbo_t& vbo, const int attrId, const int numValues, const int dType, const int stride, const int offset) {
+void vao_enable_attribute(vao_t& vao, const vbo_t& vbo, const int attr_id, const int num_values, const int d_type, const int stride, const int offset) {
 	bind_vao(vao);
 	bind_vbo(vbo);
-	glVertexAttribPointer(attrId, numValues, dType, GL_FALSE, stride, reinterpret_cast<void*>(offset));
-	glEnableVertexAttribArray(attrId);
+	glVertexAttribPointer(attr_id, num_values, d_type, GL_FALSE, stride, reinterpret_cast<void*>(offset));
+	glEnableVertexAttribArray(attr_id);
 	unbind_vbo();
 	unbind_vao();
 }
@@ -96,4 +102,78 @@ void vao_bind_ebo(vao_t& vao, ebo_t& ebo) {
 
 void delete_vao(const vao_t& vao) {
 	glDeleteVertexArrays(1, &vao.id);
+}
+
+// Shaders
+shader_t create_shader(const char* vert_source_path, const char* frag_source_path) {
+	shader_t shader;
+	shader.id = glCreateProgram();
+
+	GLuint vert = glCreateShader(GL_VERTEX_SHADER);
+	char* vert_source = get_file_contents(vert_source_path);
+	glShaderSource(vert, 1, &vert_source, NULL);
+
+	int success;
+	glCompileShader(vert);
+	glGetShaderiv(vert, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		char info_log[512]{};
+		glGetShaderInfoLog(vert, 512, NULL, info_log);
+		printf("ERROR::SHADER::VERTEX::COMPILATION_FAILED %s\n", info_log);
+		throw std::runtime_error("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" + std::string(info_log));
+	}
+
+	GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
+	char* frag_source = get_file_contents(frag_source_path);
+	glShaderSource(frag, 1, &frag_source, NULL);
+	glCompileShader(frag);
+	glGetShaderiv(frag, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		char info_log[512]{};
+		glGetShaderInfoLog(frag, 512, NULL, info_log);
+		printf("ERROR::SHADER::FRAG::COMPILATION_FAILED %s\n", info_log);
+		throw std::runtime_error("ERROR::SHADER::FRAG::COMPILATION_FAILED\n" + std::string(info_log));
+	}
+
+	glAttachShader(shader.id, vert);
+	glAttachShader(shader.id, frag);
+	glLinkProgram(shader.id);
+
+	glDeleteShader(vert);
+	glDeleteShader(frag);
+
+	free(vert_source);
+	free(frag_source);
+
+	return shader;
+}
+
+void bind_shader(shader_t& shader) {
+	glUseProgram(shader.id);
+}
+
+void unbind_shader() {
+	glUseProgram(0);
+}
+
+void shader_set_float(shader_t& shader, const char* var_name, float val) {
+	glUseProgram(shader.id);
+	GLint loc = glGetUniformLocation(shader.id, var_name);
+    if (loc == -1) {
+        printf("%s does not exist in shader %i\n", var_name, shader.id);
+    }
+	glUniform1f(loc, val);
+	unbind_shader();
+}
+
+void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec) {
+	glUseProgram(shader.id);
+	GLint loc = glGetUniformLocation(shader.id, var_name);
+    if (loc == -1) {
+        printf("%s does not exist in shader %i\n", var_name, shader.id);
+    }
+	glUniform3fv(loc, 1, (GLfloat*)&vec);
+	unbind_shader();
 }

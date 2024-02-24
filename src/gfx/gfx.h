@@ -2,6 +2,8 @@
 
 #include "glew.h"
 
+#include "utils/vectors.h"
+
 struct ebo_t {
 	GLuint id = 0;
 	int num_indicies = -1;
@@ -28,7 +30,15 @@ struct vao_t {
 vao_t create_vao();
 void bind_vao(const vao_t& vao);
 void unbind_vao();
-void vao_enable_attribute(vao_t& vao, const vbo_t& vbo, const int attrId, const int numValues, const int dType, const int stride, const int offset);
+void vao_enable_attribute(vao_t& vao, const vbo_t& vbo, const int attr_id, const int num_values, const int d_type, const int stride, const int offset);
 void vao_bind_ebo(vao_t& vao, ebo_t& ebo);
 void delete_vao(const vao_t& vao);
 
+struct shader_t {
+	GLuint id = 0;
+};
+shader_t create_shader(const char* vert_source_path, const char* frag_source_path);
+void bind_shader(shader_t& shader);
+void unbind_shader();
+void shader_set_float(shader_t& shader, const char* var_name, float val);
+void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec);
