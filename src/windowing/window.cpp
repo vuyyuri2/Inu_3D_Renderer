@@ -115,7 +115,9 @@ void create_window(HINSTANCE h_instance, int width, int height) {
   GLenum err = glewInit();
   inu_assert(err == GLEW_OK, glewGetErrorString(err));
 
-  glClearColor(1.f, 0.f, 0.f, 0.f);
+  printf("version: %s\n", glGetString(GL_VERSION));
+  glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {
@@ -151,7 +153,6 @@ void poll_events() {
 }
 
 void swap_buffers() {
-  glClear(GL_COLOR_BUFFER_BIT);
   HDC gl_device_context = wglGetCurrentDC();
   SwapBuffers(gl_device_context);
 }
