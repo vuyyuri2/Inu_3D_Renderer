@@ -4,7 +4,8 @@
 #include <unordered_set>
 
 #include "utils/log.h"
-#include "../model_internal.h"
+#include "model_loading/model_internal.h"
+#include "utils/vectors.h"
 
 /*
  https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/README.md#showcase
@@ -47,25 +48,47 @@ void gltf_skip_section() {
       closing = ']';
     }
 
+    if ((peeked == ']' || peeked == '}') && looking_for_comma) {
+      break;
+    }
+
     if (peeked == opening) {
       looking_for_comma = false;
       num_opening_seen++;
     } else if (peeked == closing) {
       num_opening_seen--;
-      if (looking_for_comma) {
-        break;
-      }
     }
     gltf_eat();
   }
+
   if (!looking_for_comma && gltf_peek() == ',') {
     gltf_eat();
   }
 }
 
 void gltf_parse_asset_section() {
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+
   while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+
+    inu_assert(gltf_peek() == ':');
     gltf_eat();
+
+    if (key == "version") {
+      std::string version = gltf_parse_string();
+      float fversion = atof(version.c_str());
+      if (fversion < 2.f || fversion >= 3.f) {
+        inu_assert_msg("gltf file is not major version 2");
+      }
+    } else {
+      gltf_skip_section();
+    }
+
+    if (gltf_peek() == ',') {
+      gltf_eat();
+    }
   }
   gltf_eat(); 
 }
@@ -541,19 +564,34 @@ void* gltf_read_accessor_data(int accessor_idx) {
   inu_assert(uri_file, "uri file does not exist");
 
   int start_offset = acc.byte_offset + buffer_view.byte_offset;
-  fseek(uri_file, start_offset, SEEK_SET);
 
-  for (int i = 0; i < size_of_acc_data; i++) {
-    data[i] = fgetc(uri_file);
+  int stride = -1;
+  if (buffer_view.byte_stride != -1) {
+    stride = buffer_view.byte_stride;
+  } else {
+    stride = size_of_element;
   }
+
+  int count = 0;
+  for (int i = 0; i < acc.count; i++) {
+    int offset = start_offset + (i * stride);
+    fseek(uri_file, offset, SEEK_SET);
+    for (int j = 0; j < size_of_element; j++) {
+      data[count] = fgetc(uri_file);
+      count++;
+    }
+  }
+
+  inu_assert(count == size_of_acc_data, "size of actual data not equal to final count");
   
   fclose(uri_file);
   
   return (void*)data;
 }
 
-void gltf_load_file(const char* filepath, mesh_t& mesh) {
+void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
+  printf("loading gltf file: %s\n", filepath);
 
   // 1. preprocess step
   gltf_preprocess(filepath);
@@ -574,34 +612,56 @@ void gltf_load_file(const char* filepath, mesh_t& mesh) {
   memset(folder_path, 0, 256);
   memcpy(folder_path, filepath, last_slash - filepath);
   for (gltf_mesh_t& gltf_mesh : gltf_meshes) {
+    model_t model;
+    
+    // each prim could have its own vao, vbo, and ebo
     for (gltf_primitive_t& prim : gltf_mesh.primitives) {
+      mesh_t mesh;
+
       if (prim.indicies_accessor_idx != -1) {
         void* index_data = gltf_read_accessor_data(prim.indicies_accessor_idx);
-        gltf_accessor_t& acc = gltf_accessors[accessor_idx];
+        gltf_accessor_t& acc = gltf_accessors[prim.indicies_accessor_idx];
         if (acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_INT) {
-          unsigned int* uint_pos_data = static_cast<unsigned int*>(positions_data);
+          unsigned int* uint_data = static_cast<unsigned int*>(index_data);
           for (int i = 0; i < acc.count; i++) {
-            mesh.indicies.push_back(uint_pos_data[i]);
+            mesh.indicies.push_back(uint_data[i]);
+          }
+        } else if (acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_SHORT) {
+          unsigned short* ushort_data = static_cast<unsigned short*>(index_data);
+          for (int i = 0; i < acc.count; i++) {
+            unsigned int val = ushort_data[i];
+            mesh.indicies.push_back(val);
           }
         }
       }
       if (prim.attribs.normals_accessor_idx != -1) {
-        void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
+        // void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
       }
       if (prim.attribs.positions_accessor_idx != -1) {
         void* positions_data = gltf_read_accessor_data(prim.attribs.positions_accessor_idx);
-        gltf_accessor_t& acc = gltf_accessors[accessor_idx];
+        gltf_accessor_t& acc = gltf_accessors[prim.attribs.positions_accessor_idx];
         if (acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
-          float* float_pos_data = static_cast<float*>(positions_data);
+          vec3* pos_data = static_cast<vec3*>(positions_data);
           for (int i = 0; i < acc.count; i++) {
             vertex_t vert;
-            vert.position = float_pos_data[i];
+            vert.position = pos_data[i];
             mesh.vertices.push_back(vert);
           }
         }
       }
+
+      mesh.vao = create_vao();
+      mesh.vbo = create_vbo((float*)mesh.vertices.data(), mesh.vertices.size() * sizeof(vertex_t));
+      mesh.ebo = create_ebo(mesh.indicies.data(), mesh.indicies.size() * sizeof(unsigned int));
+
+      vao_enable_attribute(mesh.vao, mesh.vbo, 0, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, position));
+      vao_bind_ebo(mesh.vao, mesh.ebo);
+      
+      model.meshes.push_back(mesh);
     }
-  }
+
+    models.push_back(model);
+  } 
 
   // 4. store objects in internal node hierarchy
    

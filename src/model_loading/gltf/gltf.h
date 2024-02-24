@@ -54,11 +54,12 @@ enum class BUFFER_VIEW_TARGET {
 };
 
 struct gltf_buffer_view_t {
+  int gltf_buffer_index = -1;
   int byte_offset = -1;
   int byte_length = -1;
   BUFFER_VIEW_TARGET target = BUFFER_VIEW_TARGET::NONE;
   // will need to look into later on when this value becomes more important
-  int byte_stride = 1; 
+  int byte_stride = -1; 
 };
 
 enum class ACC_COMPONENT_TYPE {
@@ -144,4 +145,4 @@ void gltf_eat();
 void gltf_parse_section();
 char gltf_peek();
 void gltf_preprocess(const char* filepath);
-void gltf_load_file(const char* filepath, mesh_t& mesh);
+void gltf_load_file(const char* filepath, std::vector<model_t>& models);
