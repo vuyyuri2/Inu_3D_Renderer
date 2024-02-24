@@ -21,6 +21,8 @@ function(configure_project)
 
         src/gfx/gfx.cpp
         src/gfx/opengl/glew.c
+
+        src/utils/math.cpp
     )
 
     add_executable(${PROJECT_NAME} 
