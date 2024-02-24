@@ -23,6 +23,8 @@ function(configure_project)
         src/gfx/opengl/glew.c
 
         src/model_loading/gltf/gltf.cpp
+
+        src/utils/general.cpp
     )
 
     add_executable(${PROJECT_NAME} 
