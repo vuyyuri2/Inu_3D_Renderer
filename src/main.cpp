@@ -12,7 +12,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
   shader_t shader = create_shader("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\shaders\\model.vert", "C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\shaders\\model.frag");
 
-  // mesh_t mesh;
   std::vector<model_t> models;
   // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box\\Box.gltf", models);
   gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box_interleaved\\BoxInterleaved.gltf", models);
