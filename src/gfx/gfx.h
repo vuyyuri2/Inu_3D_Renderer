@@ -42,3 +42,24 @@ void bind_shader(shader_t& shader);
 void unbind_shader();
 void shader_set_float(shader_t& shader, const char* var_name, float val);
 void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec);
+
+struct texture_t {
+	GLuint id = -1;
+	int tex_slot = 0;	
+	int width = -1;
+	int height = -1;
+	int num_channels = -1;
+};
+texture_t create_texture(const char* img_path);
+void bind_texture(texture_t& tex);
+void unbind_texture();
+
+struct material_t {
+	static shader_t associated_shader;
+
+	vec4 color;
+	texture_t tex0_sampler;	
+	float angle = 0;
+};
+int create_material(vec4 color, texture_t tex0);
+void bind_material(int mat_idx);

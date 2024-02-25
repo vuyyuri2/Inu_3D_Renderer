@@ -9,6 +9,7 @@
 
 struct vertex_t {
   vec3 position; 
+  vec2 tex0;
 };
 
 struct mesh_t {
@@ -19,6 +20,8 @@ struct mesh_t {
 
   ebo_t ebo;
   std::vector<unsigned int> indicies;
+
+  int mat_idx;
 };
 
 struct model_t {

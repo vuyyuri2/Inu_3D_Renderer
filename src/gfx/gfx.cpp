@@ -4,9 +4,15 @@
 #include <stdlib.h>
 #include <string>
 #include <stdexcept>
+#include <vector>
+
+#include "model_loading/image/stb_image.h"
 
 #include "utils/general.h"
 #include "utils/vectors.h"
+#include "utils/log.h"
+
+std::vector<material_t> materials;
 
 // VBO
 vbo_t create_vbo(const float* vertices, const int data_size) {
@@ -176,4 +182,79 @@ void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec) {
     }
 	glUniform3fv(loc, 1, (GLfloat*)&vec);
 	unbind_shader();
+}
+
+// TEXTURES
+texture_t create_texture(const char* img_path, int tex_slot) {
+	texture_t texture;
+	texture.tex_slot = tex_slot;	
+
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load(img_path, &texture.width, &texture.height, &texture.num_channels, 0);
+	inu_assert(data, "image data not loaded");
+
+	glGenTextures(1, &texture.id);
+	glBindTexture(GL_TEXTURE_2D, texture.id);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	if (texture.num_channels == 3) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	}
+	else {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	}
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	stbi_image_free(data);
+	return texture;
+}
+
+void bind_texture(texture_t& tex) {
+	glActiveTexture(GL_TEXTURE0 + tex.tex_slot);
+	glBindTexture(GL_TEXTURE_2D, tex.id);
+}
+
+void unbind_texture() {
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// MATERIALS
+shader_t material_t::associated_shader;
+
+int create_material(vec4 color, texture_t tex0) {
+	material_t mat;
+	mat.color = color;
+	mat.tex0_sampler = tex0;
+	mat.angle = 0;
+	materials.push_back(mat);
+	return materials.size()-1;
+}
+
+void bind_material(int mat_idx) {
+	inu_assert(mat_idx < materials.size(), "mat idx out of bounds");
+	shader_t& shader = material_t::associated_shader;
+
+	material_t& mat = materials[mat_idx];
+	shader_set_float(shader, "angle", mat.angle);
+  mat.angle += 0.01f;
+  if (mat.angle >= 360.f) {
+    mat.angle -= 360.f;
+  }
+  
+  vec3 color;
+  if (mat.angle > 180) {
+    color.x = 0;
+    color.y = 1;
+    color.z = 0;
+  } else {
+    color.x = 0;
+    color.y = 0;
+    color.z = 1;
+  }
+  color.x = mat.color.x;
+  color.y = mat.color.y;
+  color.z = mat.color.z;
+  shader_set_vec3(shader, "in_color", color);
+
+  bind_shader(shader);
 }

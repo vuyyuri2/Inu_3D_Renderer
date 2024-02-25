@@ -15,3 +15,10 @@ struct vec3 {
   float y = 0;
   float z = 0;
 };
+
+struct vec4 {
+  float x = 0;
+  float y = 0;
+  float z = 0;
+  float w = 0;
+};

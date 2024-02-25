@@ -1,6 +1,7 @@
 #pragma once
 
 #include "model_loading/model_internal.h"
+#include "utils/vectors.h"
 
 #include <vector>
 #include <string>
@@ -17,6 +18,7 @@ struct gltf_scene_t {
 struct gltf_attributes_t {
   int normals_accessor_idx = -1;
   int positions_accessor_idx = -1;
+  int tex_coord_0_accessor_idx = -1;
 };
 
 enum class GLTF_PRIMITIVE_MODE {
@@ -62,6 +64,16 @@ struct gltf_buffer_view_t {
   int byte_stride = -1; 
 };
 
+struct gltf_pbr_metallic_roughness_t {
+  vec4 base_color_factor;
+  float metallic_factor = 0;
+};
+
+struct gltf_material_t {
+  std::string name;
+  gltf_pbr_metallic_roughness_t pbr;
+};
+
 enum class ACC_COMPONENT_TYPE {
   BYTE = 5120,
   UNSIGNED_BYTE = 5121,
@@ -79,9 +91,50 @@ struct gltf_accessor_t {
   std::string type;
 };
 
+struct gltf_image_t {
+  std::string uri;
+};
+
+struct gltf_texture_t {
+  int sampler_idx = -1;
+  int image_source_idx = -1;
+};
+
+enum class MAG_FILTER {
+  NONE = 0,
+  NEAREST = 9728,
+  LINEAR = 9729
+};
+
+enum class MIN_FILTER {
+  NONE = 0,
+  NEAREST = 9728,
+  LINEAR = 9729,
+  NEAREST_MIPMAP_NEAREST = 9984,
+  LINEAR_MIPMAP_NEAREST = 9985,
+  NEAREST_MIPMAP_LINEAR = 9986,
+  LINEAR_MIPMAP_LINEAR = 9987
+};
+
+enum class SAMPLER_WRAP {
+  NONE = 0,
+  CLAMP_TO_EDGE = 33071,
+  MIRRORED_REPEAT = 33648,
+  REPEAT = 10497
+};
+
+struct gltf_sampler_t {
+  MAG_FILTER mag_filter = MAG_FILTER::NEAREST;
+  MIN_FILTER min_filter = MIN_FILTER::NEAREST;
+  SAMPLER_WRAP wrap_s = SAMPLER_WRAP::REPEAT;
+  SAMPLER_WRAP wrap_t = SAMPLER_WRAP::REPEAT;
+};
+
 int gltf_parse_integer();
 std::string gltf_parse_string();
 std::vector<int> gltf_parse_integer_array();
+vec4 gltf_parse_vec4();
+float gltf_parse_float();
 
 gltf_primitive_t gltf_parse_primitive();
 std::vector<gltf_primitive_t> gltf_parse_primitives_section();
@@ -129,7 +182,14 @@ gltf_attributes_t gltf_parse_attribs();
   buffers --
     byteLength --
     uri --
-
+  textures
+    sampler
+    source
+  images
+    magFilter
+    minFilter
+    wrapS
+    wrapT
  */
 
 void gltf_skip_section();
@@ -140,6 +200,10 @@ void gltf_parse_meshes_section();
 void gltf_parse_buffers_section();
 void gltf_parse_buffer_views_section();
 void gltf_parse_accessors_section();
+void gltf_parse_images_section();
+void gltf_parse_textures_section();
+void gltf_parse_samplers_section();
+void gltf_parse_materials_section();
 
 void gltf_eat();
 void gltf_parse_section();
