@@ -117,7 +117,7 @@ void create_window(HINSTANCE h_instance, int width, int height) {
 
   printf("version: %s\n", glGetString(GL_VERSION));
   glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
-
+  glEnable(GL_DEPTH_TEST);
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {
