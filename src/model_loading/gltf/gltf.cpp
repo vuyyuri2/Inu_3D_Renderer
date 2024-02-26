@@ -587,6 +587,26 @@ void gltf_parse_samplers_section() {
   if (gltf_peek() == ',') gltf_eat();
 }
 
+gltf_base_color_texture_info_t gltf_parse_base_color_texture() {
+  gltf_base_color_texture_info_t info;
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+  while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat();
+    if (key == "index") {
+      info.gltf_texture_idx = gltf_parse_integer();
+    } else {
+      gltf_skip_section();
+    }
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  return info;
+}
+
 gltf_pbr_metallic_roughness_t gltf_parse_pbr_met_rough() {
   inu_assert(gltf_peek() == '{');
   gltf_eat();
@@ -600,6 +620,8 @@ gltf_pbr_metallic_roughness_t gltf_parse_pbr_met_rough() {
       pbr.base_color_factor = gltf_parse_vec4();
     } else if (key == "metallicFactor") {
       pbr.metallic_factor = gltf_parse_float();
+    } else if (key == "baseColorTexture") {
+      pbr.base_color_tex_info = gltf_parse_base_color_texture();
     } else {
       gltf_skip_section();
     }
@@ -810,9 +832,23 @@ void* gltf_read_accessor_data(int accessor_idx) {
   return (void*)data;
 }
 
+int gltf_read_texture(int gltf_tex_idx) {
+  inu_assert(gltf_tex_idx < gltf_textures.size());
+  gltf_texture_t& gltf_tex = gltf_textures[gltf_tex_idx];
+  gltf_image_t& img = gltf_images[gltf_tex.image_source_idx];
+  std::string& img_file_name = img.uri;
+  char img_full_path[256]{};
+  sprintf(img_full_path, "%s\\%s", folder_path, img_file_name.c_str());
+  return create_texture(img_full_path);
+}
+
 void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
   printf("loading gltf file: %s\n", filepath);
+
+  const char* last_slash = strrchr(filepath, '\\');
+  memset(folder_path, 0, 256);
+  memcpy(folder_path, filepath, last_slash - filepath);
 
   // 1. preprocess step
   gltf_preprocess(filepath);
@@ -830,13 +866,14 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
   // 3. load into internal format/ load raw data
   for (gltf_material_t& mat : gltf_materials) {
-    texture_t t;
-    create_material(mat.pbr.base_color_factor, t);
+    int tex_handle = -1;
+    int mat_gltf_tex_idx = mat.pbr.base_color_tex_info.gltf_texture_idx;
+    if (mat_gltf_tex_idx != -1) {
+      tex_handle = gltf_read_texture(mat_gltf_tex_idx);
+    }
+    create_material(mat.pbr.base_color_factor, tex_handle);
   }
-
-  const char* last_slash = strrchr(filepath, '\\');
-  memset(folder_path, 0, 256);
-  memcpy(folder_path, filepath, last_slash - filepath);
+ 
   for (gltf_mesh_t& gltf_mesh : gltf_meshes) {
     model_t model;
     

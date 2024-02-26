@@ -64,9 +64,14 @@ struct gltf_buffer_view_t {
   int byte_stride = -1; 
 };
 
+struct gltf_base_color_texture_info_t {
+  int gltf_texture_idx = -1;
+};
+
 struct gltf_pbr_metallic_roughness_t {
   vec4 base_color_factor;
   float metallic_factor = 0;
+  gltf_base_color_texture_info_t base_color_tex_info;
 };
 
 struct gltf_material_t {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "glew.h"
 
 #include "utils/vectors.h"
@@ -42,24 +44,27 @@ void bind_shader(shader_t& shader);
 void unbind_shader();
 void shader_set_float(shader_t& shader, const char* var_name, float val);
 void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec);
+void shader_set_int(shader_t& shader, const char* var_name, int val);
 
 struct texture_t {
-	GLuint id = -1;
+	int id = -1;
+	GLuint gl_id = -1;
 	int tex_slot = 0;	
 	int width = -1;
 	int height = -1;
 	int num_channels = -1;
+	std::string path;
 };
-texture_t create_texture(const char* img_path);
-void bind_texture(texture_t& tex);
+int create_texture(const char* img_path);
+void bind_texture(int tex_id);
 void unbind_texture();
 
 struct material_t {
 	static shader_t associated_shader;
 
 	vec4 color;
-	texture_t tex0_sampler;	
+	int tex0_sampler_handle = -1;
 	float angle = 0;
 };
-int create_material(vec4 color, texture_t tex0);
+int create_material(vec4 color, int tex0_sampler_handle);
 void bind_material(int mat_idx);

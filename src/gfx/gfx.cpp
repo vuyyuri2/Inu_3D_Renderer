@@ -164,6 +164,16 @@ void unbind_shader() {
 	glUseProgram(0);
 }
 
+void shader_set_int(shader_t& shader, const char* var_name, int val) {
+	glUseProgram(shader.id);
+	GLint loc = glGetUniformLocation(shader.id, var_name);
+    if (loc == -1) {
+        printf("%s does not exist in shader %i\n", var_name, shader.id);
+    }
+	glUniform1i(loc, val);
+	unbind_shader();
+}
+
 void shader_set_float(shader_t& shader, const char* var_name, float val) {
 	glUseProgram(shader.id);
 	GLint loc = glGetUniformLocation(shader.id, var_name);
@@ -185,16 +195,26 @@ void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec) {
 }
 
 // TEXTURES
-texture_t create_texture(const char* img_path, int tex_slot) {
+static std::vector<texture_t> textures;
+int create_texture(const char* img_path) {
+	for (texture_t& t : textures) {
+		if (strcmp(img_path, t.path.c_str()) == 0) {
+			return t.id;
+		}
+	}
+
 	texture_t texture;
-	texture.tex_slot = tex_slot;	
+	texture.tex_slot = 0;	
+	texture.path = std::string(img_path);
 
 	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(img_path, &texture.width, &texture.height, &texture.num_channels, 0);
 	inu_assert(data, "image data not loaded");
 
-	glGenTextures(1, &texture.id);
-	glBindTexture(GL_TEXTURE_2D, texture.id);
+	texture.id = textures.size();
+
+	glGenTextures(1, &texture.gl_id);
+	glBindTexture(GL_TEXTURE_2D, texture.gl_id);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	if (texture.num_channels == 3) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -203,15 +223,23 @@ texture_t create_texture(const char* img_path, int tex_slot) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	stbi_image_free(data);
-	return texture;
+	textures.push_back(texture);
+	return texture.id;
 }
 
-void bind_texture(texture_t& tex) {
+void bind_texture(int tex_id) {
+	texture_t& tex = textures[tex_id];
 	glActiveTexture(GL_TEXTURE0 + tex.tex_slot);
-	glBindTexture(GL_TEXTURE_2D, tex.id);
+	glBindTexture(GL_TEXTURE_2D, tex.gl_id);
 }
 
 void unbind_texture() {
@@ -221,10 +249,10 @@ void unbind_texture() {
 // MATERIALS
 shader_t material_t::associated_shader;
 
-int create_material(vec4 color, texture_t tex0) {
+int create_material(vec4 color, int tex0_sampler_handle) {
 	material_t mat;
 	mat.color = color;
-	mat.tex0_sampler = tex0;
+	mat.tex0_sampler_handle = tex0_sampler_handle;
 	mat.angle = 0;
 	materials.push_back(mat);
 	return materials.size()-1;
@@ -255,6 +283,9 @@ void bind_material(int mat_idx) {
   color.y = mat.color.y;
   color.z = mat.color.z;
   shader_set_vec3(shader, "in_color", color);
+
+	bind_texture(mat.tex0_sampler_handle);
+	shader_set_int(shader, "tex0", 0);
 
   bind_shader(shader);
 }

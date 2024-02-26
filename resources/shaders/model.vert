@@ -15,11 +15,19 @@ void main() {
   // float angle = 45;
   float c = cos(radians(angle));
   float s = sin(radians(angle));
+  /*
   mat4 model = mat4(
     c, 0.0, -s, 0.0,
     0.0, 1.0, 0.0, 0.0,
     s, 0.0, c, 0.0,
     0.0, 0.0, 0.0, 1.0
+  );
+  */
+  mat4 model = mat4(
+    1,0,0,0,
+    0,c,-s,0,
+    0,s,c,0,
+    0,0,0,1
   );
   gl_Position = model * vec4(pos, 1.0);
   tex = tex0;

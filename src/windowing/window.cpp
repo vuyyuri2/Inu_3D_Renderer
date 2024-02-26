@@ -116,7 +116,7 @@ void create_window(HINSTANCE h_instance, int width, int height) {
   inu_assert(err == GLEW_OK, glewGetErrorString(err));
 
   printf("version: %s\n", glGetString(GL_VERSION));
-  glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+  // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
   glEnable(GL_DEPTH_TEST);
 }
 
