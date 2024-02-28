@@ -135,7 +135,7 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
       // bottom left should be (0,0)
       window.input.mouse_pos.x = GET_X_LPARAM(l_param);
       window.input.mouse_pos.y = window.window_dim.y - GET_Y_LPARAM(l_param);
-      printf("mouse pos: (%i,%i)\n", window.input.mouse_pos.x, window.input.mouse_pos.y);
+      // printf("mouse pos: (%i,%i)\n", window.input.mouse_pos.x, window.input.mouse_pos.y);
       break;
     }
   }
