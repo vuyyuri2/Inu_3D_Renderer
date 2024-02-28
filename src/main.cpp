@@ -12,6 +12,8 @@ app_info_t app_info;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
+  create_window(hInstance, 400, 300); 
+
   if (wcscmp(pCmdLine, L"running_in_vs") == 0) {
     app_info.running_in_vs = true;
   }
@@ -19,8 +21,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   char resources_path[256]{};
   get_resources_folder_path(resources_path);
   printf("resources_path: %s\n", resources_path);
-
-  create_window(hInstance, 400, 300); 
 
   char vert_shader_path[256]{};
   sprintf(vert_shader_path, "%s\\shaders\\model.vert", resources_path);
