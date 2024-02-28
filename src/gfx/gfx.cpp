@@ -270,6 +270,7 @@ void bind_material(int mat_idx) {
     mat.angle -= 360.f;
   }
   
+  /*
   vec3 color;
   if (mat.angle > 180) {
     color.x = 0;
@@ -284,6 +285,7 @@ void bind_material(int mat_idx) {
   color.y = mat.color.y;
   color.z = mat.color.z;
   shader_set_vec3(shader, "in_color", color);
+  */
 
 	if (mat.base_color_tex.tex_handle != -1) {
 		texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
