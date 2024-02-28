@@ -10,6 +10,9 @@
 struct vertex_t {
   vec3 position; 
   vec2 tex0;
+  vec2 tex1;
+  vec2 tex2;
+  vec2 tex3;
 };
 
 struct mesh_t {
