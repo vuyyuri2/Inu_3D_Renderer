@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <unordered_set>
+#include <algorithm>
 
 #include "utils/log.h"
 #include "utils/vectors.h"
@@ -87,6 +88,10 @@ void gltf_parse_asset_section() {
       if (fversion < 2.f || fversion >= 3.f) {
         inu_assert_msg("gltf file is not major version 2");
       }
+    } else if (key == "copyright") {
+      gltf_parse_string();
+    } else if (key == "generator") {
+      gltf_parse_string();
     } else {
       gltf_skip_section();
     }
@@ -243,6 +248,10 @@ std::string gltf_parse_string() {
 gltf_attributes_t gltf_parse_attribs() {
   gltf_attributes_t attrib;
 
+  for (int i = 0; i < MAX_SUPPORTED_TEX_COORDS; i++) {
+    attrib.tex_coord_accessor_indicies[i] = -1;
+  }
+
   inu_assert(gltf_peek() == '{');
   gltf_eat();
 
@@ -256,8 +265,10 @@ gltf_attributes_t gltf_parse_attribs() {
       attrib.normals_accessor_idx = gltf_parse_integer();
     } else if (key == "POSITION") {
       attrib.positions_accessor_idx = gltf_parse_integer();
-    } else if (key == "TEXCOORD_0") {
-      attrib.tex_coord_0_accessor_idx = gltf_parse_integer();
+    } else if (strstr(key.c_str(),  "TEXCOORD") != NULL) {
+      const char* tex_coord_idx_char = strstr(key.c_str(), "_") + 1;
+      int tex_coord_idx = atoi(tex_coord_idx_char);
+      attrib.tex_coord_accessor_indicies[tex_coord_idx] = gltf_parse_integer();
     } else {
       // not sure if this works for individual elements
       gltf_skip_section();
@@ -371,6 +382,23 @@ int gltf_parse_integer() {
   return val;
 }
 
+std::string replace_uri_encoded_space(std::string& in) {
+  std::string val = "";
+  int i;
+  for (i = 0; i < in.size() - 3; i++) {
+    if (in[i] == '%' && in[i+1] == '2' && in[i+2] == '0') {
+      val = val + " ";
+      i = i + 2;
+    } else {
+      val = val + in[i];
+    }
+  }
+  val = val + in[i];
+  val = val + in[i+1];
+  val = val + in[i+2];
+  return val;
+}
+
 void gltf_parse_buffer() {
   gltf_buffer_t buffer; 
   inu_assert(gltf_peek() == '{');
@@ -383,6 +411,10 @@ void gltf_parse_buffer() {
       buffer.byte_length = gltf_parse_integer();
     } else if (key == "uri") {
       buffer.uri = gltf_parse_string();
+      // std::replace(buffer.uri.begin(), buffer.uri.end(), std::string("%20"), std::string(" "));
+      buffer.uri = replace_uri_encoded_space(buffer.uri);
+    } else {
+      gltf_skip_section();
     }
     if (gltf_peek() == ',') gltf_eat();
   }
@@ -396,6 +428,7 @@ void gltf_parse_buffers_section() {
   gltf_eat();
   while (gltf_peek() != ']') {
     gltf_parse_buffer();
+    if (gltf_peek() == ',') gltf_eat();
   }
   gltf_eat();
   if (gltf_peek() == ',') gltf_eat();
@@ -490,6 +523,7 @@ void gltf_parse_image() {
     gltf_eat();
     if (key == "uri") {
       img.uri = gltf_parse_string();
+      img.uri = replace_uri_encoded_space(img.uri);
     } else {
       gltf_skip_section();
     }
@@ -587,8 +621,8 @@ void gltf_parse_samplers_section() {
   if (gltf_peek() == ',') gltf_eat();
 }
 
-gltf_base_color_texture_info_t gltf_parse_base_color_texture() {
-  gltf_base_color_texture_info_t info;
+gltf_mat_image_info_t gltf_parse_base_color_texture() {
+  gltf_mat_image_info_t info;
   inu_assert(gltf_peek() == '{');
   gltf_eat();
   while (gltf_peek() != '}') {
@@ -597,6 +631,8 @@ gltf_base_color_texture_info_t gltf_parse_base_color_texture() {
     gltf_eat();
     if (key == "index") {
       info.gltf_texture_idx = gltf_parse_integer();
+    } else if (key == "texCoord") {
+      info.tex_coord_idx = gltf_parse_integer();
     } else {
       gltf_skip_section();
     }
@@ -647,6 +683,8 @@ void gltf_parse_material() {
       mat.pbr = gltf_parse_pbr_met_rough();
     } else if (key == "name") {
       mat.name = gltf_parse_string();
+    } else {
+      gltf_skip_section();
     }
     if (gltf_peek() == ',') gltf_eat();
   }
@@ -727,9 +765,13 @@ void gltf_preprocess(const char* filepath) {
   FILE* gltf_file = fopen(filepath, "r");
   inu_assert(gltf_file, "gltf file not found");
   int count = 0;
+  bool preprocessing_str = false;
   while (!feof(gltf_file)) {
     char c = fgetc(gltf_file);
-    if (c > 0 && !isspace(c)) {
+    if (c == '\"') {
+      preprocessing_str = !preprocessing_str;
+    }
+    if (c > 0 && (preprocessing_str || (!preprocessing_str &&!isspace(c)))) {
       buffer[count] = c;
       count++;
       if (count == buffer_len) {
@@ -842,6 +884,18 @@ int gltf_read_texture(int gltf_tex_idx) {
   return create_texture(img_full_path);
 }
 
+material_image_t gltf_mat_img_to_internal_mat_img(gltf_mat_image_info_t& gltf_mat_image_info) {
+  int mat_gltf_tex_idx = gltf_mat_image_info.gltf_texture_idx;
+  int tex_handle = -1;
+  if (mat_gltf_tex_idx != -1) {
+    tex_handle = gltf_read_texture(mat_gltf_tex_idx);
+  }
+  material_image_t mat_img;
+  mat_img.tex_handle = tex_handle;
+  mat_img.tex_coords_idx = gltf_mat_image_info.tex_coord_idx;
+  return mat_img;
+}
+
 void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
   printf("loading gltf file: %s\n", filepath);
@@ -866,12 +920,8 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
   // 3. load into internal format/ load raw data
   for (gltf_material_t& mat : gltf_materials) {
-    int tex_handle = -1;
-    int mat_gltf_tex_idx = mat.pbr.base_color_tex_info.gltf_texture_idx;
-    if (mat_gltf_tex_idx != -1) {
-      tex_handle = gltf_read_texture(mat_gltf_tex_idx);
-    }
-    create_material(mat.pbr.base_color_factor, tex_handle);
+    material_image_t base_color_img = gltf_mat_img_to_internal_mat_img(mat.pbr.base_color_tex_info);
+    create_material(mat.pbr.base_color_factor, base_color_img);
   }
  
   for (gltf_mesh_t& gltf_mesh : gltf_meshes) {
@@ -913,25 +963,32 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
           }
           for (int i = 0; i < acc.count; i++) {
             vertex_t& vert = mesh.vertices[i];
-            vert.position = pos_data[i];
+            float divider = 2.f;
+            vert.position.x = pos_data[i].x / divider;
+            vert.position.y = pos_data[i].y / divider;
+            vert.position.z = pos_data[i].z / divider;
           }
         } else {
           inu_assert_msg("this type for positions data is not supported yet");
         }
       }
       
-      if (prim.attribs.tex_coord_0_accessor_idx != -1) {
-        void* tex_0_data = gltf_read_accessor_data(prim.attribs.tex_coord_0_accessor_idx);
-        gltf_accessor_t& tex_acc = gltf_accessors[prim.attribs.tex_coord_0_accessor_idx];
+      // if (prim.attribs.tex_coord_0_accessor_idx != -1) {
+      for (int i = 0; i < MAX_SUPPORTED_TEX_COORDS; i++) {
+        int accessor_idx = prim.attribs.tex_coord_accessor_indicies[i];
+        if (accessor_idx == -1) continue;
+        void* tex_data_void = gltf_read_accessor_data(accessor_idx);
+        gltf_accessor_t& tex_acc = gltf_accessors[accessor_idx];
         if (tex_acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
           // can do direct static cast b/c vec2 is made up of floats
-          vec2* tex_data = static_cast<vec2*>(tex_0_data);
+          vec2* tex_data = static_cast<vec2*>(tex_data_void);
           if (mesh.vertices.size() == 0) {
             mesh.vertices.resize(tex_acc.count);
           }
-          for (int i = 0; i < tex_acc.count; i++) {
-            vertex_t& vert = mesh.vertices[i];
-            vert.tex0 = tex_data[i];
+          for (int j = 0; j < tex_acc.count; j++) {
+            vertex_t& vert = mesh.vertices[j];
+            vec2* tex_ptr = &vert.tex0;
+            *(tex_ptr+i) = tex_data[j];
           }
         } else {
           inu_assert_msg("this type for texture data is not supported yet");
@@ -946,6 +1003,9 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
       vao_enable_attribute(mesh.vao, mesh.vbo, 0, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, position));
       vao_enable_attribute(mesh.vao, mesh.vbo, 1, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex0));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 2, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex1));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 3, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex2));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 4, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex3));
       vao_bind_ebo(mesh.vao, mesh.ebo);
       
       model.meshes.push_back(mesh);

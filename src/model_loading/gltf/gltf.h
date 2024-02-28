@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 
+#define MAX_SUPPORTED_TEX_COORDS 4
+
 struct gltf_node_t {
   std::vector<int> child_node_idxs;
   int gltf_mesh_handle = -1;
@@ -18,7 +20,8 @@ struct gltf_scene_t {
 struct gltf_attributes_t {
   int normals_accessor_idx = -1;
   int positions_accessor_idx = -1;
-  int tex_coord_0_accessor_idx = -1;
+  // int tex_coord_0_accessor_idx = -1;
+  int tex_coord_accessor_indicies[MAX_SUPPORTED_TEX_COORDS];
 };
 
 enum class GLTF_PRIMITIVE_MODE {
@@ -64,14 +67,15 @@ struct gltf_buffer_view_t {
   int byte_stride = -1; 
 };
 
-struct gltf_base_color_texture_info_t {
+struct gltf_mat_image_info_t {
   int gltf_texture_idx = -1;
+  int tex_coord_idx = 0;
 };
 
 struct gltf_pbr_metallic_roughness_t {
   vec4 base_color_factor;
   float metallic_factor = 0;
-  gltf_base_color_texture_info_t base_color_tex_info;
+  gltf_mat_image_info_t base_color_tex_info;
 };
 
 struct gltf_material_t {
@@ -90,7 +94,7 @@ enum class ACC_COMPONENT_TYPE {
 
 struct gltf_accessor_t {
   int buffer_view_idx = -1;
-  int byte_offset = -1;
+  int byte_offset = 0;
   ACC_COMPONENT_TYPE component_type = ACC_COMPONENT_TYPE::BYTE;
   int count = -1;
   std::string type;
