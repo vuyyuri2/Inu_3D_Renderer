@@ -56,15 +56,20 @@ struct texture_t {
 	std::string path;
 };
 int create_texture(const char* img_path);
-void bind_texture(int tex_id);
+texture_t bind_texture(int tex_id);
 void unbind_texture();
+
+struct material_image_t {
+	int tex_handle = -1;
+	int tex_coords_idx = 0;
+};
 
 struct material_t {
 	static shader_t associated_shader;
 
 	vec4 color;
-	int tex0_sampler_handle = -1;
+	material_image_t base_color_tex;
 	float angle = 0;
 };
-int create_material(vec4 color, int tex0_sampler_handle);
+int create_material(vec4 color, material_image_t base_color_img);
 void bind_material(int mat_idx);

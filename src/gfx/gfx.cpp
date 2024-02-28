@@ -236,10 +236,11 @@ int create_texture(const char* img_path) {
 	return texture.id;
 }
 
-void bind_texture(int tex_id) {
+texture_t bind_texture(int tex_id) {
 	texture_t& tex = textures[tex_id];
 	glActiveTexture(GL_TEXTURE0 + tex.tex_slot);
 	glBindTexture(GL_TEXTURE_2D, tex.gl_id);
+	return tex;
 }
 
 void unbind_texture() {
@@ -249,10 +250,10 @@ void unbind_texture() {
 // MATERIALS
 shader_t material_t::associated_shader;
 
-int create_material(vec4 color, int tex0_sampler_handle) {
+int create_material(vec4 color, material_image_t base_color_img) {
 	material_t mat;
 	mat.color = color;
-	mat.tex0_sampler_handle = tex0_sampler_handle;
+	mat.base_color_tex = base_color_img;
 	mat.angle = 0;
 	materials.push_back(mat);
 	return materials.size()-1;
@@ -284,8 +285,9 @@ void bind_material(int mat_idx) {
   color.z = mat.color.z;
   shader_set_vec3(shader, "in_color", color);
 
-	bind_texture(mat.tex0_sampler_handle);
-	shader_set_int(shader, "tex0", 0);
+	texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
+	shader_set_int(shader, "base_color_tex.samp", texture.tex_slot);
+	shader_set_int(shader, "base_color_tex.tex_id", mat.base_color_tex.tex_coords_idx);
 
   bind_shader(shader);
 }
