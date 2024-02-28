@@ -4,15 +4,26 @@
 #include "model_loading/model_internal.h"
 #include "model_loading/gltf/gltf.h"
 #include "gfx/gfx.h"
+#include "utils/general.h"
+#include "utils/app_info.h"
 
 extern window_t window;
-
+app_info_t app_info;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+
+  if (wcscmp(pCmdLine, L"running_in_vs") == 0) {
+    app_info.running_in_vs = true;
+  }
+
   create_window(hInstance, 400, 300); 
 
   // shader_t shader = create_shader("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\shaders\\model.vert", "C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\shaders\\model.frag");
   material_t::associated_shader = create_shader("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\shaders\\model.vert", "C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\shaders\\model.frag");
+
+  char resources_path[256]{};
+  get_resources_folder_path(resources_path);
+  printf("resources_path: %s\n", resources_path);
 
   std::vector<model_t> models;
   // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box\\Box.gltf", models);
