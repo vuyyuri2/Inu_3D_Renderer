@@ -7,6 +7,7 @@
 
 extern window_t window;
 
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
   create_window(hInstance, 400, 300); 
 
@@ -17,7 +18,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box\\Box.gltf", models);
   // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box_interleaved\\BoxInterleaved.gltf", models);
   // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box_textured\\BoxTextured.gltf", models);
-  gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf", models);
+  // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf", models);
+  gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\box_with_spaces\\Box With Spaces.gltf", models);
+
+  // gltf_load_file("C:\\Sarthak\\projects\\3d_anim_renderer\\resources\\duck\\Duck.gltf", models);
   // float angle = 0;
   while (window.running) {
     poll_events();
