@@ -54,7 +54,7 @@
       "byteStride" : 12,
       "target" : 34962
     } ],
-    "meshes"  {
+    "meshes" : [ {
       "primitives" : [ {
         "attributes" : {
           "POSITION" : 1,
