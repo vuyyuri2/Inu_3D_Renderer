@@ -268,7 +268,9 @@ gltf_attributes_t gltf_parse_attribs() {
     } else if (strstr(key.c_str(),  "TEXCOORD") != NULL) {
       const char* tex_coord_idx_char = strstr(key.c_str(), "_") + 1;
       int tex_coord_idx = atoi(tex_coord_idx_char);
-      attrib.tex_coord_accessor_indicies[tex_coord_idx] = gltf_parse_integer();
+      if (tex_coord_idx < MAX_SUPPORTED_TEX_COORDS) {
+        attrib.tex_coord_accessor_indicies[tex_coord_idx] = gltf_parse_integer();
+      }
     } else {
       // not sure if this works for individual elements
       gltf_skip_section();
