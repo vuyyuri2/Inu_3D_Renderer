@@ -1,16 +1,19 @@
 #version 410 core
 
+struct shader_tex {
+  sampler2D samp; 
+  int tex_id;
+};
+
+in vec2 tex_coords[4];
+
 uniform vec3 in_color;
-
-in vec2 tex;
-
-uniform sampler2D tex0;
+uniform shader_tex base_color_tex;
 
 out vec4 frag_color;
 
 void main() {
-  frag_color = vec4(tex, 0, 1);
   frag_color = vec4(in_color, 1);
-  frag_color = texture(tex0, tex);
+  frag_color = texture(base_color_tex.samp, tex_coords[base_color_tex.tex_id]);
   // frag_color = vec4(1,0,0,1);
 }
