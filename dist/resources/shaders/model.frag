@@ -7,7 +7,7 @@ struct shader_tex {
 
 in vec2 tex_coords[4];
 
-uniform vec3 in_color;
+// uniform vec3 in_color;
 uniform shader_tex base_color_tex;
 
 in vec3 vert_color;
