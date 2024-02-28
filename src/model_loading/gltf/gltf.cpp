@@ -935,6 +935,26 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     for (gltf_primitive_t& prim : gltf_mesh.primitives) {
       mesh_t mesh;
 
+      inu_assert(prim.attribs.positions_accessor_idx != -1, "mesh must specify positions");
+      void* positions_data = gltf_read_accessor_data(prim.attribs.positions_accessor_idx);
+      gltf_accessor_t& acc = gltf_accessors[prim.attribs.positions_accessor_idx];
+      if (acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
+        // can do direct static cast b/c vec3 is made up of floats
+        vec3* pos_data = static_cast<vec3*>(positions_data);
+        if (mesh.vertices.size() == 0) {
+          mesh.vertices.resize(acc.count);
+        }
+        for (int i = 0; i < acc.count; i++) {
+          vertex_t& vert = mesh.vertices[i];
+          float divider = 2.f;
+          vert.position.x = pos_data[i].x / divider;
+          vert.position.y = pos_data[i].y / divider;
+          vert.position.z = pos_data[i].z / divider;
+        }
+      } else {
+        inu_assert_msg("this type for positions data is not supported yet");
+      }
+
       if (prim.indicies_accessor_idx != -1) {
         void* index_data = gltf_read_accessor_data(prim.indicies_accessor_idx);
         gltf_accessor_t& acc = gltf_accessors[prim.indicies_accessor_idx];
@@ -954,28 +974,7 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
 
       if (prim.attribs.normals_accessor_idx != -1) {
         // void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
-      }
-
-      if (prim.attribs.positions_accessor_idx != -1) {
-        void* positions_data = gltf_read_accessor_data(prim.attribs.positions_accessor_idx);
-        gltf_accessor_t& acc = gltf_accessors[prim.attribs.positions_accessor_idx];
-        if (acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
-          // can do direct static cast b/c vec3 is made up of floats
-          vec3* pos_data = static_cast<vec3*>(positions_data);
-          if (mesh.vertices.size() == 0) {
-            mesh.vertices.resize(acc.count);
-          }
-          for (int i = 0; i < acc.count; i++) {
-            vertex_t& vert = mesh.vertices[i];
-            float divider = 2.f;
-            vert.position.x = pos_data[i].x / divider;
-            vert.position.y = pos_data[i].y / divider;
-            vert.position.z = pos_data[i].z / divider;
-          }
-        } else {
-          inu_assert_msg("this type for positions data is not supported yet");
-        }
-      }
+      } 
 
       if (prim.attribs.color_0_accessor_idx != -1) {
         void* color_data = gltf_read_accessor_data(prim.attribs.color_0_accessor_idx);
@@ -983,16 +982,20 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
         if (acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
           // can do direct static cast b/c vec3 is made up of floats
           vec3* col_data = static_cast<vec3*>(color_data);
-          if (mesh.vertices.size() == 0) {
-            mesh.vertices.resize(acc.count);
-          }
+          inu_assert(acc.count == mesh.vertices.size(), "count of vertices for color data different from count of actual loading in vertices from position data");
           for (int i = 0; i < acc.count; i++) {
             vertex_t& vert = mesh.vertices[i];
-            float divider = 2.f;
             vert.color = col_data[i];
           }
         } else {
           inu_assert_msg("this type for colors data is not supported yet");
+        }
+      } else {
+        for (int i = 0; i < mesh.vertices.size(); i++) {
+          vertex_t& vert = mesh.vertices[i];
+          vert.color.x = 1;
+          vert.color.y = 1;
+          vert.color.z = 1;
         }
       }
       
@@ -1004,9 +1007,6 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
         if (tex_acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
           // can do direct static cast b/c vec2 is made up of floats
           vec2* tex_data = static_cast<vec2*>(tex_data_void);
-          if (mesh.vertices.size() == 0) {
-            mesh.vertices.resize(tex_acc.count);
-          }
           for (int j = 0; j < tex_acc.count; j++) {
             vertex_t& vert = mesh.vertices[j];
             vec2* tex_ptr = &vert.tex0;
