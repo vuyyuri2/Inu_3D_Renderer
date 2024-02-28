@@ -40,18 +40,24 @@ char* get_file_contents(const char* full_path) {
 
 extern app_info_t app_info;
 void get_resources_folder_path(char path_buffer[256]) {	
+  // C:\Sarthak\projects\3d_anim_renderer\out\build\Release\three_d_renderer.exe
 	static bool got_root_path = false;
 	static char s_folder[256]{};
 	if (!got_root_path) {
 		char folder[256]{};
-		if (app_info.running_in_vs) {
-		  GetCurrentDirectoryA(256, folder);
+    GetModuleFileNameA(NULL, folder, 256);
+		if (app_info.running_in_vs) { 
+      char* slash_before_exe_name = strrchr(folder, '\\');
+      *slash_before_exe_name = 0;
+		  char* slash_before_vs_sol_config_folder = strrchr(folder, '\\');
+		  *slash_before_vs_sol_config_folder = 0;
 		  char* slash_before_build_folder = strrchr(folder, '\\');
 		  *slash_before_build_folder = 0;
       char* slash_before_out_folder = strrchr(folder, '\\');
 		  *slash_before_out_folder = 0;
 		} else {
-		  GetCurrentDirectoryA(256, folder);
+      char* slash_before_exe_name = strrchr(folder, '\\');
+      *slash_before_exe_name = 0;
 		}
 
 		sprintf(s_folder, "%s\\resources", folder);
