@@ -20,7 +20,7 @@ struct gltf_scene_t {
 struct gltf_attributes_t {
   int normals_accessor_idx = -1;
   int positions_accessor_idx = -1;
-  // int tex_coord_0_accessor_idx = -1;
+  int color_0_accessor_idx = -1;
   int tex_coord_accessor_indicies[MAX_SUPPORTED_TEX_COORDS];
 };
 

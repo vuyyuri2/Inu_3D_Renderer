@@ -13,6 +13,7 @@ struct vertex_t {
   vec2 tex1;
   vec2 tex2;
   vec2 tex3;
+  vec3 color;
 };
 
 struct mesh_t {

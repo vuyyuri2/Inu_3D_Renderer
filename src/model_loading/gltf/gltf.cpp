@@ -167,16 +167,16 @@ void gltf_parse_scene() {
   gltf_eat();
   while (gltf_peek() != '}') {
     std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat();
 
     if (key == "nodes") {
       // get the root nodes
-      inu_assert(gltf_peek() == ':');
-      gltf_eat();
       scene.root_nodes = gltf_parse_integer_array();
-      if (gltf_peek() == ',') gltf_eat();
     } else {
       gltf_skip_section();
     }
+    if (gltf_peek() == ',') gltf_eat();
   }
   gltf_eat();
   gltf_scenes.push_back(scene);
@@ -271,6 +271,8 @@ gltf_attributes_t gltf_parse_attribs() {
       if (tex_coord_idx < MAX_SUPPORTED_TEX_COORDS) {
         attrib.tex_coord_accessor_indicies[tex_coord_idx] = gltf_parse_integer();
       }
+    } else if (key == "COLOR_0") {
+      attrib.color_0_accessor_idx = gltf_parse_integer();
     } else {
       // not sure if this works for individual elements
       gltf_skip_section();
@@ -345,9 +347,7 @@ void gltf_parse_mesh() {
     } else {
       gltf_skip_section();
     }
-
     if (gltf_peek() == ',') gltf_eat();
-
   }
   gltf_eat();
   if (gltf_peek() == ',') gltf_eat();
@@ -494,6 +494,8 @@ void gltf_parse_buffer_view() {
       buffer_view.byte_stride = gltf_parse_integer();
     } else if (key == "target") {
       buffer_view.target = static_cast<BUFFER_VIEW_TARGET>(gltf_parse_integer());
+    } else {
+      gltf_skip_section();
     }
     if (gltf_peek() == ',') gltf_eat();
   }
@@ -974,8 +976,26 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
           inu_assert_msg("this type for positions data is not supported yet");
         }
       }
+
+      if (prim.attribs.color_0_accessor_idx != -1) {
+        void* color_data = gltf_read_accessor_data(prim.attribs.color_0_accessor_idx);
+        gltf_accessor_t& acc = gltf_accessors[prim.attribs.color_0_accessor_idx];
+        if (acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
+          // can do direct static cast b/c vec3 is made up of floats
+          vec3* col_data = static_cast<vec3*>(color_data);
+          if (mesh.vertices.size() == 0) {
+            mesh.vertices.resize(acc.count);
+          }
+          for (int i = 0; i < acc.count; i++) {
+            vertex_t& vert = mesh.vertices[i];
+            float divider = 2.f;
+            vert.color = col_data[i];
+          }
+        } else {
+          inu_assert_msg("this type for colors data is not supported yet");
+        }
+      }
       
-      // if (prim.attribs.tex_coord_0_accessor_idx != -1) {
       for (int i = 0; i < MAX_SUPPORTED_TEX_COORDS; i++) {
         int accessor_idx = prim.attribs.tex_coord_accessor_indicies[i];
         if (accessor_idx == -1) continue;
@@ -997,7 +1017,18 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
         }
       }
 
-      mesh.mat_idx = prim.material_idx;
+      if (prim.material_idx != -1) {
+        mesh.mat_idx = prim.material_idx;
+      } else {
+        vec4 color;
+        color.x = 0;
+        color.y = 1;
+        color.z = 0;
+        color.w = 0;
+
+        material_image_t base_img;
+        mesh.mat_idx = create_material(color, base_img);
+      }
 
       mesh.vao = create_vao();
       mesh.vbo = create_vbo((float*)mesh.vertices.data(), mesh.vertices.size() * sizeof(vertex_t));
@@ -1008,6 +1039,7 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
       vao_enable_attribute(mesh.vao, mesh.vbo, 2, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex1));
       vao_enable_attribute(mesh.vao, mesh.vbo, 3, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex2));
       vao_enable_attribute(mesh.vao, mesh.vbo, 4, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex3));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 5, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, color));
       vao_bind_ebo(mesh.vao, mesh.ebo);
       
       model.meshes.push_back(mesh);

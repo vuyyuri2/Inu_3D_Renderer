@@ -285,9 +285,14 @@ void bind_material(int mat_idx) {
   color.z = mat.color.z;
   shader_set_vec3(shader, "in_color", color);
 
-	texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
-	shader_set_int(shader, "base_color_tex.samp", texture.tex_slot);
-	shader_set_int(shader, "base_color_tex.tex_id", mat.base_color_tex.tex_coords_idx);
+	if (mat.base_color_tex.tex_handle != -1) {
+		texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
+		shader_set_int(shader, "base_color_tex.samp", texture.tex_slot);
+		shader_set_int(shader, "base_color_tex.tex_id", mat.base_color_tex.tex_coords_idx);
+	} else {
+		shader_set_int(shader, "base_color_tex.samp", 0);
+		shader_set_int(shader, "base_color_tex.tex_id", -1);
+	}
 
   bind_shader(shader);
 }
