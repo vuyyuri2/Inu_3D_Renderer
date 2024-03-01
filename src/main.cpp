@@ -34,7 +34,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
-  const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
+  const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
 
   std::vector<model_t> models;
   char gltf_full_file_path[256]{};

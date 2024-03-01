@@ -36,13 +36,21 @@ void main() {
     0,0,0,1
   );
 
-  mat4 rotate = mat4(
+  mat4 rotate_x = mat4(
     1,0,0,0,
     0,c,-s,0,
     0,s,c,0,
     0,0,0,1
   );
-  gl_Position = translate * rotate * vec4(pos, 1.0);
+
+  mat4 rotate_y = mat4(
+    c,0,-s,0,
+    0,1,0,0,
+    s,0,c,0,
+    0,0,0,1
+  );
+
+  gl_Position = translate * rotate_y * vec4(pos, 1.0);
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
   tex_coords[2] = tex2;

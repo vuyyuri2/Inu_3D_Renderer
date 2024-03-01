@@ -207,7 +207,7 @@ int create_texture(const char* img_path) {
 	texture.tex_slot = 0;	
 	texture.path = std::string(img_path);
 
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(false);
 	unsigned char* data = stbi_load(img_path, &texture.width, &texture.height, &texture.num_channels, 0);
 	inu_assert(data, "image data not loaded");
 

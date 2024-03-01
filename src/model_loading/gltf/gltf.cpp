@@ -853,11 +853,8 @@ void* gltf_read_accessor_data(int accessor_idx) {
 
   char file_buffer[12]{};
 
-  FILE* uri_file = fopen(buffer_uri_full_path, "r");
+  FILE* uri_file = fopen(buffer_uri_full_path, "rb");
   inu_assert(uri_file, "uri file does not exist");
-
-  // setvbuf(uri_file, NULL, _IONBF, 0);
-  setvbuf(uri_file, file_buffer, _IOFBF, 12);
 
   int start_offset = acc.byte_offset + buffer_view.byte_offset;
 
@@ -872,83 +869,16 @@ void* gltf_read_accessor_data(int accessor_idx) {
   for (int i = 0; i < acc.count; i++) {
     int offset = start_offset + (i * stride);
     int err = fseek(uri_file, offset, SEEK_SET);
-    if (i == 927) {
-	    int a = 5;
-	  }
     for (int j = 0; j < size_of_element; j++) {
-#if 0
-      int new_offset = offset + j;
-      fseek(uri_file, new_offset, SEEK_SET);
       int file_ptr_before = ftell(uri_file);
-#endif
-#if 0
-      int file_ptr = ftell(uri_file);
-
-      unsigned char c1 = fgetc(uri_file);
-
-      fseek(uri_file, file_ptr, SEEK_SET);
-      char c2[2]{0xff, 0xff};
-      char* res = fgets(c2, 2, uri_file);
-
-      fseek(uri_file, file_ptr, SEEK_SET);
-      char c3 = 0;
-      size_t num_read = fread(&c3, 1, 1, uri_file);
-
-      char f = c1;
-      if (c1 != c3 && c1 == 0) {
-        f = c3;
-      }
-      data[count] = f;
-#endif
-
-
-#if 0
-      unsigned char c = fgetc(uri_file);
-      char c2[2]{};
-      char* res = fgets(c2, 2, uri_file);
-      data[count] = c2[0];
-#elif 0
-      char c[2]{0xff, 0xff};
-      char* res = fgets(c, 2, uri_file);
-      data[count] = c[0];
-#elif 0
       char c = 0;
-      size_t num_read = fread(&c, 1, 1, uri_file);
-      data[count] = c;
-#endif
-      // char c = 0;
-      // fscanf(uri_file, "%c", &c);
-      // int c_int = fgetc(uri_file);
-
-      int new_offset = offset + j;
-      fseek(uri_file, new_offset, SEEK_SET);
-      int file_ptr_before = ftell(uri_file);
-      errno = 0;
-      char c = 5;
       size_t bytes_read = fread(&c, sizeof(char), 1, uri_file);
       int file_ptr_after = ftell(uri_file);
       int diff = file_ptr_after - file_ptr_before;
-
-#if 0
-      printf("diff: %i\n", diff);
-      if (bytes_read == 0) {
-        printf("did not read any bytes\n");
-        printf("errno: %i\n", errno);
-      } 
-#endif
-
-#if 0
-      if (c_int == EOF) {
-        printf("EOF encountered\n");
-        int err = ferror(uri_file);
-        if (err == 1) {
-          printf("errno: %i\n", errno);
-        }
-        int e = feof(uri_file);
-        int a = 5;
+      if (diff != 1) {
+        printf("diff: %i\n", diff);
       }
-#endif
-      // char c = static_cast<char>(c_int);
+
       data[count] = c;
       count++;
     }
