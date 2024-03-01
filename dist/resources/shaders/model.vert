@@ -29,6 +29,19 @@ void main() {
   );
   */
 
+  float n = 0.01;
+  float f = 100000;
+  float r = 50;
+  float l = -50;
+  float t = 28.125;
+  float b = -28.125;
+  mat4 projection = mat4(
+    2*n/(r-l), 0, 0, 0,
+    0, 2*n/(t-b), 0, 0,
+    0, 0, -(f+n)/(f-n),-1,
+    0,0,-2*f*n/(f-n),0
+  );
+
   mat4 translate = mat4(
     1,0,0,0,
     0,1,0,0,
@@ -42,6 +55,7 @@ void main() {
     0,s,c,0,
     0,0,0,1
   );
+  // gl_Position = projection * translate * rotate * vec4(pos, 1.0);
   gl_Position = translate * rotate * vec4(pos, 1.0);
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
