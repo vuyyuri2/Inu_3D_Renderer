@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <unordered_set>
 #include <algorithm>
+#include <errno.h>
+#include <stdio.h>
 
 #include "utils/log.h"
 #include "utils/vectors.h"
@@ -766,7 +768,7 @@ void gltf_eat() {
 void gltf_preprocess(const char* filepath) {
   int buffer_len = 1000;
   char* buffer = (char*)malloc(buffer_len * sizeof(uint8_t));
-  FILE* gltf_file = fopen(filepath, "r");
+  FILE* gltf_file = fopen(filepath, "rb");
   inu_assert(gltf_file, "gltf file not found");
   int count = 0;
   bool preprocessing_str = false;
@@ -849,8 +851,13 @@ void* gltf_read_accessor_data(int accessor_idx) {
   char buffer_uri_full_path[256]{};
   sprintf(buffer_uri_full_path, "%s\\%s", folder_path, buffer.uri.c_str());
 
+  char file_buffer[12]{};
+
   FILE* uri_file = fopen(buffer_uri_full_path, "r");
   inu_assert(uri_file, "uri file does not exist");
+
+  // setvbuf(uri_file, NULL, _IONBF, 0);
+  setvbuf(uri_file, file_buffer, _IOFBF, 12);
 
   int start_offset = acc.byte_offset + buffer_view.byte_offset;
 
@@ -864,9 +871,85 @@ void* gltf_read_accessor_data(int accessor_idx) {
   int count = 0;
   for (int i = 0; i < acc.count; i++) {
     int offset = start_offset + (i * stride);
-    fseek(uri_file, offset, SEEK_SET);
+    int err = fseek(uri_file, offset, SEEK_SET);
+    if (i == 927) {
+	    int a = 5;
+	  }
     for (int j = 0; j < size_of_element; j++) {
-      data[count] = fgetc(uri_file);
+#if 0
+      int new_offset = offset + j;
+      fseek(uri_file, new_offset, SEEK_SET);
+      int file_ptr_before = ftell(uri_file);
+#endif
+#if 0
+      int file_ptr = ftell(uri_file);
+
+      unsigned char c1 = fgetc(uri_file);
+
+      fseek(uri_file, file_ptr, SEEK_SET);
+      char c2[2]{0xff, 0xff};
+      char* res = fgets(c2, 2, uri_file);
+
+      fseek(uri_file, file_ptr, SEEK_SET);
+      char c3 = 0;
+      size_t num_read = fread(&c3, 1, 1, uri_file);
+
+      char f = c1;
+      if (c1 != c3 && c1 == 0) {
+        f = c3;
+      }
+      data[count] = f;
+#endif
+
+
+#if 0
+      unsigned char c = fgetc(uri_file);
+      char c2[2]{};
+      char* res = fgets(c2, 2, uri_file);
+      data[count] = c2[0];
+#elif 0
+      char c[2]{0xff, 0xff};
+      char* res = fgets(c, 2, uri_file);
+      data[count] = c[0];
+#elif 0
+      char c = 0;
+      size_t num_read = fread(&c, 1, 1, uri_file);
+      data[count] = c;
+#endif
+      // char c = 0;
+      // fscanf(uri_file, "%c", &c);
+      // int c_int = fgetc(uri_file);
+
+      int new_offset = offset + j;
+      fseek(uri_file, new_offset, SEEK_SET);
+      int file_ptr_before = ftell(uri_file);
+      errno = 0;
+      char c = 5;
+      size_t bytes_read = fread(&c, sizeof(char), 1, uri_file);
+      int file_ptr_after = ftell(uri_file);
+      int diff = file_ptr_after - file_ptr_before;
+
+#if 0
+      printf("diff: %i\n", diff);
+      if (bytes_read == 0) {
+        printf("did not read any bytes\n");
+        printf("errno: %i\n", errno);
+      } 
+#endif
+
+#if 0
+      if (c_int == EOF) {
+        printf("EOF encountered\n");
+        int err = ferror(uri_file);
+        if (err == 1) {
+          printf("errno: %i\n", errno);
+        }
+        int e = feof(uri_file);
+        int a = 5;
+      }
+#endif
+      // char c = static_cast<char>(c_int);
+      data[count] = c;
       count++;
     }
   }
@@ -945,8 +1028,11 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
           mesh.vertices.resize(acc.count);
         }
         for (int i = 0; i < acc.count; i++) {
+          if (i == 927) {
+            int a = 5;
+          }
           vertex_t& vert = mesh.vertices[i];
-          float divider = 2.f;
+          float divider = 200.f;
           vert.position.x = pos_data[i].x / divider;
           vert.position.y = pos_data[i].y / divider;
           vert.position.z = pos_data[i].z / divider;
