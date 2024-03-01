@@ -768,7 +768,7 @@ void gltf_eat() {
 void gltf_preprocess(const char* filepath) {
   int buffer_len = 1000;
   char* buffer = (char*)malloc(buffer_len * sizeof(uint8_t));
-  FILE* gltf_file = fopen(filepath, "rb");
+  FILE* gltf_file = fopen(filepath, "r");
   inu_assert(gltf_file, "gltf file not found");
   int count = 0;
   bool preprocessing_str = false;
