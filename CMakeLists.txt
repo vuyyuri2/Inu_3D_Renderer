@@ -22,7 +22,7 @@ function(configure_project)
         src/gfx/gfx.cpp
         src/gfx/opengl/glew.c
 
-        src/utils/math.cpp
+        src/utils/inu_math.cpp
     )
 
     add_executable(${PROJECT_NAME} 
