@@ -957,6 +957,7 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
           vert.position.x = pos_data[i].x / divider;
           vert.position.y = pos_data[i].y / divider;
           vert.position.z = pos_data[i].z / divider;
+          vert.position.y -= 0.5f;
         }
       } else {
         inu_assert_msg("this type for positions data is not supported yet");
