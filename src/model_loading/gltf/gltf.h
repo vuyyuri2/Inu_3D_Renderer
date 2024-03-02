@@ -60,7 +60,7 @@ enum class BUFFER_VIEW_TARGET {
 
 struct gltf_buffer_view_t {
   int gltf_buffer_index = -1;
-  int byte_offset = -1;
+  int byte_offset = 0;
   int byte_length = -1;
   BUFFER_VIEW_TARGET target = BUFFER_VIEW_TARGET::NONE;
   // will need to look into later on when this value becomes more important

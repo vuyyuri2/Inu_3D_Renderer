@@ -870,15 +870,8 @@ void* gltf_read_accessor_data(int accessor_idx) {
     int offset = start_offset + (i * stride);
     int err = fseek(uri_file, offset, SEEK_SET);
     for (int j = 0; j < size_of_element; j++) {
-      int file_ptr_before = ftell(uri_file);
       char c = 0;
       size_t bytes_read = fread(&c, sizeof(char), 1, uri_file);
-      int file_ptr_after = ftell(uri_file);
-      int diff = file_ptr_after - file_ptr_before;
-      if (diff != 1) {
-        printf("diff: %i\n", diff);
-      }
-
       data[count] = c;
       count++;
     }
@@ -958,11 +951,9 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
           mesh.vertices.resize(acc.count);
         }
         for (int i = 0; i < acc.count; i++) {
-          if (i == 927) {
-            int a = 5;
-          }
           vertex_t& vert = mesh.vertices[i];
-          float divider = 200.f;
+          // float divider = 200.f;
+          float divider = 0.05f;
           vert.position.x = pos_data[i].x / divider;
           vert.position.y = pos_data[i].y / divider;
           vert.position.z = pos_data[i].z / divider;
@@ -985,6 +976,8 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
             unsigned int val = ushort_data[i];
             mesh.indicies.push_back(val);
           }
+        } else {
+          inu_assert("indicies data type not supported");
         }
       }
 
