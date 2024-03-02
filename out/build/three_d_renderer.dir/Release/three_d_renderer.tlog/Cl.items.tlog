@@ -1,7 +1,0 @@
-C:\Sarthak\projects\3d_anim_renderer\src\main.cpp;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\main.obj
-C:\Sarthak\projects\3d_anim_renderer\src\windowing\window.cpp;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\window.obj
-C:\Sarthak\projects\3d_anim_renderer\src\gfx\gfx.cpp;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\gfx.obj
-C:\Sarthak\projects\3d_anim_renderer\src\gfx\opengl\glew.c;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\glew.obj
-C:\Sarthak\projects\3d_anim_renderer\src\model_loading\gltf\gltf.cpp;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\gltf.obj
-C:\Sarthak\projects\3d_anim_renderer\src\model_loading\image\stb_image.cpp;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\stb_image.obj
-C:\Sarthak\projects\3d_anim_renderer\src\utils\general.cpp;C:\Sarthak\projects\3d_anim_renderer\out\build\three_d_renderer.dir\Release\general.obj
