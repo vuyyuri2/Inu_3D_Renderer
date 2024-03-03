@@ -298,3 +298,37 @@ void bind_material(int mat_idx) {
 
   bind_shader(shader);
 }
+
+framebuffer_t create_framebuffer(int width, int height) {
+	framebuffer_t fb;
+	glGenFramebuffers(1, &fb.id);
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);	
+
+	glGenTextures(1, &fb.color_att);
+	glBindTexture(GL_TEXTURE_2D, fb.color_att);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.color_att, 0);
+
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		int a = 5;
+	}
+
+	return fb;
+}
+
+void bind_framebuffer(framebuffer_t& fb) {
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
+}
+
+void unbind_framebuffer() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}

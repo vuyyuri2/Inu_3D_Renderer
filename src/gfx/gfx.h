@@ -73,3 +73,15 @@ struct material_t {
 };
 int create_material(vec4 color, material_image_t base_color_img);
 void bind_material(int mat_idx);
+
+struct framebuffer_t {
+	GLuint id = -1;
+
+	GLuint color_att = -1;
+
+	int width = -1;
+	int height = -1;
+};
+framebuffer_t create_framebuffer(int width, int height);
+void bind_framebuffer(framebuffer_t& fb);
+void unbind_framebuffer();

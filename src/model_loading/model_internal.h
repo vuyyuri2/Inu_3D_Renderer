@@ -7,6 +7,12 @@
 #include "utils/log.h"
 #include "gfx/gfx.h"
 
+struct offline_to_online_vertex_t {
+  vec2 position; 
+  vec2 tex;
+};
+offline_to_online_vertex_t create_offline_to_online_vertex(vec2 pos, vec2 tex);
+
 struct vertex_t {
   vec3 position; 
   vec2 tex0;

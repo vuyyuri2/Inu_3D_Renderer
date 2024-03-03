@@ -24,6 +24,7 @@ function(configure_project)
 
         src/model_loading/gltf/gltf.cpp
         src/model_loading/image/stb_image.cpp
+        src/model_loading/model_internal.cpp
 
         src/utils/general.cpp
         src/utils/math.cpp
