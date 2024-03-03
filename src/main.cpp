@@ -6,21 +6,29 @@
 #include "gfx/gfx.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
+#include "gfx/online_renderer.h"
 
 extern window_t window;
 app_info_t app_info;
 
+static float fb_width = 1280 / 2.f;
+static float fb_height = 960 / 2.f;
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
-  create_window(hInstance, 400, 300); 
+  create_window(hInstance, fb_width, fb_height);
 
   if (wcscmp(pCmdLine, L"running_in_vs") == 0) {
     app_info.running_in_vs = true;
   }
 
+  init_online_renderer();
+
   char resources_path[256]{};
   get_resources_folder_path(resources_path);
   printf("resources_path: %s\n", resources_path);
+
+  framebuffer_t offline_fb = create_framebuffer(fb_width, fb_height);
 
   char vert_shader_path[256]{};
   sprintf(vert_shader_path, "%s\\shaders\\model.vert", resources_path);
@@ -37,6 +45,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
   const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
 
   std::vector<model_t> models;
   char gltf_full_file_path[256]{};
@@ -46,7 +55,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   while (window.running) {
     poll_events();
 
-    glClearColor(0.f, 0.f, 0.f, 0.f);
+    // offline rendering pass
+    bind_framebuffer(offline_fb);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (model_t& model : models) {
@@ -60,6 +73,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
       }
     }
     unbind_shader();
+
+    // online rendering pass
+    render_online(offline_fb);
 
     swap_buffers();
   }

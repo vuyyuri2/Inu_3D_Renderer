@@ -131,14 +131,20 @@ void create_window(HINSTANCE h_instance, int width, int height) {
   inu_assert(err == GLEW_OK, glewGetErrorString(err)); 
 
   printf("version: %s\n", glGetString(GL_VERSION));
-  // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
   glEnable(GL_DEPTH_TEST);
-  // glFrontFace(GL_CCW);
-  // glDisable(GL_CULL_FACE);
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {
   switch (u_msg) {
+    case WM_SIZE: {
+      window.resized = true;
+      unsigned int width = LOWORD(l_param);
+      unsigned int height = HIWORD(l_param);
+      glViewport(0, 0, width, height);
+      window.window_dim.x = width;
+      window.window_dim.y = height;
+      break;
+    }
     case WM_DESTROY: {
       window.running = false;
       PostQuitMessage(0);
@@ -160,6 +166,7 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
 }
 
 void poll_events() {
+  window.resized = false;
   MSG msg{};
   while (PeekMessage(&msg, window.win32_wnd, 0, 0, 0)) {
     bool quit_msg = (GetMessage(&msg, NULL, 0, 0) == 0);

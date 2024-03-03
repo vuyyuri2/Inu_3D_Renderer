@@ -12,6 +12,7 @@ struct input_t {
 struct window_t {
   input_t input; 
   ivec2 window_dim;
+  bool resized = false;
 
   HWND win32_wnd = NULL;
   bool running = true;

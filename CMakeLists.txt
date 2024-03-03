@@ -21,6 +21,7 @@ function(configure_project)
 
         src/gfx/gfx.cpp
         src/gfx/opengl/glew.c
+        src/gfx/online_renderer.cpp
 
         src/model_loading/gltf/gltf.cpp
         src/model_loading/image/stb_image.cpp

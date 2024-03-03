@@ -952,11 +952,16 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
         }
         for (int i = 0; i < acc.count; i++) {
           vertex_t& vert = mesh.vertices[i];
+          // duck
           // float divider = 200.f;
+          // avocado
           float divider = 0.05f;
+          // suzanne
+          // float divider = 2.f;
           vert.position.x = pos_data[i].x / divider;
           vert.position.y = pos_data[i].y / divider;
           vert.position.z = pos_data[i].z / divider;
+          // avocado
           vert.position.y -= 0.5f;
         }
       } else {
