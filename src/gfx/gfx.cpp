@@ -319,8 +319,11 @@ framebuffer_t create_framebuffer(int width, int height) {
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		int a = 5;
+		inu_assert_msg("framebuffer not made successfully");
 	}
+
+	fb.width = width;
+	fb.height = height;
 
 	return fb;
 }

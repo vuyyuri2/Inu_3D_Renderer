@@ -6,6 +6,7 @@
 #include "gfx/gfx.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
+#include "gfx/online_renderer.h"
 
 extern window_t window;
 app_info_t app_info;
@@ -14,19 +15,6 @@ static float fb_width = 1280;
 static float fb_height = 960;
 // static float fb_width = 400;
 // static float fb_height = 300;
-
-void update_online_vertices(mesh_t& offline_to_online_quad) {
-  float fb_ratio = fb_width / fb_height;
-  float win_ratio = static_cast<float>(window.window_dim.x) / window.window_dim.y;
-  float width_of_screen = fb_ratio / win_ratio;
-  float not_width_of_screen = 1.f - width_of_screen;
-  offline_to_online_vertex_t verts[4];
-  verts[0] = create_offline_to_online_vertex({-1+not_width_of_screen,-1}, {0,0});
-  verts[1] = create_offline_to_online_vertex({1-not_width_of_screen,-1}, {1,0});
-  verts[2] = create_offline_to_online_vertex({1-not_width_of_screen,1}, {1,1});
-  verts[3] = create_offline_to_online_vertex({-1+not_width_of_screen,1}, {0,1});
-  update_vbo_data(offline_to_online_quad.vbo, (float*)verts, sizeof(verts));
-}
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
@@ -37,10 +25,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app_info.running_in_vs = true;
   }
 
+  init_online_renderer();
+
   char resources_path[256]{};
   get_resources_folder_path(resources_path);
   printf("resources_path: %s\n", resources_path);
 
+#if 0
   char vert_offline_to_online_path[256]{};
   sprintf(vert_offline_to_online_path, "%s\\shaders\\offline_to_online.vert", resources_path);
   char frag_offline_to_online_path[256]{};
@@ -50,12 +41,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
   mesh_t offline_to_online_quad; 
   offline_to_online_vertex_t verts[4];
-#if 0
-  verts[0] = create_offline_to_online_vertex({-1,-1}, {0,0});
-  verts[1] = create_offline_to_online_vertex({1,-1}, {1,0});
-  verts[2] = create_offline_to_online_vertex({1,1}, {1,1});
-  verts[3] = create_offline_to_online_vertex({-1,1}, {0,1});
-#endif
   unsigned int indicies[6] {
     0,2,3,
     1,2,0
@@ -69,6 +54,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   vao_enable_attribute(offline_to_online_quad.vao, offline_to_online_quad.vbo, 0, 2, GL_FLOAT, sizeof(offline_to_online_vertex_t), offsetof(offline_to_online_vertex_t, position));
   vao_enable_attribute(offline_to_online_quad.vao, offline_to_online_quad.vbo, 1, 2, GL_FLOAT, sizeof(offline_to_online_vertex_t), offsetof(offline_to_online_vertex_t, tex)); 
   vao_bind_ebo(offline_to_online_quad.vao, offline_to_online_quad.ebo);
+#endif
 
   framebuffer_t offline_fb = create_framebuffer(fb_width, fb_height);
 
@@ -93,18 +79,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);
   gltf_load_file(gltf_full_file_path, models);
 
-  int i = 0;
-
   while (window.running) {
     poll_events();
 
     bind_framebuffer(offline_fb);
     glViewport(0, 0, fb_width, fb_height);
 
-    // glClearColor(i%2==1, i%3==1, i%5==1, 1.f);
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    i++;
 
     for (model_t& model : models) {
       for (mesh_t& mesh : model.meshes) {
@@ -118,11 +100,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
     unbind_shader();
 
+#if 0
     if (window.resized) {
       update_online_vertices(offline_to_online_quad);
     }
+#endif
 
     unbind_framebuffer();
+
+#if 0
     glViewport(0, 0, window.window_dim.x, window.window_dim.y);
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -133,6 +119,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     draw_ebo(offline_to_online_quad.ebo);
     unbind_vao();
     unbind_ebo();
+#else
+    render_online(offline_fb);
+#endif
 
     swap_buffers();
   }
