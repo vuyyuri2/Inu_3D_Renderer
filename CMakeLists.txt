@@ -26,6 +26,7 @@ function(configure_project)
         src/model_loading/image/stb_image.cpp
 
         src/utils/general.cpp
+        src/utils/math.cpp
     )
 
     add_executable(${PROJECT_NAME} 
