@@ -48,7 +48,6 @@ void init_online_renderer() {
   offline_to_online_quad.vao = create_vao();
 
   offline_to_online_quad.vbo = create_dyn_vbo(sizeof(online_renderer.verts));
-  // update_online_vertices();
 
   offline_to_online_quad.ebo = create_ebo(indicies, sizeof(indicies));
 
