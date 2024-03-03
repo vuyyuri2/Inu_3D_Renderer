@@ -7,6 +7,9 @@
 #include <Windowsx.h>
 #include <wingdi.h>
 #include <winuser.h>
+#include "glew.h"
+#include "wglew.h"
+// #include <utils/wglext.h>
 
 #include "gfx/gfx.h"
 
@@ -106,16 +109,32 @@ void create_window(HINSTANCE h_instance, int width, int height) {
   int pixel_format_idx = ChoosePixelFormat(device_context, &pixel_format);
   SetPixelFormat(device_context, pixel_format_idx, &pixel_format);
 
-  HGLRC gl_render_context = wglCreateContext(device_context);
+  int gl_attribs[] = {
+      WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+      WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+      WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+      0,
+  };
+
+  HGLRC gl_render_context_for_context_func = wglCreateContext(device_context);
+  wglMakeCurrent(device_context, gl_render_context_for_context_func);
+  PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress("wglCreateContextAttribsARB");
+  HGLRC gl_render_context = wglCreateContextAttribsARB(device_context, nullptr, gl_attribs);
+  wglMakeCurrent(device_context, NULL);
+  wglDeleteContext(gl_render_context_for_context_func);
   wglMakeCurrent(device_context, gl_render_context);
 
   HDC gl_device_context = wglGetCurrentDC();
   inu_assert(gl_device_context == device_context, "opengl device context not the same as the window's\n");
 
   GLenum err = glewInit();
-  inu_assert(err == GLEW_OK, glewGetErrorString(err));
+  inu_assert(err == GLEW_OK, glewGetErrorString(err)); 
 
-  glClearColor(1.f, 0.f, 0.f, 0.f);
+  printf("version: %s\n", glGetString(GL_VERSION));
+  // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+  glEnable(GL_DEPTH_TEST);
+  // glFrontFace(GL_CCW);
+  // glDisable(GL_CULL_FACE);
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {
@@ -133,7 +152,7 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
       // bottom left should be (0,0)
       window.input.mouse_pos.x = GET_X_LPARAM(l_param);
       window.input.mouse_pos.y = window.window_dim.y - GET_Y_LPARAM(l_param);
-      printf("mouse pos: (%i,%i)\n", window.input.mouse_pos.x, window.input.mouse_pos.y);
+      // printf("mouse pos: (%i,%i)\n", window.input.mouse_pos.x, window.input.mouse_pos.y);
       break;
     }
   }
@@ -151,7 +170,6 @@ void poll_events() {
 }
 
 void swap_buffers() {
-  glClear(GL_COLOR_BUFFER_BIT);
   HDC gl_device_context = wglGetCurrentDC();
   SwapBuffers(gl_device_context);
 }
