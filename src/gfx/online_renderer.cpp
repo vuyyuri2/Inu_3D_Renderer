@@ -58,17 +58,16 @@ void init_online_renderer() {
 
 void render_online(framebuffer_t& final_offline_fb) {
   unbind_framebuffer();
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   if (online_renderer.first_render || window.resized) {
     online_renderer.first_render = false;
     update_online_vertices(final_offline_fb);
   }
 
-  glViewport(0, 0, window.window_dim.x, window.window_dim.y);
   glClearColor(0.f, 0.f, 0.f, 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glActiveTexture(GL_TEXTURE0);
-  // glBindTexture(GL_TEXTURE_2D, offline_fb.color_att);
   glBindTexture(GL_TEXTURE_2D, final_offline_fb.color_att);
   bind_shader(online_renderer.offline_to_online_shader);
   bind_vao(online_renderer.offline_to_online_quad.vao);

@@ -11,8 +11,10 @@
 #include "utils/general.h"
 #include "utils/vectors.h"
 #include "utils/log.h"
+#include "windowing/window.h"
 
 std::vector<material_t> materials;
+extern window_t window;
 
 // VBO
 vbo_t create_vbo(const float* vertices, const int data_size) {
@@ -330,8 +332,10 @@ framebuffer_t create_framebuffer(int width, int height) {
 
 void bind_framebuffer(framebuffer_t& fb) {
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
+	glViewport(0, 0, fb.width, fb.height);
 }
 
 void unbind_framebuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, window.window_dim.x, window.window_dim.y);
 }

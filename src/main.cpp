@@ -11,8 +11,8 @@
 extern window_t window;
 app_info_t app_info;
 
-static float fb_width = 1280;
-static float fb_height = 960;
+static float fb_width = 1280 / 2.f;
+static float fb_height = 960 / 2.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
@@ -45,6 +45,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
   const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
 
   std::vector<model_t> models;
   char gltf_full_file_path[256]{};
@@ -56,7 +57,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     // offline rendering pass
     bind_framebuffer(offline_fb);
-    glViewport(0, 0, fb_width, fb_height);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
