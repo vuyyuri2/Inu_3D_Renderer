@@ -29,6 +29,8 @@ function(configure_project)
         src/utils/general.cpp
         src/utils/math.cpp
         src/utils/mats.cpp
+
+        src/scene/scene.cpp
     )
 
     add_executable(${PROJECT_NAME} 
