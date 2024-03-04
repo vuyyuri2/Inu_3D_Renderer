@@ -65,7 +65,7 @@ void render_online(framebuffer_t& final_offline_fb) {
     update_online_vertices(final_offline_fb);
   }
 
-  glClearColor(0.f, 0.f, 0.f, 1.f);
+  glClearColor(1.f, 0.f, 0.f, 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, final_offline_fb.color_att);

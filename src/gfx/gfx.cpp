@@ -9,7 +9,6 @@
 #include "model_loading/image/stb_image.h"
 
 #include "utils/general.h"
-#include "utils/vectors.h"
 #include "utils/log.h"
 #include "windowing/window.h"
 
@@ -166,12 +165,22 @@ void unbind_shader() {
 	glUseProgram(0);
 }
 
+void shader_set_mat4(shader_t& shader, const char* var_name, mat4& mat) {
+	glUseProgram(shader.id);
+	GLint loc = glGetUniformLocation(shader.id, var_name);
+  if (loc == -1) {
+      printf("%s does not exist in shader %i\n", var_name, shader.id);
+  }
+	glUniformMatrix4fv(loc, 1, GL_FALSE, (float*)&mat.cols[0].x);
+	unbind_shader();
+}
+
 void shader_set_int(shader_t& shader, const char* var_name, int val) {
 	glUseProgram(shader.id);
 	GLint loc = glGetUniformLocation(shader.id, var_name);
-    if (loc == -1) {
-        printf("%s does not exist in shader %i\n", var_name, shader.id);
-    }
+  if (loc == -1) {
+      printf("%s does not exist in shader %i\n", var_name, shader.id);
+  }
 	glUniform1i(loc, val);
 	unbind_shader();
 }
@@ -339,3 +348,4 @@ void unbind_framebuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window.window_dim.x, window.window_dim.y);
 }
+

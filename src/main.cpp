@@ -6,6 +6,7 @@
 #include "gfx/gfx.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
+#include "utils/mats.h"
 #include "gfx/online_renderer.h"
 
 extern window_t window;
@@ -15,6 +16,10 @@ static float fb_width = 1280 / 2.f;
 static float fb_height = 960 / 2.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+
+  mat4 a = create_matrix(2.0f);
+  mat4 b = create_matrix(3.0f);
+  mat4 c = mat_multiply_mat(a, b);
 
   create_window(hInstance, fb_width, fb_height);
 
@@ -40,11 +45,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path =  "box_interleaved\\BoxInterleaved.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
+  const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
-  const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
 
   std::vector<model_t> models;
@@ -59,8 +64,25 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     bind_framebuffer(offline_fb);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClearColor(0.f, 1.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    proj_mats_t proj_mats = proj_mat(60.f, 0.1f, 100.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+    shader_set_mat4(material_t::associated_shader, "projection_ortho", proj_mats.ortho);
+    shader_set_mat4(material_t::associated_shader, "projection_persp", proj_mats.persp);
+
+    vec3 t = { 0,0,-20 };
+    // vec3 t;
+    mat4 translate = translate_mat(t);
+    mat4 scale = scale_mat(5.f);
+    // mat4 scale = scale_mat(1.f);
+    mat4 model = mat_multiply_mat(translate, scale);
+    shader_set_mat4(material_t::associated_shader, "model", model);
+
+    vec4 pos = {-0.0013f, -0.48518f, -0.0075f, 1.0f};
+    vec4 world_pos = mat_multiply_vec(model, pos);
+    vec4 pers_pos = mat_multiply_vec(proj_mats.persp, world_pos);
+    vec4 ndc_pos = mat_multiply_vec(proj_mats.ortho, pers_pos);
 
     for (model_t& model : models) {
       for (mesh_t& mesh : model.meshes) {
