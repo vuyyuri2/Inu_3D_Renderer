@@ -2,7 +2,7 @@
 
 #include <vector>
 
-static std::vector<model_t> models;
+std::vector<model_t> models;
 
 int register_model(model_t& model) {
   model.id = models.size();

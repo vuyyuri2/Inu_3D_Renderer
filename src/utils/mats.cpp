@@ -89,10 +89,25 @@ mat4 scale_mat(float s) {
   return scale;
 }
 
+mat4 scale_mat(vec3& s) {
+  mat4 scale = create_matrix(1.0f);
+  scale.cols[0].x = s.x;
+  scale.cols[1].y = s.y;
+  scale.cols[2].z = s.z;
+  return scale;
+}
+
 mat4 translate_mat(vec3& p) {
   mat4 translate = create_matrix(1.0f);
   translate.cols[3].x = p.x;
   translate.cols[3].y = p.y;
   translate.cols[3].z = p.z;
   return translate;
+}
+
+mat4 get_model_matrix(transform_t& t) {
+  mat4 scale = scale_mat(t.scale);
+  mat4 translate = translate_mat(t.pos);
+  mat4 model = mat_multiply_mat(translate, scale);
+  return model;
 }

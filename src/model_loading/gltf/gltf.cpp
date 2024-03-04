@@ -33,7 +33,7 @@ static std::vector<gltf_texture_t> gltf_textures;
 static std::vector<gltf_sampler_t> gltf_samplers;
 static std::vector<gltf_material_t> gltf_materials;
 
-static std::map<int, int> gltf_mesh_id_to_internal_model_id;
+static std::unordered_map<int, int> gltf_mesh_id_to_internal_model_id;
 
 static char folder_path[256];
 
@@ -144,13 +144,31 @@ float gltf_parse_float() {
   return v;
 }
 
+vec3 gltf_parse_vec3() {
+  inu_assert(gltf_peek() == '[');
+  gltf_eat();
+
+  vec3 v;
+
+  bool looking_for_comma = true;
+  v.x = gltf_parse_float();
+  if (gltf_peek() == ',') gltf_eat();
+  v.y = gltf_parse_float();
+  if (gltf_peek() == ',') gltf_eat();
+  v.z = gltf_parse_float();
+
+  inu_assert(gltf_peek() == ']');
+  gltf_eat();
+
+  return v;
+}
+
 vec4 gltf_parse_vec4() {
   inu_assert(gltf_peek() == '[');
   gltf_eat();
 
   vec4 v;
 
-  bool looking_for_comma = true;
   v.x = gltf_parse_float();
   if (gltf_peek() == ',') gltf_eat();
   v.y = gltf_parse_float();
@@ -203,7 +221,7 @@ void gltf_parse_node() {
 
   inu_assert(gltf_peek() == '{');
   gltf_eat();
-
+  bool scale_parsed = false;
   while (gltf_peek() != '}') {
 
     std::string key = gltf_parse_string();
@@ -218,11 +236,23 @@ void gltf_parse_node() {
     } else if (key == "mesh") {
       node.gltf_mesh_handle = gltf_parse_integer();
       if (gltf_peek() == ',') gltf_eat();
+    } else if (key == "translation") {
+      node.translation = gltf_parse_vec3();
+    } else if (key == "scale") {
+      node.scale = gltf_parse_vec3();
+      scale_parsed = true;
     } else {
       gltf_skip_section();
     }
   }
   gltf_eat();
+  
+  if (!scale_parsed) {
+    node.scale.x = 1;
+    node.scale.y = 1;
+    node.scale.z = 1;
+  }
+
   gltf_nodes.push_back(node);
 }
 
@@ -1084,11 +1114,21 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
   } 
 
   // 4. store objects in internal node hierarchy
+  int id_offset_diff_gltf_to_internal_obj = -1;
   for (int i = 0; i < gltf_nodes.size(); i++) {
-    transform_t t;
-    int obj_id = create_object(t);
-    int id_offset_diff_gltf_to_internal_obj = obj_id - i;
     gltf_node_t& node = gltf_nodes[i];
+
+    transform_t t;
+    t.pos.x = node.translation.x;
+    t.pos.y = node.translation.y;
+    t.pos.z = node.translation.z;
+
+    t.scale.x = node.scale.x;
+    t.scale.y = node.scale.y;
+    t.scale.z = node.scale.z;
+
+    int obj_id = create_object(t);
+    id_offset_diff_gltf_to_internal_obj = obj_id - i;
     if (node.gltf_mesh_handle != -1) {
       attach_model_to_obj(obj_id, gltf_mesh_id_to_internal_model_id[node.gltf_mesh_handle]);
     }
@@ -1096,4 +1136,13 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
       attach_child_obj_to_obj(obj_id, child_id + id_offset_diff_gltf_to_internal_obj);
     }
   }
+
+  // mark parent objects
+  inu_assert(active_scene != -1, "active scene not defined");
+  for (int gltf_node_idx : gltf_scenes[active_scene].root_nodes) {
+    set_obj_as_parent(gltf_node_idx + id_offset_diff_gltf_to_internal_obj);
+  }
+
+  // update object transforms
+  update_obj_model_mats();
 }

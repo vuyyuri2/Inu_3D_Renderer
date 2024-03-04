@@ -4,10 +4,11 @@
 #include "model_loading/model_internal.h"
 #include "model_loading/gltf/gltf.h"
 #include "gfx/gfx.h"
+#include "gfx/online_renderer.h"
+#include "scene/scene.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
-#include "gfx/online_renderer.h"
 
 extern window_t window;
 app_info_t app_info;
@@ -41,7 +42,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   sprintf(frag_shader_path, "%s\\shaders\\model.frag", resources_path);
   material_t::associated_shader = create_shader(vert_shader_path, frag_shader_path); 
 
-  // const char* gltf_file_resources_folder_rel_path =  "box\\Box.gltf";
+  const char* gltf_file_resources_folder_rel_path =  "box\\Box.gltf";
   // const char* gltf_file_resources_folder_rel_path =  "box_interleaved\\BoxInterleaved.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
@@ -51,12 +52,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
-  const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
 
-  std::vector<model_t> models;
+  std::vector<model_t> _models;
   char gltf_full_file_path[256]{};
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);
-  gltf_load_file(gltf_full_file_path, models);
+  gltf_load_file(gltf_full_file_path, _models);
 
   while (window.running) {
     poll_events();
@@ -69,9 +70,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
-
-    vec3 t = { 0,-5,-100 };
-    mat4 translate = translate_mat(t);
+ 
 #if 0
     static float scale_val = 5.f;
     static float multiplier = 1.f;
@@ -86,24 +85,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
       multiplier *= -1;
     }
 #endif
-    mat4 scale = scale_mat(5.f);
-    mat4 model = mat_multiply_mat(translate, scale);
-    shader_set_mat4(material_t::associated_shader, "model", model);
-
-    // will need to change this to iterate over nodes rather than models 
-    for (model_t& model : models) {
-      for (mesh_t& mesh : model.meshes) {
-        bind_material(mesh.mat_idx);
-
-        bind_vao(mesh.vao);
-        draw_ebo(mesh.ebo);
-        unbind_vao();
-        unbind_ebo();
-      }
-    }
-
-    unbind_shader();
-
+    mat4 scale = scale_mat(1.f);
+     
+    render_scene();
     // online rendering pass
     render_online(offline_fb);
 

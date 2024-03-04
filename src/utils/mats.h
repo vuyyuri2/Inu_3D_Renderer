@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vectors.h"
+#include "scene/transform.h"
 
 struct mat4 {
   union {
@@ -22,4 +23,6 @@ vec4 mat_multiply_vec(mat4& m, vec4& v);
 
 mat4 proj_mat(float fov, float near, float far, float aspect_ratio);
 mat4 scale_mat(float s);
+mat4 scale_mat(vec3& scale);
 mat4 translate_mat(vec3& p);
+mat4 get_model_matrix(transform_t& t);
