@@ -102,6 +102,7 @@ struct gltf_accessor_t {
 
 struct gltf_image_t {
   std::string uri;
+  // need to add support for image in buffer view
 };
 
 struct gltf_texture_t {
@@ -133,8 +134,8 @@ enum class SAMPLER_WRAP {
 };
 
 struct gltf_sampler_t {
-  MAG_FILTER mag_filter = MAG_FILTER::NEAREST;
-  MIN_FILTER min_filter = MIN_FILTER::NEAREST;
+  MAG_FILTER mag_filter = MAG_FILTER::LINEAR;
+  MIN_FILTER min_filter = MIN_FILTER::LINEAR;
   SAMPLER_WRAP wrap_s = SAMPLER_WRAP::REPEAT;
   SAMPLER_WRAP wrap_t = SAMPLER_WRAP::REPEAT;
 };
