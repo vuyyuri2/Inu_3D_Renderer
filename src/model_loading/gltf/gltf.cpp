@@ -986,6 +986,10 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
         } else {
           inu_assert("indicies data type not supported");
         }
+      } else {
+        for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
+          mesh.indicies.push_back(i);
+        }
       }
 
       if (prim.attribs.normals_accessor_idx != -1) {

@@ -49,8 +49,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
-  const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
+  const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
 
   std::vector<model_t> models;
   char gltf_full_file_path[256]{};
@@ -66,12 +67,26 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mat4 proj = proj_mat(60.f, 0.1f, 100.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+    mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
 
-    vec3 t = { 0,-5,-20 };
+    vec3 t = { 0,-5,-100 };
     mat4 translate = translate_mat(t);
-    mat4 scale = scale_mat(200.f);
+#if 0
+    static float scale_val = 5.f;
+    static float multiplier = 1.f;
+    scale_val += multiplier * 0.0002f;
+    float upper = 5.5f;
+    float lower = 4.5f;
+    if (scale_val > upper) {
+      scale_val = upper;
+      multiplier *= -1;
+    } else if (scale_val < lower) {
+      scale_val = lower;
+      multiplier *= -1;
+    }
+#endif
+    mat4 scale = scale_mat(5.f);
     mat4 model = mat_multiply_mat(translate, scale);
     shader_set_mat4(material_t::associated_shader, "model", model);
 
