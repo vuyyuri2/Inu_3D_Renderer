@@ -6,15 +6,20 @@
 #include "gfx/gfx.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
+#include "utils/mats.h"
 #include "gfx/online_renderer.h"
 
 extern window_t window;
 app_info_t app_info;
 
-static float fb_width = 1280 / 2.f;
-static float fb_height = 960 / 2.f;
+static float fb_width = 1280 / 1.f;
+static float fb_height = 960 / 1.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+
+  mat4 a = create_matrix(2.0f);
+  mat4 b = create_matrix(3.0f);
+  mat4 c = mat_multiply_mat(a, b);
 
   create_window(hInstance, fb_width, fb_height);
 
@@ -57,10 +62,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     // offline rendering pass
     bind_framebuffer(offline_fb);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    mat4 proj = proj_mat(60.f, 0.1f, 100.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+    shader_set_mat4(material_t::associated_shader, "projection", proj);
+
+    vec3 t = { 0,-5,-20 };
+    mat4 translate = translate_mat(t);
+    mat4 scale = scale_mat(200.f);
+    mat4 model = mat_multiply_mat(translate, scale);
+    shader_set_mat4(material_t::associated_shader, "model", model);
 
     for (model_t& model : models) {
       for (mesh_t& mesh : model.meshes) {

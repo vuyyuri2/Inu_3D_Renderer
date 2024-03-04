@@ -4,6 +4,7 @@
 
 #include "glew.h"
 
+#include "utils/mats.h"
 #include "utils/vectors.h"
 
 struct ebo_t {
@@ -45,6 +46,7 @@ void unbind_shader();
 void shader_set_float(shader_t& shader, const char* var_name, float val);
 void shader_set_vec3(shader_t& shader, const char* var_name, vec3 vec);
 void shader_set_int(shader_t& shader, const char* var_name, int val);
+void shader_set_mat4(shader_t& shader, const char* var_name, mat4& mat);
 
 struct texture_t {
 	int id = -1;
