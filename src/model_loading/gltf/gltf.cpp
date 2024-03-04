@@ -235,7 +235,6 @@ void gltf_parse_node() {
       if (gltf_peek() == ',') gltf_eat();
     } else if (key == "mesh") {
       node.gltf_mesh_handle = gltf_parse_integer();
-      if (gltf_peek() == ',') gltf_eat();
     } else if (key == "translation") {
       node.translation = gltf_parse_vec3();
     } else if (key == "scale") {
@@ -244,6 +243,7 @@ void gltf_parse_node() {
     } else {
       gltf_skip_section();
     }
+    if (gltf_peek() == ',') gltf_eat();
   }
   gltf_eat();
   
@@ -1122,6 +1122,11 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     t.pos.x = node.translation.x;
     t.pos.y = node.translation.y;
     t.pos.z = node.translation.z;
+
+    std::vector<int>& root_nodes = gltf_scenes[active_scene].root_nodes;
+    if (std::find(root_nodes.begin(), root_nodes.end(), i) != root_nodes.end()) {
+      // t.pos.z -= 10;
+    }
 
     t.scale.x = node.scale.x;
     t.scale.y = node.scale.y;

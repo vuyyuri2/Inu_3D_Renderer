@@ -45,23 +45,39 @@ void update_obj_model_mats() {
   }
 }
 
+void render_scene_obj(int obj_id, bool parent) {
+  object_t& obj = objs[obj_id];
+  mat4 translate = create_matrix(1.0f);
+  if (parent) {
+    vec3 t = { 0,0,-10 };
+    // translate = translate_mat(t);
+  }
+  // mat4 final_model = mat_multiply_mat(translate, scale);
+  mat4 final_model = mat_multiply_mat(translate, obj.model_mat);
+  shader_set_mat4(material_t::associated_shader, "model", final_model);
+  if (obj.model_id != -1) {
+    model_t& model = models[obj.model_id];
+    for (mesh_t& mesh : model.meshes) {
+      bind_material(mesh.mat_idx);
+
+      bind_vao(mesh.vao);
+      draw_ebo(mesh.ebo);
+      unbind_vao();
+      unbind_ebo();
+    }
+  }
+
+  for (int child : obj.child_objects) {
+    render_scene_obj(child, false);
+  }
+}
+
 void render_scene() {
-  vec3 t = { 0,0,-10 };
-  mat4 translate = translate_mat(t);
 
   // will need to change this to iterate over nodes rather than models 
-    for (model_t& model : models) {
-      // mat4 final_model = mat_multiply_mat(translate, scale);
-      shader_set_mat4(material_t::associated_shader, "model", translate);
-      for (mesh_t& mesh : model.meshes) {
-        bind_material(mesh.mat_idx);
+  for (int parent_id : scene.parent_objs) {
+    render_scene_obj(parent_id, true);
+  }
 
-        bind_vao(mesh.vao);
-        draw_ebo(mesh.ebo);
-        unbind_vao();
-        unbind_ebo();
-      }
-    }
-
-    unbind_shader();
+  unbind_shader();
 }
