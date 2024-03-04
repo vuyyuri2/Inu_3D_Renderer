@@ -12,8 +12,8 @@
 extern window_t window;
 app_info_t app_info;
 
-static float fb_width = 1280 / 2.f;
-static float fb_height = 960 / 2.f;
+static float fb_width = 1280 / 1.f;
+static float fb_height = 960 / 1.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
@@ -45,11 +45,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path =  "box_interleaved\\BoxInterleaved.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
-  const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
+  const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
 
   std::vector<model_t> models;
@@ -71,18 +71,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     shader_set_mat4(material_t::associated_shader, "projection_ortho", proj_mats.ortho);
     shader_set_mat4(material_t::associated_shader, "projection_persp", proj_mats.persp);
 
-    vec3 t = { 0,0,-20 };
-    // vec3 t;
+    vec3 t = { 0,-5,-20 };
     mat4 translate = translate_mat(t);
-    mat4 scale = scale_mat(5.f);
-    // mat4 scale = scale_mat(1.f);
+    mat4 scale = scale_mat(200.f);
     mat4 model = mat_multiply_mat(translate, scale);
     shader_set_mat4(material_t::associated_shader, "model", model);
-
-    vec4 pos = {-0.0013f, -0.48518f, -0.0075f, 1.0f};
-    vec4 world_pos = mat_multiply_vec(model, pos);
-    vec4 pers_pos = mat_multiply_vec(proj_mats.persp, world_pos);
-    vec4 ndc_pos = mat_multiply_vec(proj_mats.ortho, pers_pos);
 
     for (model_t& model : models) {
       for (mesh_t& mesh : model.meshes) {

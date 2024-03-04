@@ -64,7 +64,7 @@ proj_mats_t proj_mat(float fov, float near, float far, float aspect_ratio) {
   mat4 scale = create_matrix(1.0f);
   scale.cols[0].x = 1/right;
   scale.cols[1].y = 1/top;
-  scale.cols[2].z = 2.f/(far-near);
+  scale.cols[2].z = -2.f/(far-near);
   
   proj_mat.ortho = mat_multiply_mat(scale, translate);
 

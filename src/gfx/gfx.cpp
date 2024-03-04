@@ -276,7 +276,7 @@ void bind_material(int mat_idx) {
 
 	material_t& mat = materials[mat_idx];
 	shader_set_float(shader, "angle", mat.angle);
-  mat.angle += 0.01f;
+  mat.angle += 0.05f;
   if (mat.angle >= 360.f) {
     mat.angle -= 360.f;
   }

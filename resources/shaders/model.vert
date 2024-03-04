@@ -53,6 +53,8 @@ void main() {
 
   // gl_Position = translate * rotate_y * vec4(pos, 1.0);
   gl_Position = projection_ortho * projection_persp * model * rotate_y * vec4(pos, 1.0);
+  // gl_Position = gl_Position / gl_Position.w;
+  // gl_Position.z *= -1;
   // gl_Position = model * vec4(pos, 1.0);
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
