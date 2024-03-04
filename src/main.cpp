@@ -62,14 +62,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     // offline rendering pass
     bind_framebuffer(offline_fb);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glClearColor(0.f, 1.f, 0.f, 1.f);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    proj_mats_t proj_mats = proj_mat(60.f, 0.1f, 100.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
-    shader_set_mat4(material_t::associated_shader, "projection_ortho", proj_mats.ortho);
-    shader_set_mat4(material_t::associated_shader, "projection_persp", proj_mats.persp);
+    mat4 proj = proj_mat(60.f, 0.1f, 100.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+    shader_set_mat4(material_t::associated_shader, "projection", proj);
 
     vec3 t = { 0,-5,-20 };
     mat4 translate = translate_mat(t);

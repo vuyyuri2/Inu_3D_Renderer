@@ -50,12 +50,10 @@ vec4 mat_multiply_vec(mat4& m, vec4& v) {
   return res;
 }
 
-proj_mats_t proj_mat(float fov, float near, float far, float aspect_ratio) {
+mat4 proj_mat(float fov, float near, float far, float aspect_ratio) {
   float multipler = 3.141526f / 180.f;
   float top = near * tan(fov * multipler / 2.f);
   float right = top * aspect_ratio;
-
-  proj_mats_t proj_mat;
 
   // brings to origin
   mat4 translate = create_matrix(1.0f);
@@ -66,10 +64,9 @@ proj_mats_t proj_mat(float fov, float near, float far, float aspect_ratio) {
   scale.cols[1].y = 1/top;
   scale.cols[2].z = -2.f/(far-near);
   
-  proj_mat.ortho = mat_multiply_mat(scale, translate);
+  mat4 ortho = mat_multiply_mat(scale, translate);
 
-  mat4& pers = proj_mat.persp;
-  pers = create_matrix(1.0f);
+  mat4 pers = create_matrix(1.0f);
   pers.cols[0].x = near;
 
   pers.cols[1].y = near;
@@ -80,9 +77,8 @@ proj_mats_t proj_mat(float fov, float near, float far, float aspect_ratio) {
   pers.cols[3].z = near * far;
   pers.cols[3].w = 0.f;
 
-  // mat4 proj = mat_multiply_mat(ortho, pers);
-
-  return proj_mat;
+  mat4 proj = mat_multiply_mat(ortho, pers);
+  return proj;
 }
 
 mat4 scale_mat(float s) {
