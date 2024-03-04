@@ -11,8 +11,8 @@ int create_object(transform_t& transform) {
   return obj.id;
 }
 
-void attach_mesh_to_obj(int obj_id, int mesh_idx) {
-  objs[obj_id].mesh_idx = mesh_idx;
+void attach_model_to_obj(int obj_id, int model_id) {
+  objs[obj_id].model_id = model_id;
 }
 
 void attach_child_obj_to_obj(int obj_id, int child_obj_id) {

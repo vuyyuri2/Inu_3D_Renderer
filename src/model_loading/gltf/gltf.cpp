@@ -1065,7 +1065,8 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
       model.meshes.push_back(mesh);
     }
 
-    models.push_back(model);
+    // models.push_back(model);
+    register_model(model);
   } 
 
   // 4. store objects in internal node hierarchy
