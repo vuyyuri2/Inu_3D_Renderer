@@ -5,11 +5,13 @@
 #include <algorithm>
 #include <errno.h>
 #include <stdio.h>
+#include <unordered_map>
 
 #include "utils/log.h"
 #include "utils/vectors.h"
 #include "model_loading/model_internal.h"
 #include "gfx/gfx.h"
+#include "scene/scene.h"
 
 /*
  https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/README.md#showcase
@@ -30,6 +32,8 @@ static std::vector<gltf_image_t> gltf_images;
 static std::vector<gltf_texture_t> gltf_textures;
 static std::vector<gltf_sampler_t> gltf_samplers;
 static std::vector<gltf_material_t> gltf_materials;
+
+static std::map<int, int> gltf_mesh_id_to_internal_model_id;
 
 static char folder_path[256];
 
@@ -934,6 +938,8 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     create_material(mat.pbr.base_color_factor, base_color_img);
   }
  
+  // mesh processing
+  int gltf_mesh_idx = 0;
   for (gltf_mesh_t& gltf_mesh : gltf_meshes) {
     model_t model;
     
@@ -952,6 +958,7 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
         }
         for (int i = 0; i < acc.count; i++) {
           vertex_t& vert = mesh.vertices[i];
+#if 0
           // duck
           // float divider = 200.f;
           // avocado
@@ -964,6 +971,11 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
           vert.position.z = pos_data[i].z / divider;
           // avocado
           // vert.position.y -= 0.5f;
+#else
+          vert.position.x = pos_data[i].x;
+          vert.position.y = pos_data[i].y;
+          vert.position.z = pos_data[i].z;
+#endif
         }
       } else {
         inu_assert_msg("this type for positions data is not supported yet");
@@ -1066,9 +1078,22 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     }
 
     // models.push_back(model);
-    register_model(model);
+    int internal_model_id = register_model(model);
+    gltf_mesh_id_to_internal_model_id[gltf_mesh_idx] = internal_model_id;
+    gltf_mesh_idx++; 
   } 
 
   // 4. store objects in internal node hierarchy
-   
+  for (int i = 0; i < gltf_nodes.size(); i++) {
+    transform_t t;
+    int obj_id = create_object(t);
+    int id_offset_diff_gltf_to_internal_obj = obj_id - i;
+    gltf_node_t& node = gltf_nodes[i];
+    if (node.gltf_mesh_handle != -1) {
+      attach_model_to_obj(obj_id, gltf_mesh_id_to_internal_model_id[node.gltf_mesh_handle]);
+    }
+    for (int child_id : node.child_node_idxs) {
+      attach_child_obj_to_obj(obj_id, child_id + id_offset_diff_gltf_to_internal_obj);
+    }
+  }
 }

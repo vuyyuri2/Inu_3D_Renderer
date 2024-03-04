@@ -8,6 +8,7 @@
 
 #define MAX_SUPPORTED_TEX_COORDS 4
 
+// TODO: need to parse transform
 struct gltf_node_t {
   std::vector<int> child_node_idxs;
   int gltf_mesh_handle = -1;

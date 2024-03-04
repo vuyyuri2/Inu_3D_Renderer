@@ -90,6 +90,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     mat4 model = mat_multiply_mat(translate, scale);
     shader_set_mat4(material_t::associated_shader, "model", model);
 
+    // will need to change this to iterate over nodes rather than models 
     for (model_t& model : models) {
       for (mesh_t& mesh : model.meshes) {
         bind_material(mesh.mat_idx);
@@ -100,6 +101,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         unbind_ebo();
       }
     }
+
     unbind_shader();
 
     // online rendering pass
