@@ -29,5 +29,8 @@ struct mesh_t {
 };
 
 struct model_t {
+  int id;
   std::vector<mesh_t> meshes;
 };
+
+int register_model(model_t& model);

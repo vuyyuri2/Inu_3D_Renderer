@@ -4,10 +4,12 @@
 #include "model_loading/model_internal.h"
 #include "model_loading/gltf/gltf.h"
 #include "gfx/gfx.h"
+#include "gfx/online_renderer.h"
+#include "scene/scene.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
-#include "gfx/online_renderer.h"
+#include "utils/quaternion.h"
 
 extern window_t window;
 app_info_t app_info;
@@ -16,10 +18,6 @@ static float fb_width = 1280 / 1.f;
 static float fb_height = 960 / 1.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
-
-  mat4 a = create_matrix(2.0f);
-  mat4 b = create_matrix(3.0f);
-  mat4 c = mat_multiply_mat(a, b);
 
   create_window(hInstance, fb_width, fb_height);
 
@@ -53,10 +51,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
   const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
 
-  std::vector<model_t> models;
   char gltf_full_file_path[256]{};
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);
-  gltf_load_file(gltf_full_file_path, models);
+  gltf_load_file(gltf_full_file_path);
 
   while (window.running) {
     poll_events();
@@ -69,38 +66,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
-
-    vec3 t = { 0,-5,-100 };
-    mat4 translate = translate_mat(t);
-#if 0
-    static float scale_val = 5.f;
-    static float multiplier = 1.f;
-    scale_val += multiplier * 0.0002f;
-    float upper = 5.5f;
-    float lower = 4.5f;
-    if (scale_val > upper) {
-      scale_val = upper;
-      multiplier *= -1;
-    } else if (scale_val < lower) {
-      scale_val = lower;
-      multiplier *= -1;
-    }
-#endif
-    mat4 scale = scale_mat(5.f);
-    mat4 model = mat_multiply_mat(translate, scale);
-    shader_set_mat4(material_t::associated_shader, "model", model);
-
-    for (model_t& model : models) {
-      for (mesh_t& mesh : model.meshes) {
-        bind_material(mesh.mat_idx);
-
-        bind_vao(mesh.vao);
-        draw_ebo(mesh.ebo);
-        unbind_vao();
-        unbind_ebo();
-      }
-    }
-    unbind_shader();
+ 
+    render_scene();
 
     // online rendering pass
     render_online(offline_fb);

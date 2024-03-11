@@ -124,6 +124,7 @@
   "nodes": [
     {
       "mesh": 0,
+      "translation": [0,-0.05,-0.2],
       "rotation": [
         0.0,
         1.0,

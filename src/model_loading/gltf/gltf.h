@@ -2,15 +2,20 @@
 
 #include "model_loading/model_internal.h"
 #include "utils/vectors.h"
+#include "utils/quaternion.h"
 
 #include <vector>
 #include <string>
 
 #define MAX_SUPPORTED_TEX_COORDS 4
 
+// TODO: need to parse transform
 struct gltf_node_t {
   std::vector<int> child_node_idxs;
   int gltf_mesh_handle = -1;
+  vec3 translation;
+  vec3 scale;
+  quaternion_t rot;
 };
 
 struct gltf_scene_t {
@@ -144,6 +149,7 @@ int gltf_parse_integer();
 std::string gltf_parse_string();
 std::vector<int> gltf_parse_integer_array();
 vec4 gltf_parse_vec4();
+vec3 gltf_parse_vec3();
 float gltf_parse_float();
 
 gltf_primitive_t gltf_parse_primitive();
@@ -219,4 +225,4 @@ void gltf_eat();
 void gltf_parse_section();
 char gltf_peek();
 void gltf_preprocess(const char* filepath);
-void gltf_load_file(const char* filepath, std::vector<model_t>& models);
+void gltf_load_file(const char* filepath);
