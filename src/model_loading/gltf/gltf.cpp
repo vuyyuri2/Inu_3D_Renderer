@@ -947,7 +947,7 @@ material_image_t gltf_mat_img_to_internal_mat_img(gltf_mat_image_info_t& gltf_ma
   return mat_img;
 }
 
-void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
+void gltf_load_file(const char* filepath) {
 
   printf("loading gltf file: %s\n", filepath);
 
@@ -1114,7 +1114,6 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
       model.meshes.push_back(mesh);
     }
 
-    // models.push_back(model);
     int internal_model_id = register_model(model);
     gltf_mesh_id_to_internal_model_id[gltf_mesh_idx] = internal_model_id;
     gltf_mesh_idx++; 
@@ -1133,7 +1132,7 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     std::vector<int>& root_nodes = gltf_scenes[active_scene].root_nodes;
 #if 1
     if (std::find(root_nodes.begin(), root_nodes.end(), i) != root_nodes.end()) {
-      t.pos.z -= 0.1;
+      // t.pos.z -= 0.1;
     }
 #endif
 
