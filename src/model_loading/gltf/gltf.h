@@ -2,6 +2,7 @@
 
 #include "model_loading/model_internal.h"
 #include "utils/vectors.h"
+#include "utils/quaternion.h"
 
 #include <vector>
 #include <string>
@@ -14,6 +15,7 @@ struct gltf_node_t {
   int gltf_mesh_handle = -1;
   vec3 translation;
   vec3 scale;
+  quaternion_t rot;
 };
 
 struct gltf_scene_t {

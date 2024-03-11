@@ -104,10 +104,3 @@ mat4 translate_mat(vec3& p) {
   translate.cols[3].z = p.z;
   return translate;
 }
-
-mat4 get_model_matrix(transform_t& t) {
-  mat4 scale = scale_mat(t.scale);
-  mat4 translate = translate_mat(t.pos);
-  mat4 model = mat_multiply_mat(translate, scale);
-  return model;
-}

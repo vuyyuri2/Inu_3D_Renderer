@@ -51,7 +51,8 @@ void main() {
   );
 
   // gl_Position = projection * model * rotate_y * vec4(pos, 1.0);
-  gl_Position = projection * model * rotate_y * rot_x_90 * vec4(pos, 1.0);
+  // gl_Position = projection * model * rotate_y * rot_x_90 * vec4(pos, 1.0);
+  gl_Position = projection * model * vec4(pos, 1.0);
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
   tex_coords[2] = tex2;

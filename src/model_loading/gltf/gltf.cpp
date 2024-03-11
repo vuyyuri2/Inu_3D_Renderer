@@ -240,6 +240,12 @@ void gltf_parse_node() {
     } else if (key == "scale") {
       node.scale = gltf_parse_vec3();
       scale_parsed = true;
+    } else if (key == "rotation") {
+      vec4 rot = gltf_parse_vec4();
+      node.rot.x = rot.x;
+      node.rot.y = rot.y;
+      node.rot.z = rot.z;
+      node.rot.w = rot.w;
     } else {
       gltf_skip_section();
     }
@@ -1124,13 +1130,20 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     t.pos.z = node.translation.z;
 
     std::vector<int>& root_nodes = gltf_scenes[active_scene].root_nodes;
+#if 1
     if (std::find(root_nodes.begin(), root_nodes.end(), i) != root_nodes.end()) {
       // t.pos.z -= 10;
     }
+#endif
 
     t.scale.x = node.scale.x;
     t.scale.y = node.scale.y;
     t.scale.z = node.scale.z;
+
+    t.rot.x = node.rot.x;
+    t.rot.y = node.rot.y;
+    t.rot.z = node.rot.z;
+    t.rot.w = node.rot.w;
 
     int obj_id = create_object(t);
     id_offset_diff_gltf_to_internal_obj = obj_id - i;

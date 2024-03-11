@@ -15,6 +15,7 @@ struct vec3 {
   float y = 0;
   float z = 0;
 };
+vec3 norm_vec3(vec3& v);
 
 struct vec4 {
   float x = 0;

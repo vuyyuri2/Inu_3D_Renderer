@@ -28,10 +28,13 @@ function(configure_project)
         src/model_loading/model_internal.cpp
 
         src/utils/general.cpp
-        src/utils/math.cpp
+        src/utils/inu_math.cpp
         src/utils/mats.cpp
+        src/utils/quaternion.cpp
+        src/utils/vectors.cpp
 
         src/scene/scene.cpp
+        src/scene/transform.cpp
     )
 
     add_executable(${PROJECT_NAME} 

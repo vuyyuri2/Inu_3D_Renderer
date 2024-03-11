@@ -9,6 +9,7 @@
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
+#include "utils/quaternion.h"
 
 extern window_t window;
 app_info_t app_info;
@@ -18,9 +19,24 @@ static float fb_height = 960 / 1.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
+#if 0
   mat4 a = create_matrix(2.0f);
   mat4 b = create_matrix(3.0f);
   mat4 c = mat_multiply_mat(a, b);
+#endif
+
+#if 1
+  quaternion_t q = create_quaternion_w_rot({0.231f,0.481293f,0.98323f}, 73.24f);
+  vec3 point = {27,52,128};
+  vec3 rotated = get_rotated_position(point, q); 
+  vec3 r2 = get_rotated_position_raw(point, q);
+
+  mat4 q_mat = quat_as_mat4(q);
+  vec4 v = {point.x, point.y, point.z, 0.f};
+  vec4 r3_vec4 = mat_multiply_vec(q_mat, v);
+  vec3 r3 = {r3_vec4.x, r3_vec4.y, r3_vec4.z};
+  
+#endif
 
   create_window(hInstance, fb_width, fb_height);
 
@@ -42,7 +58,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   sprintf(frag_shader_path, "%s\\shaders\\model.frag", resources_path);
   material_t::associated_shader = create_shader(vert_shader_path, frag_shader_path); 
 
-  const char* gltf_file_resources_folder_rel_path =  "box\\Box.gltf";
+  // const char* gltf_file_resources_folder_rel_path =  "box\\Box.gltf";
   // const char* gltf_file_resources_folder_rel_path =  "box_interleaved\\BoxInterleaved.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
@@ -52,7 +68,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
 
   std::vector<model_t> _models;
   char gltf_full_file_path[256]{};

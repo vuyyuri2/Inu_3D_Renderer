@@ -49,7 +49,7 @@ void render_scene_obj(int obj_id, bool parent) {
   object_t& obj = objs[obj_id];
   mat4 translate = create_matrix(1.0f);
   if (parent) {
-    vec3 t = { 0,0,-10 };
+    vec3 t = { 0,0,-0.5f };
     // translate = translate_mat(t);
   }
   // mat4 final_model = mat_multiply_mat(translate, scale);
@@ -73,7 +73,6 @@ void render_scene_obj(int obj_id, bool parent) {
 }
 
 void render_scene() {
-
   // will need to change this to iterate over nodes rather than models 
   for (int parent_id : scene.parent_objs) {
     render_scene_obj(parent_id, true);
