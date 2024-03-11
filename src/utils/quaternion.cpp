@@ -92,7 +92,7 @@ mat4 quat_as_mat4(quaternion_t& q) {
   m.sep_cols.second_col.z = 2*a*d + 2*b*c;
 
   m.sep_cols.third_col.x = 2*a*c + 2*b*d;
-  m.sep_cols.third_col.y = -2*a*b + 2*b*c;
+  m.sep_cols.third_col.y = -2*a*d + 2*b*c;
   m.sep_cols.third_col.z = -a*a - b*b + c*c + d*d;
 
   return m;

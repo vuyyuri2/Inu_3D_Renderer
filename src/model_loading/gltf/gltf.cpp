@@ -120,6 +120,7 @@ std::vector<int> gltf_parse_integer_array() {
       data[offset-1] = 0;
       int val = atoi(int_str_start);
       ints.push_back(val);
+      int_str_start = data + offset;
       continue;
     }
     gltf_eat();
@@ -1132,7 +1133,7 @@ void gltf_load_file(const char* filepath, std::vector<model_t>& models) {
     std::vector<int>& root_nodes = gltf_scenes[active_scene].root_nodes;
 #if 1
     if (std::find(root_nodes.begin(), root_nodes.end(), i) != root_nodes.end()) {
-      // t.pos.z -= 10;
+      t.pos.z -= 0.1;
     }
 #endif
 

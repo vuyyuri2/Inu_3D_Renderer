@@ -27,6 +27,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 #if 1
   quaternion_t q = create_quaternion_w_rot({0.231f,0.481293f,0.98323f}, 73.24f);
+  // quaternion_t q_test = create_quaternion_w_rot({-1.f,-1.f,0.f}, 180.f);
+  quaternion_t q_test1 = create_quaternion_w_rot({1,0,0}, -90.f);
+  quaternion_t q_test2 = create_quaternion_w_rot({0,1,0}, -90.f);
+  quaternion_t q_f = quat_multiply_quat(q_test1, q_test2);
+  // quaternion_t q_test1 = create_quaternion_w_rot({0,1,0}, 90.f);
+  // quaternion_t q = create_quaternion_w_rot({1,0,0}, 90);
   vec3 point = {27,52,128};
   vec3 rotated = get_rotated_position(point, q); 
   vec3 r2 = get_rotated_position_raw(point, q);
@@ -66,9 +72,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
+  const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
-  const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
 
   std::vector<model_t> _models;
   char gltf_full_file_path[256]{};
