@@ -3,6 +3,8 @@
 #include "utils/mats.h"
 #include "utils/vectors.h"
 #include "windowing/window.h"
+#include "utils/general.h"
+#include "utils/log.h"
 
 static camera_t cam;
 
@@ -10,7 +12,12 @@ extern window_t window;
 
 void update_cam() {
   if (window.input.scroll_wheel_delta != 0) {
-    cam_move_forward(window.input.scroll_wheel_delta);
+    vec3 diff;
+    diff.x = cam.transform.pos.x - cam.focal_pt.x;
+    diff.y = cam.transform.pos.y - cam.focal_pt.y;
+    diff.z = cam.transform.pos.z - cam.focal_pt.z;
+    float l = length(diff);
+    cam_move_forward(window.input.scroll_wheel_delta * l / 20.f);
   }
 
   if (length(window.input.mouse_pos_diff) != 0 && window.input.middle_mouse_down) {
@@ -106,9 +113,24 @@ void cam_move_forward(float amount) {
   diff.y = to_fp.y * amount;
   diff.z = to_fp.z * amount;
 
+  vec3 neg_to_fp = {-to_fp.x, -to_fp.y, -to_fp.z};
+  float s = dot(cam.transform.pos, neg_to_fp);
+  int side = sgn(s);
+
+  inu_assert(side == 1);
+
   cam.transform.pos.x += diff.x;
   cam.transform.pos.y += diff.y;
   cam.transform.pos.z += diff.z;
+
+  float new_s = dot(cam.transform.pos, neg_to_fp);
+  float new_side = sgn(new_s);
+
+  if (new_side != side) {
+    cam.transform.pos.x -= diff.x;
+    cam.transform.pos.y -= diff.y;
+    cam.transform.pos.z -= diff.z;
+  }
 }
 
 void cam_move_rotate(float lat_amount, float vert_amount) {
