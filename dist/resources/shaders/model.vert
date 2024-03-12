@@ -8,7 +8,7 @@ layout (location = 4) in vec2 tex3;
 layout (location = 5) in vec3 color;
 
 uniform mat4 model;
-// uniform mat4 view;
+uniform mat4 view;
 uniform mat4 projection;
 uniform float angle;
 
@@ -60,7 +60,8 @@ void main() {
   // gl_Position = projection * model * rotate_y * rot_x_90 * vec4(pos, 1.0);
   // gl_Position = projection * model * vec4(pos, 1.0);
 
-  gl_Position = projection * model * vec4(pos, 1.0);
+  // gl_Position = projection * model * vec4(pos, 1.0);
+  gl_Position = projection * view * model * vec4(pos, 1.0);
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
   tex_coords[2] = tex2;

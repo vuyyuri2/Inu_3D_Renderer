@@ -165,6 +165,7 @@
    ],
    "nodes" : [
       {
+         "translation": [0,0,-4],
          "mesh" : 0,
          "name" : "Suzanne"
       }
