@@ -29,7 +29,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   }
 
   transform_t t;
-  t.pos.z = 20.f;
+  // t.pos.z = 20.f;
+  t.pos.z = 1.f;
   create_camera(t);
   init_online_renderer();
 
