@@ -56,7 +56,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
-  const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
+
+  if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0) {
+    app_info.render_only_textured = true;
+  }
 
   char gltf_full_file_path[256]{};
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);

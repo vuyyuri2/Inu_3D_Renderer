@@ -68,13 +68,11 @@ struct material_image_t {
 
 struct material_t {
 	static shader_t associated_shader;
-
-	vec4 color;
 	material_image_t base_color_tex;
-	float angle = 0;
+	vec4 color;
 };
 int create_material(vec4 color, material_image_t base_color_img);
-void bind_material(int mat_idx);
+material_t bind_material(int mat_idx);
 
 struct framebuffer_t {
 	GLuint id = -1;

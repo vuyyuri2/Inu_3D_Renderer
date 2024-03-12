@@ -132,6 +132,7 @@ void create_window(HINSTANCE h_instance, int width, int height) {
 
   printf("version: %s\n", glGetString(GL_VERSION));
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
   // glFrontFace(GL_CCW);
 }
 
