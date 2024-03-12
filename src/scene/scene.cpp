@@ -3,11 +3,13 @@
 #include "utils/mats.h"
 #include "gfx/gfx.h"
 #include "model_loading/model_internal.h"
+#include "utils/app_info.h"
 
 static std::vector<object_t> objs;
 static scene_t scene;
 
 extern std::vector<model_t> models;
+extern app_info_t app_info;
 
 int create_object(transform_t& transform) {
   object_t obj;
@@ -46,9 +48,6 @@ void update_obj_model_mats() {
 }
 
 void render_scene_obj(int obj_id, bool parent) {
-    if (obj_id == 14) {
-        int a = 5;
-  }
   object_t& obj = objs[obj_id];
   mat4 translate = create_matrix(1.0f);
   if (parent) {
@@ -61,7 +60,11 @@ void render_scene_obj(int obj_id, bool parent) {
   if (obj.model_id != -1) {
     model_t& model = models[obj.model_id];
     for (mesh_t& mesh : model.meshes) {
-      bind_material(mesh.mat_idx);
+      material_t m = bind_material(mesh.mat_idx);
+
+      if (app_info.render_only_textured && m.base_color_tex.tex_handle == -1) {
+        continue;
+      }
 
       bind_vao(mesh.vao);
       draw_ebo(mesh.ebo);

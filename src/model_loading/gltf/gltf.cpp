@@ -995,24 +995,9 @@ void gltf_load_file(const char* filepath) {
         }
         for (int i = 0; i < acc.count; i++) {
           vertex_t& vert = mesh.vertices[i];
-#if 0
-          // duck
-          // float divider = 200.f;
-          // avocado
-          // float divider = 0.05f;
-          float divider = 1.f;
-          // suzanne
-          // float divider = 2.f;
-          vert.position.x = pos_data[i].x / divider;
-          vert.position.y = pos_data[i].y / divider;
-          vert.position.z = pos_data[i].z / divider;
-          // avocado
-          // vert.position.y -= 0.5f;
-#else
           vert.position.x = pos_data[i].x;
           vert.position.y = pos_data[i].y;
           vert.position.z = pos_data[i].z;
-#endif
         }
       } else {
         inu_assert_msg("this type for positions data is not supported yet");
@@ -1031,7 +1016,7 @@ void gltf_load_file(const char* filepath) {
           for (int i = 0; i < acc.count; i++) {
             unsigned int val = ushort_data[i];
             mesh.indicies.push_back(val);
-          }
+          } 
         } else {
           inu_assert("indicies data type not supported");
         }
@@ -1091,9 +1076,9 @@ void gltf_load_file(const char* filepath) {
       } else {
         vec4 color;
         color.x = 0;
-        color.y = 1;
+        color.y = 0;
         color.z = 0;
-        color.w = 0;
+        color.w = 1;
 
         material_image_t base_img;
         mesh.mat_idx = create_material(color, base_img);

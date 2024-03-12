@@ -229,9 +229,14 @@ int create_texture(const char* img_path) {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	if (texture.num_channels == 3) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	}
-	else {
+	} else if (texture.num_channels == 4) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	} else if (texture.num_channels == 1) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture.width, texture.height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+	} else {
+		stbi_image_free(data);
+		glDeleteTextures(1, &texture.gl_id);
+		return -1;
 	}
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -263,41 +268,17 @@ shader_t material_t::associated_shader;
 
 int create_material(vec4 color, material_image_t base_color_img) {
 	material_t mat;
-	mat.color = color;
 	mat.base_color_tex = base_color_img;
-	mat.angle = 0;
+	mat.color = color;
 	materials.push_back(mat);
 	return materials.size()-1;
 }
 
-void bind_material(int mat_idx) {
+material_t bind_material(int mat_idx) {
 	inu_assert(mat_idx < materials.size(), "mat idx out of bounds");
 	shader_t& shader = material_t::associated_shader;
 
 	material_t& mat = materials[mat_idx];
-	shader_set_float(shader, "angle", mat.angle);
-  mat.angle += 0.05f;
-  if (mat.angle >= 360.f) {
-    mat.angle -= 360.f;
-  }
-  
-  /*
-  vec3 color;
-  if (mat.angle > 180) {
-    color.x = 0;
-    color.y = 1;
-    color.z = 0;
-  } else {
-    color.x = 0;
-    color.y = 0;
-    color.z = 1;
-  }
-  color.x = mat.color.x;
-  color.y = mat.color.y;
-  color.z = mat.color.z;
-  shader_set_vec3(shader, "in_color", color);
-  */
-
 	if (mat.base_color_tex.tex_handle != -1) {
 		texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
 		shader_set_int(shader, "base_color_tex.samp", texture.tex_slot);
@@ -308,6 +289,7 @@ void bind_material(int mat_idx) {
 	}
 
   bind_shader(shader);
+  return mat;
 }
 
 framebuffer_t create_framebuffer(int width, int height) {

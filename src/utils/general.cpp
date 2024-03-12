@@ -65,3 +65,9 @@ void get_resources_folder_path(char path_buffer[256]) {
 	}
 	memcpy(path_buffer, s_folder, strlen(s_folder)); 
 }
+
+int sgn(float val) {
+  if (val == 0) return 0;
+  if (val > 0) return 1;
+  return -1;
+}

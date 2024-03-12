@@ -6,6 +6,7 @@
 #include "gfx/gfx.h"
 #include "gfx/online_renderer.h"
 #include "scene/scene.h"
+#include "scene/camera.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
@@ -14,6 +15,8 @@
 extern window_t window;
 app_info_t app_info;
 
+// static float fb_width = 1280 / 2.f;
+// static float fb_height = 960 / 2.f;
 static float fb_width = 1280 / 1.f;
 static float fb_height = 960 / 1.f;
 
@@ -25,6 +28,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app_info.running_in_vs = true;
   }
 
+  transform_t t;
+  // t.pos.z = 20.f;
+  t.pos.z = 1.f;
+  create_camera(t);
   init_online_renderer();
 
   char resources_path[256]{};
@@ -49,7 +56,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "duck\\Duck.gltf";
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
-  const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+  const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "ferrari_enzo\\scene.gltf";
+
+  if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0
+      || strcmp(gltf_file_resources_folder_rel_path, "ferrari_enzo\\scene.gltf") == 0) {
+    app_info.render_only_textured = true;
+  }
 
   char gltf_full_file_path[256]{};
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);
@@ -66,6 +80,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
+
+    update_cam();
+
+    mat4 view = get_view_mat();
+    shader_set_mat4(material_t::associated_shader, "view", view);
  
     render_scene();
 

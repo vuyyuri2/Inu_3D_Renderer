@@ -20,6 +20,7 @@ mat4 mat_multiply_mat(mat4& m1, mat4& m2);
 vec4 vec_multiply_float(vec4& v, float f);
 vec4 mat_multiply_vec(mat4& m, vec4& v);
 
+mat4 transpose(mat4& m);
 mat4 proj_mat(float fov, float near, float far, float aspect_ratio);
 mat4 scale_mat(float s);
 mat4 scale_mat(vec3& scale);

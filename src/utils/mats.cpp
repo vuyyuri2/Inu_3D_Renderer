@@ -104,3 +104,14 @@ mat4 translate_mat(vec3& p) {
   translate.cols[3].z = p.z;
   return translate;
 }
+
+mat4 transpose(mat4& m) {
+  mat4 t;
+  for (int i = 0; i < 4; i++) {
+    t.cols[i].x = *(static_cast<float*>(&m.cols[0].x) + i);
+    t.cols[i].y = *(static_cast<float*>(&m.cols[1].x) + i);
+    t.cols[i].z = *(static_cast<float*>(&m.cols[2].x) + i);
+    t.cols[i].w = *(static_cast<float*>(&m.cols[3].x) + i);
+  }
+  return t;
+}
