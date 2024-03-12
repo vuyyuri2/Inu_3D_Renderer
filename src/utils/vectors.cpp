@@ -28,3 +28,15 @@ vec3 cross_product(vec3& v1, vec3& v2) {
   c.z = (a1*b2 - a2*b1);
   return c;
 }
+
+float dot(vec3& v1, vec3& v2) {
+  return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+}
+
+float length(vec3& v) {
+  return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+bool operator==(const vec3& v1, const vec3& v2) {
+  return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z);
+}
