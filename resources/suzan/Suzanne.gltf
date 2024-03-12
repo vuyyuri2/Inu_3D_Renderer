@@ -165,8 +165,8 @@
    ],
    "nodes" : [
       {
-         "translation": [0,0,-4],
          "mesh" : 0,
+         "scale": [0.3, 0.3, 0.3],
          "name" : "Suzanne"
       }
    ],
