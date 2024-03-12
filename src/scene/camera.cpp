@@ -2,8 +2,24 @@
 
 #include "utils/mats.h"
 #include "utils/vectors.h"
+#include "windowing/window.h"
 
 static camera_t cam;
+
+extern window_t window;
+
+void update_cam() {
+  if (window.input.scroll_wheel_delta != 0) {
+    cam_move_forward(window.input.scroll_wheel_delta);
+  }
+
+  if (length(window.input.mouse_pos_diff) != 0 && window.input.middle_mouse_down) {
+    float sensitivity = 0.3f;
+    float lat = window.input.mouse_pos_diff.x * -2.f * sensitivity;
+    float vert = window.input.mouse_pos_diff.y * 1.f * sensitivity;
+    cam_move_rotate(lat, vert);
+  }
+}
 
 void create_camera(transform_t& t) {
   cam.transform.pos.x = t.pos.x;
@@ -15,10 +31,11 @@ void create_camera(transform_t& t) {
   cam.transform.scale.y = 1.f;
   cam.transform.scale.z = 1.f;
 
-  cam.transform.rot.x = t.rot.x;
-  cam.transform.rot.y = t.rot.y;
-  cam.transform.rot.z = t.rot.z;
-  cam.transform.rot.w = t.rot.w;
+  // quat rot doesn't matter either b/c using on focal pt based rot logic
+  cam.transform.rot.x = 0;
+  cam.transform.rot.y = 0;
+  cam.transform.rot.z = 0;
+  cam.transform.rot.w = 1;
 
   cam.forward = {0,0,-1};
   cam.up = {0,1,0};
@@ -30,14 +47,6 @@ void create_camera(transform_t& t) {
 mat4 get_view_mat() {
   vec3 inv_t = {-cam.transform.pos.x, -cam.transform.pos.y, -cam.transform.pos.z};
   mat4 inv_translate = translate_mat(inv_t);
-#if 0
-  quaternion_t inv_rot = quat_inverse(cam.transform.rot);
-  mat4 inv_rot_mat = quat_as_mat4(inv_rot);
-  // mat4 view = mat_multiply_mat(inv_translate, inv_rot_mat);
-  mat4 view = mat_multiply_mat(inv_rot_mat, inv_translate);
-  // return view;
-  return inv_translate;
-#else
 
   vec3 to_fp;
   to_fp.x = cam.focal_pt.x - cam.transform.pos.x;
@@ -67,8 +76,6 @@ mat4 get_view_mat() {
 
   mat4 inv_rot = transpose(rot_mat);
   return mat_multiply_mat(inv_rot, inv_translate);
-
-#endif
 }
 
 mat4 get_view_mat(quaternion_t& new_q) {
@@ -105,19 +112,6 @@ void cam_move_forward(float amount) {
 }
 
 void cam_move_rotate(float lat_amount, float vert_amount) {
-#if 0
-  quaternion_t& cur = cam.transform.rot; 
-  quaternion_t rot = create_quaternion_w_rot(cam.up, amount);
-  quaternion_t new_q = quat_multiply_quat(rot, cur);
-
-  cam.transform.rot.x = new_q.x;
-  cam.transform.rot.y = new_q.y;
-  cam.transform.rot.z = new_q.z;
-  cam.transform.rot.w = new_q.w; 
-#else
-  // vec3 cam_forward = {};
-  // quaternion_t& cur = cam.transform.rot; 
-
   vec3 to_fp;
   to_fp.x = cam.focal_pt.x - cam.transform.pos.x;
   to_fp.y = cam.focal_pt.y - cam.transform.pos.y;
@@ -130,14 +124,4 @@ void cam_move_rotate(float lat_amount, float vert_amount) {
   quaternion_t q = quat_multiply_quat(q_right, q_up);
 
   cam.transform.pos = get_rotated_position(cam.transform.pos, q);
-
-#if 0
-  quaternion_t new_q = quat_multiply_quat(q, cur);
-  cam.transform.rot.x = new_q.x;
-  cam.transform.rot.y = new_q.y;
-  cam.transform.rot.z = new_q.z;
-  cam.transform.rot.w = new_q.w;
-#endif
-#endif
-
 }

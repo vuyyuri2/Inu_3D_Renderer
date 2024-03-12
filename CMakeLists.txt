@@ -35,6 +35,7 @@ function(configure_project)
 
         src/scene/scene.cpp
         src/scene/transform.cpp
+        src/scene/camera.cpp
     )
 
     add_executable(${PROJECT_NAME} 

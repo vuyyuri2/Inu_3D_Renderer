@@ -17,7 +17,7 @@ mat4 get_view_mat();
 mat4 get_view_mat(quaternion_t& new_q);
 void cam_move_forward(float amount);
 void cam_move_rotate(float lat_amount, float vert_amount);
-// void cam_move_rotate_vertical(float amount);
 mat4 get_view_mat(vec3& diff);
+void update_cam();
 
 
