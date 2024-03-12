@@ -6,7 +6,10 @@
 #include "utils/vectors.h"
 
 struct input_t {
+  ivec2 mouse_pos_diff; 
   ivec2 mouse_pos; 
+  float scroll_wheel_delta = 0;
+  bool middle_mouse_down = false;
 };
 
 struct window_t {

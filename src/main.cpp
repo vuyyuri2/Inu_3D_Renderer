@@ -6,6 +6,7 @@
 #include "gfx/gfx.h"
 #include "gfx/online_renderer.h"
 #include "scene/scene.h"
+#include "scene/camera.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
@@ -14,10 +15,46 @@
 extern window_t window;
 app_info_t app_info;
 
+// static float fb_width = 1280 / 2.f;
+// static float fb_height = 960 / 2.f;
 static float fb_width = 1280 / 1.f;
 static float fb_height = 960 / 1.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+
+#if 0
+  quaternion_t q1 = create_quaternion(1,0,0,0);
+  quaternion_t q2 = create_quaternion(-1,0,0,0);
+  quaternion_t f = quat_multiply_quat(q1,q2);
+#endif
+
+#if 1
+
+  struct vec3_test_combo_t {
+    vec3 v1;
+    vec3 v2;
+    vec3 expected;
+  };
+
+#define NUM_TESTS 3
+
+  vec3_test_combo_t tests[NUM_TESTS] = {
+    {{0,1,0}, {1,0,0}, {0,0,-1}},
+    {{1,1,0}, {-1,0,-1}, {-1,1,1}},
+    {{-0.5,1,0}, {-1,1,-1}, {-1,-0.5,0.5}}
+  };
+
+  for (int i = 0; i < NUM_TESTS; i++) {
+    vec3 v1 = tests[i].v1;
+    vec3 v2 = tests[i].v2;
+    vec3 f = cross_product(v1, v2);
+    inu_assert(f.x == tests[i].expected.x);
+    inu_assert(f.y == tests[i].expected.y);
+    inu_assert(f.z == tests[i].expected.z);
+  }
+#undef NUM_TESTS
+
+#endif
 
   create_window(hInstance, fb_width, fb_height);
 
@@ -25,6 +62,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app_info.running_in_vs = true;
   }
 
+  transform_t t;
+  t.pos.z = 20.f;
+  create_camera(t);
   init_online_renderer();
 
   char resources_path[256]{};
@@ -66,6 +106,28 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
+
+    static float angle = 0;
+    quaternion_t new_q = create_quaternion_w_rot({0,1,0}, angle);
+    // angle += 0.05f;
+    // mat4 view = get_view_mat(new_q);
+    
+    // vec3 diff = {0,0,-window.input.scroll_wheel_delta};
+    //
+    if (window.input.scroll_wheel_delta != 0) {
+      cam_move_forward(window.input.scroll_wheel_delta);
+    }
+
+    bool moved = length(window.input.mouse_pos_diff) != 0 && window.input.middle_mouse_down;
+    if (moved) {
+      // cam_move_forward(window.input.scroll_wheel_delta);
+      float lat = window.input.mouse_pos_diff.x * -2.f;
+      float vert = window.input.mouse_pos_diff.y * 1.f;
+      // cam_move_rotate(0, window.input.scroll_wheel_delta * 10.f);
+      cam_move_rotate(lat, vert);
+    }
+    mat4 view = get_view_mat();
+    shader_set_mat4(material_t::associated_shader, "view", view);
  
     render_scene();
 

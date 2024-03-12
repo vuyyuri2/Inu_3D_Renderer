@@ -157,10 +157,22 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
     }
     case WM_MOUSEMOVE: {
       // bottom left should be (0,0)
+      ivec2 orig = {window.input.mouse_pos.x, window.input.mouse_pos.y};
       window.input.mouse_pos.x = GET_X_LPARAM(l_param);
       window.input.mouse_pos.y = window.window_dim.y - GET_Y_LPARAM(l_param);
-      // printf("mouse pos: (%i,%i)\n", window.input.mouse_pos.x, window.input.mouse_pos.y);
+      window.input.middle_mouse_down = (w_param & MK_MBUTTON) != 0;
+
+      window.input.mouse_pos_diff.x = window.input.mouse_pos.x - orig.x;
+      window.input.mouse_pos_diff.y = window.input.mouse_pos.y - orig.y;
+      printf("mouse pos diff: (%i,%i) middle mouse down: %i\n", window.input.mouse_pos_diff.x, window.input.mouse_pos_diff.y, window.input.middle_mouse_down);
       break;
+    }
+    case WM_MOUSEWHEEL: {
+      // fwKeys = GET_KEYSTATE_WPARAM(wParam);
+      float scroll_wheel_delta = GET_WHEEL_DELTA_WPARAM(w_param);
+      window.input.scroll_wheel_delta = scroll_wheel_delta / WHEEL_DELTA;
+      printf("window.input.scroll_wheel_delta: %f\n", window.input.scroll_wheel_delta);
+      return 0;
     }
   }
   return DefWindowProc(h_window, u_msg, w_param, l_param);
@@ -168,6 +180,9 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
 
 void poll_events() {
   window.resized = false;
+  window.input.scroll_wheel_delta = 0;
+  window.input.middle_mouse_down = false;
+  window.input.mouse_pos_diff = {0,0};
   MSG msg{};
   while (PeekMessage(&msg, window.win32_wnd, 0, 0, 0)) {
     bool quit_msg = (GetMessage(&msg, NULL, 0, 0) == 0);

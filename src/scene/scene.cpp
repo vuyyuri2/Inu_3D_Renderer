@@ -46,9 +46,6 @@ void update_obj_model_mats() {
 }
 
 void render_scene_obj(int obj_id, bool parent) {
-    if (obj_id == 14) {
-        int a = 5;
-  }
   object_t& obj = objs[obj_id];
   mat4 translate = create_matrix(1.0f);
   if (parent) {
