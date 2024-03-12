@@ -229,9 +229,14 @@ int create_texture(const char* img_path) {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	if (texture.num_channels == 3) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	}
-	else {
+	} else if (texture.num_channels == 4) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	} else if (texture.num_channels == 1) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture.width, texture.height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+	} else {
+		stbi_image_free(data);
+		glDeleteTextures(1, &texture.gl_id);
+		return -1;
 	}
 	glGenerateMipmap(GL_TEXTURE_2D);
 
