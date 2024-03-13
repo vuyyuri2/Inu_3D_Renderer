@@ -116,3 +116,25 @@ quaternion_t quat_multiply_quat(quaternion_t& q1, quaternion_t& q2) {
 
   return res;
 }
+
+float quat_dot(quaternion_t& a, quaternion_t& b) {
+  return (a.x*b.x) + (a.y*b.y) + (a.z*b.z) + (a.w*b.w);
+}
+
+quaternion_t quat_multiply_float(quaternion_t& q, float f) {
+  quaternion_t new_q;
+  new_q.x = q.x * f;
+  new_q.y = q.y * f;
+  new_q.z = q.z * f;
+  new_q.w = q.w * f;
+  return new_q;
+}
+
+quaternion_t quat_add_quat(quaternion_t& q1, quaternion_t& q2) {
+  quaternion_t q;
+  q.x = q1.x + q2.x;
+  q.y = q1.y + q2.y;
+  q.z = q1.z + q2.z;
+  q.w = q1.w + q2.w;
+  return q;
+}

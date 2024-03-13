@@ -17,3 +17,6 @@ vec3 get_rotated_position(vec3& pos, quaternion_t& q);
 vec3 get_rotated_position_raw(vec3& pos, quaternion_t& q);
 quaternion_t quat_multiply_quat(quaternion_t& q1, quaternion_t& q2);
 mat4 quat_as_mat4(quaternion_t& q1);
+float quat_dot(quaternion_t& a, quaternion_t& b);
+quaternion_t quat_multiply_float(quaternion_t& q1, float f);
+quaternion_t quat_add_quat(quaternion_t& q1, quaternion_t& q2);
