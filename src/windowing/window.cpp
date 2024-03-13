@@ -12,6 +12,7 @@
 // #include <utils/wglext.h>
 
 #include "gfx/gfx.h"
+#include "utils/inu_time.h"
 
 #ifndef UNICODE
 #define UNICODE
@@ -153,7 +154,6 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
       return 0;
     }
     case WM_LBUTTONUP: {
-      printf("left button up\n");
       break;
     }
     case WM_MOUSEMOVE: {
@@ -165,14 +165,12 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
 
       window.input.mouse_pos_diff.x = window.input.mouse_pos.x - orig.x;
       window.input.mouse_pos_diff.y = window.input.mouse_pos.y - orig.y;
-      printf("mouse pos diff: (%i,%i) middle mouse down: %i\n", window.input.mouse_pos_diff.x, window.input.mouse_pos_diff.y, window.input.middle_mouse_down);
       break;
     }
     case WM_MOUSEWHEEL: {
       // fwKeys = GET_KEYSTATE_WPARAM(wParam);
       float scroll_wheel_delta = GET_WHEEL_DELTA_WPARAM(w_param);
       window.input.scroll_wheel_delta = scroll_wheel_delta / WHEEL_DELTA;
-      printf("window.input.scroll_wheel_delta: %f\n", window.input.scroll_wheel_delta);
       return 0;
     }
   }
