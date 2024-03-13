@@ -97,12 +97,23 @@ enum class ACC_COMPONENT_TYPE {
   FLOAT = 5126
 };
 
+enum class ACC_ELEMENT_TYPE {
+  SCALAR = 0,
+  VEC2,
+  VEC3,
+  VEC4,
+  MAT2,
+  MAT3,
+  MAT4
+};
+
 struct gltf_accessor_t {
   int buffer_view_idx = -1;
   int byte_offset = 0;
   ACC_COMPONENT_TYPE component_type = ACC_COMPONENT_TYPE::BYTE;
   int count = -1;
-  std::string type;
+  ACC_ELEMENT_TYPE element_type = ACC_ELEMENT_TYPE::SCALAR;
+  // std::string type;
 };
 
 struct gltf_image_t {
@@ -143,6 +154,47 @@ struct gltf_sampler_t {
   MIN_FILTER min_filter = MIN_FILTER::LINEAR;
   SAMPLER_WRAP wrap_s = SAMPLER_WRAP::REPEAT;
   SAMPLER_WRAP wrap_t = SAMPLER_WRAP::REPEAT;
+};
+
+enum class CHANNEL_TARGET_PATH {
+  NONE = 0,
+  ROTATION,
+  SCALE,
+  TRANSLATION,
+  WEIGHTS
+};
+
+struct gltf_channel_target_t {
+  int gltf_node_idx = -1; 
+  CHANNEL_TARGET_PATH path = CHANNEL_TARGET_PATH::NONE;
+};
+
+struct gltf_channel_t {
+  int gltf_anim_sampler_idx = -1;
+  gltf_channel_target_t target;
+};
+
+enum class GLTF_INTERPOLATION_MODE {
+  LINEAR,
+  STEP,
+  CUBICSPLINE
+};
+
+struct gltf_anim_sampler_t {
+  int input_accessor_idx = -1;
+  int output_accessor_idx = -1;
+  GLTF_INTERPOLATION_MODE interpolation_mode = GLTF_INTERPOLATION_MODE::LINEAR;
+};
+
+/*
+ - Multiple nodes can be references in one animation
+ - 2 nodes in the same animation can have the same sampler
+ */
+
+struct gltf_animation_t {
+  std::string name; 
+  std::vector<gltf_channel_t> channels;
+  std::vector<gltf_anim_sampler_t> anim_samplers;
 };
 
 int gltf_parse_integer();

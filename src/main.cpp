@@ -14,6 +14,7 @@
 
 extern window_t window;
 app_info_t app_info;
+extern animation_globals_t animation_globals;
 
 // static float fb_width = 1280 / 2.f;
 // static float fb_height = 960 / 2.f;
@@ -50,6 +51,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path =  "box_interleaved\\BoxInterleaved.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
+  const char* gltf_file_resources_folder_rel_path = "animated_cube\\AnimatedCube.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "two_cylinder_engine\\2CylinderEngine.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cube_non_smooth_face\\Cube.gltf";
@@ -57,7 +60,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
-  const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "ferrari_enzo\\scene.gltf";
 
   if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0
@@ -70,7 +73,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   gltf_load_file(gltf_full_file_path);
 
   while (window.running) {
+    inu_timer_t frame_timer;
+    start_timer(frame_timer);
+
+    // WINDOW + INPUT PASS
     poll_events();
+
+    // UPDATE PASS
+    update_cam();
+    update_animations();
+
+    // RENDERING PASS
 
     // offline rendering pass
     bind_framebuffer(offline_fb);
@@ -81,7 +94,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
 
-    update_cam();
 
     mat4 view = get_view_mat();
     shader_set_mat4(material_t::associated_shader, "view", view);
@@ -92,5 +104,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     render_online(offline_fb);
 
     swap_buffers();
+
+    end_timer(frame_timer);
+    app_info.delta_time = frame_timer.elapsed_time_sec;
   }
 }

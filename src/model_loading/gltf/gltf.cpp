@@ -10,6 +10,7 @@
 #include "utils/log.h"
 #include "utils/vectors.h"
 #include "model_loading/model_internal.h"
+#include "animation/animation_internal.h"
 #include "gfx/gfx.h"
 #include "scene/scene.h"
 
@@ -32,6 +33,7 @@ static std::vector<gltf_image_t> gltf_images;
 static std::vector<gltf_texture_t> gltf_textures;
 static std::vector<gltf_sampler_t> gltf_samplers;
 static std::vector<gltf_material_t> gltf_materials;
+static std::vector<gltf_animation_t> gltf_animations;
 
 static std::unordered_map<int, int> gltf_mesh_id_to_internal_model_id;
 
@@ -496,7 +498,22 @@ void gltf_parse_accessor() {
     } else if (key == "count") {
       accessor.count = gltf_parse_integer();
     } else if (key == "type") {
-      accessor.type = gltf_parse_string();
+      std::string type_str = gltf_parse_string();
+      if (type_str == "SCALAR") {
+        accessor.element_type = ACC_ELEMENT_TYPE::SCALAR;
+      } else if (type_str == "VEC2") {
+        accessor.element_type = ACC_ELEMENT_TYPE::VEC2;
+      } else if (type_str == "VEC3") {
+        accessor.element_type = ACC_ELEMENT_TYPE::VEC3;
+      } else if (type_str == "VEC4") {
+        accessor.element_type = ACC_ELEMENT_TYPE::VEC4;
+      } else if (type_str == "MAT2") {
+        accessor.element_type = ACC_ELEMENT_TYPE::MAT2;
+      } else if (type_str == "MAT3") {
+        accessor.element_type = ACC_ELEMENT_TYPE::MAT3;
+      } else if (type_str == "MAT4") {
+        accessor.element_type = ACC_ELEMENT_TYPE::MAT4;
+      }
     } else {
       gltf_skip_section();
     }
@@ -753,6 +770,163 @@ void gltf_parse_materials_section() {
   if (gltf_peek() == ',') gltf_eat();
 }
 
+gltf_channel_target_t gltf_parse_channel_target() {
+  gltf_channel_target_t target;
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+  while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat();  
+    if (key == "node") {
+      target.gltf_node_idx = gltf_parse_integer();
+    } else if (key == "path") {
+      std::string path_str = gltf_parse_string();
+      if (path_str == "rotation") {
+        target.path = CHANNEL_TARGET_PATH::ROTATION;
+      } else if (path_str == "scale") {
+        target.path = CHANNEL_TARGET_PATH::SCALE;
+      } else if (path_str == "translation") {
+        target.path = CHANNEL_TARGET_PATH::TRANSLATION;
+      } else if (path_str == "weights") {
+        target.path = CHANNEL_TARGET_PATH::WEIGHTS;
+      }
+    } else {
+      gltf_skip_section();
+    }
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  return target;
+}
+
+gltf_channel_t gltf_parse_anim_channel() {
+  gltf_channel_t channel;
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+  while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat(); 
+    
+    if (key == "sampler") {
+      channel.gltf_anim_sampler_idx = gltf_parse_integer();
+    } else if (key == "target") {
+      channel.target = gltf_parse_channel_target();
+    } else {
+      gltf_skip_section();
+    }
+
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  return channel;
+}
+
+std::vector<gltf_channel_t> gltf_parse_anim_channels() {
+  std::vector<gltf_channel_t> channels;  
+  inu_assert(gltf_peek() == '[');
+  gltf_eat();
+  while (gltf_peek() != ']') {
+    gltf_channel_t channel = gltf_parse_anim_channel();
+    if (channel.target.gltf_node_idx != -1) {
+      channels.push_back(channel);
+    }
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  return channels;
+}
+
+gltf_anim_sampler_t gltf_parse_anim_sampler() {
+  gltf_anim_sampler_t anim_sampler;
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+  while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat();
+
+    if (key == "input") {
+      anim_sampler.input_accessor_idx = gltf_parse_integer();
+    } else if (key == "output") {
+      anim_sampler.output_accessor_idx = gltf_parse_integer();
+    } else if (key == "interpolation") {
+      std::string inter_str = gltf_parse_string();
+      if (inter_str == "LINEAR") {
+        anim_sampler.interpolation_mode = GLTF_INTERPOLATION_MODE::LINEAR;
+      } else if (inter_str == "STEP") {
+        anim_sampler.interpolation_mode = GLTF_INTERPOLATION_MODE::STEP;
+      } else if (inter_str == "CUBICSPLINE") {
+        anim_sampler.interpolation_mode = GLTF_INTERPOLATION_MODE::CUBICSPLINE;
+      }
+    } else {
+      gltf_skip_section();
+    }
+
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  return anim_sampler;
+}
+
+std::vector<gltf_anim_sampler_t> gltf_parse_anim_samplers() {
+  std::vector<gltf_anim_sampler_t> anim_samplers;
+  inu_assert(gltf_peek() == '[');
+  gltf_eat();
+
+  while (gltf_peek() != ']') {
+    gltf_anim_sampler_t sampler = gltf_parse_anim_sampler();
+    anim_samplers.push_back(sampler);
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  return anim_samplers;
+}
+
+void gltf_parse_animation() {
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+
+  gltf_animation_t gltf_anim;
+  while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat();
+    if (key == "name") {
+      gltf_anim.name = gltf_parse_string();
+    } else if (key == "channels") {
+      gltf_anim.channels = gltf_parse_anim_channels();
+    } else if (key == "samplers") {
+      gltf_anim.anim_samplers = gltf_parse_anim_samplers();
+    } else {
+      gltf_skip_section();
+    }
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+
+  gltf_animations.push_back(gltf_anim);
+}
+
+void gltf_parse_animations_section() {
+  inu_assert(gltf_peek() == '[');
+  gltf_eat();
+
+  while (gltf_peek() != ']') {
+    gltf_parse_animation();
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+}
+
 void gltf_parse_section() {
 
   std::string key = gltf_parse_string();
@@ -784,6 +958,8 @@ void gltf_parse_section() {
     gltf_parse_samplers_section();
   } else if (key == "materials") {
     gltf_parse_materials_section();
+  } else if (key == "animations") {
+    gltf_parse_animations_section();
   } else {
     gltf_skip_section();
   }
@@ -873,14 +1049,22 @@ void* gltf_read_accessor_data(int accessor_idx) {
   }
 
   int size_of_element = 0;
-  if (acc.type == "SCALAR") {
+  if (acc.element_type == ACC_ELEMENT_TYPE::SCALAR) {
     size_of_element = size_of_component;
-  } else if (acc.type == "VEC3") {
+  } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC3) {
     size_of_element = size_of_component * 3; 
-  } else if (acc.type == "VEC2") {
+  } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC2) {
     size_of_element = size_of_component * 2;
+  } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC4) {
+    size_of_element = size_of_component * 4;
+  } else if (acc.element_type == ACC_ELEMENT_TYPE::MAT2) {
+    size_of_element = size_of_component * 4;
+  } else if (acc.element_type == ACC_ELEMENT_TYPE::MAT3) {
+    size_of_element = size_of_component * 9;
+  }  else if (acc.element_type == ACC_ELEMENT_TYPE::MAT4) {
+    size_of_element = size_of_component * 16;
   } else {
-    inu_assert_msg("this accessor type is not supported");
+    inu_assert_msg("this accessor element type is not supported");
   }
 
   int size_of_acc_data = size_of_element * acc.count;
@@ -891,8 +1075,6 @@ void* gltf_read_accessor_data(int accessor_idx) {
   gltf_buffer_t& buffer = gltf_buffers[buffer_view.gltf_buffer_index];
   char buffer_uri_full_path[256]{};
   sprintf(buffer_uri_full_path, "%s\\%s", folder_path, buffer.uri.c_str());
-
-  char file_buffer[12]{};
 
   FILE* uri_file = fopen(buffer_uri_full_path, "rb");
   inu_assert(uri_file, "uri file does not exist");
@@ -1002,6 +1184,7 @@ void gltf_load_file(const char* filepath) {
       } else {
         inu_assert_msg("this type for positions data is not supported yet");
       }
+      free(positions_data);
 
       if (prim.indicies_accessor_idx != -1) {
         void* index_data = gltf_read_accessor_data(prim.indicies_accessor_idx);
@@ -1020,6 +1203,7 @@ void gltf_load_file(const char* filepath) {
         } else {
           inu_assert("indicies data type not supported");
         }
+        free(index_data);
       } else {
         for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
           mesh.indicies.push_back(i);
@@ -1044,6 +1228,7 @@ void gltf_load_file(const char* filepath) {
         } else {
           inu_assert_msg("this type for colors data is not supported yet");
         }
+        free(color_data);
       } else {
         for (int i = 0; i < mesh.vertices.size(); i++) {
           vertex_t& vert = mesh.vertices[i];
@@ -1069,6 +1254,7 @@ void gltf_load_file(const char* filepath) {
         } else {
           inu_assert_msg("this type for texture data is not supported yet");
         }
+        free(tex_data_void);
       }
 
       if (prim.material_idx != -1) {
@@ -1115,9 +1301,9 @@ void gltf_load_file(const char* filepath) {
     t.pos.z = node.translation.z;
 
     std::vector<int>& root_nodes = gltf_scenes[active_scene].root_nodes;
-#if 1
+#if 0
     if (std::find(root_nodes.begin(), root_nodes.end(), i) != root_nodes.end()) {
-      // t.pos.z -= 0.1;
+      t.pos.z -= 0.1;
     }
 #endif
 
@@ -1148,4 +1334,61 @@ void gltf_load_file(const char* filepath) {
 
   // update object transforms
   update_obj_model_mats();
+
+  // 5. animation processing
+  for (gltf_animation_t& gltf_anim : gltf_animations) {
+
+    // process anim sampler data
+    std::unordered_map<int,int> gltf_anim_sampler_id_to_internal_chunk_id;
+    for (int j = 0; j < gltf_anim.anim_samplers.size(); j++) {
+      gltf_anim_sampler_t& sampler = gltf_anim.anim_samplers[j];
+      gltf_accessor_t& time_data_acc = gltf_accessors[sampler.input_accessor_idx];
+      inu_assert(time_data_acc.component_type == ACC_COMPONENT_TYPE::FLOAT);
+      inu_assert(time_data_acc.element_type == ACC_ELEMENT_TYPE::SCALAR);
+      
+      animation_data_chunk_t data_chunk;
+
+      if (sampler.interpolation_mode == GLTF_INTERPOLATION_MODE::LINEAR) {
+        data_chunk.interpolation_mode = ANIM_INTERPOLATION_MODE::LINEAR;
+      } else if (sampler.interpolation_mode == GLTF_INTERPOLATION_MODE::STEP) {
+        data_chunk.interpolation_mode = ANIM_INTERPOLATION_MODE::STEP;
+      } else {
+        inu_assert_msg("currently cannot support this gltf interpolation mode");
+      }
+
+      // read timestamp data
+      float* timestamp_data = (float*)gltf_read_accessor_data(sampler.input_accessor_idx);
+      data_chunk.num_timestamps = time_data_acc.count;
+      for (int i = 0; i < data_chunk.num_timestamps; i++) {
+        float timestamp = *(timestamp_data + i);
+        data_chunk.timestamps.push_back(timestamp);
+      }
+      free(timestamp_data);
+
+      // read keyframe data
+      data_chunk.keyframe_data = gltf_read_accessor_data(sampler.output_accessor_idx);
+
+      int internal_chunk_id = register_anim_data_chunk(data_chunk);
+      gltf_anim_sampler_id_to_internal_chunk_id[j] = internal_chunk_id;
+    }
+
+    // process channel data
+    for (int j = 0; j < gltf_anim.channels.size(); j++) {
+      animation_chunk_data_ref_t ref; 
+
+      gltf_channel_t& channel = gltf_anim.channels[j];
+      ref.chunk_id = gltf_anim_sampler_id_to_internal_chunk_id[channel.gltf_anim_sampler_idx];
+      gltf_channel_target_t& target = channel.target; 
+      if (target.path == CHANNEL_TARGET_PATH::ROTATION) {
+        ref.target = ANIM_TARGET_ON_NODE::ROTATION;
+      } else if (target.path == CHANNEL_TARGET_PATH::SCALE) {
+        ref.target = ANIM_TARGET_ON_NODE::SCALE;
+      } else if (target.path == CHANNEL_TARGET_PATH::TRANSLATION) {
+        ref.target = ANIM_TARGET_ON_NODE::POSITION;
+      }
+
+      int obj_id = id_offset_diff_gltf_to_internal_obj + target.gltf_node_idx;
+      attach_anim_chunk_ref_to_obj(obj_id, ref) ;
+    }
+  }
 }

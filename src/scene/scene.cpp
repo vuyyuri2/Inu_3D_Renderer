@@ -5,7 +5,7 @@
 #include "model_loading/model_internal.h"
 #include "utils/app_info.h"
 
-static std::vector<object_t> objs;
+std::vector<object_t> objs;
 static scene_t scene;
 
 extern std::vector<model_t> models;
@@ -47,6 +47,11 @@ void update_obj_model_mats() {
   }
 }
 
+void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref) {
+  object_t& obj = objs[obj_id];
+  obj.anim_chunk_refs.push_back(ref);
+}
+
 void render_scene_obj(int obj_id, bool parent) {
   object_t& obj = objs[obj_id];
   mat4 translate = create_matrix(1.0f);
@@ -86,3 +91,4 @@ void render_scene() {
 
   unbind_shader();
 }
+

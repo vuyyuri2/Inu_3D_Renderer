@@ -32,10 +32,14 @@ function(configure_project)
         src/utils/mats.cpp
         src/utils/quaternion.cpp
         src/utils/vectors.cpp
+        src/utils/inu_time.cpp
 
         src/scene/scene.cpp
         src/scene/transform.cpp
         src/scene/camera.cpp
+
+        src/animation/interpolation.cpp
+        src/animation/animation_internal.cpp
     )
 
     add_executable(${PROJECT_NAME} 
