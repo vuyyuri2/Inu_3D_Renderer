@@ -20,8 +20,6 @@ int register_anim_data_chunk(animation_data_chunk_t& data) {
 }
 
 void update_animations() {
-  // return;
-
   animation_globals.anim_time += app_info.delta_time;
   if (animation_globals.anim_time > animation_globals.anim_end_time) {
     animation_globals.anim_time = animation_globals.anim_start_time;
@@ -33,7 +31,7 @@ void update_animations() {
       animation_data_chunk_t* chunk = get_anim_data_chunk(ref.chunk_id);
 
       quaternion_t* rot_anim_data = static_cast<quaternion_t*>(chunk->keyframe_data); 
-		  vec3* position_data = static_cast<vec3*>(chunk->keyframe_data);
+		  vec3* vec3_data = static_cast<vec3*>(chunk->keyframe_data);
 
       int left_anim_frame_idx = -1;
       int right_anim_frame_idx = -1;
@@ -53,9 +51,12 @@ void update_animations() {
         }
         // position interpolation
 		    else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
-          obj.transform.pos = position_data[0];
+          obj.transform.pos = vec3_data[0];
 		    }
-
+        // scale interpolation
+		    else if (ref.target == ANIM_TARGET_ON_NODE::SCALE) {
+          obj.transform.scale = vec3_data[0];
+		    }
       } else if (left_anim_frame_idx == chunk->num_timestamps-1) {
         // OUTSIDE ANIMATION FRAMES, CLOSEST ONE IS THE LAST FRAME
 
@@ -65,7 +66,11 @@ void update_animations() {
         }
         // position interpolation
 		    else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
-          obj.transform.pos = position_data[left_anim_frame_idx];
+          obj.transform.pos = vec3_data[left_anim_frame_idx];
+		    }
+        // scale interpolation
+		    else if (ref.target == ANIM_TARGET_ON_NODE::SCALE) {
+          obj.transform.scale = vec3_data[left_anim_frame_idx];
 		    }
       } else {
         // ANIMATING BETWEEN FRAMES
@@ -84,9 +89,17 @@ void update_animations() {
 		    // position interpolation
 		    else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
 		      if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::LINEAR) {
-			      obj.transform.pos = vec3_linear(position_data[left_anim_frame_idx], position_data[right_anim_frame_idx], t);
+			      obj.transform.pos = vec3_linear(vec3_data[left_anim_frame_idx], vec3_data[right_anim_frame_idx], t);
 		      } else if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::STEP) {
-			      obj.transform.pos = position_data[left_anim_frame_idx];
+			      obj.transform.pos = vec3_data[left_anim_frame_idx];
+		      }
+		    }
+		    // scale interpolation
+		    else if (ref.target == ANIM_TARGET_ON_NODE::SCALE) {
+          if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::LINEAR) {
+			      obj.transform.scale = vec3_linear(vec3_data[left_anim_frame_idx], vec3_data[right_anim_frame_idx], t);
+		      } else if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::STEP) {
+			      obj.transform.scale = vec3_data[left_anim_frame_idx];
 		      }
 		    }
 		  }
