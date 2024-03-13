@@ -30,8 +30,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   }
 
   transform_t t;
-  // t.pos.z = 20.f;
-  t.pos.z = 1.f;
+  t.pos.z = 10.f;
   create_camera(t);
   init_online_renderer();
 
@@ -51,7 +50,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path =  "box_interleaved\\BoxInterleaved.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
-  const char* gltf_file_resources_folder_rel_path = "animated_cube\\AnimatedCube.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "animated_cube\\AnimatedCube.gltf";
+  const char* gltf_file_resources_folder_rel_path = "box_animated\\BoxAnimated.gltf";
   // const char* gltf_file_resources_folder_rel_path = "two_cylinder_engine\\2CylinderEngine.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";

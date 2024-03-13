@@ -23,3 +23,11 @@ quaternion_t spherical_linear(quaternion_t& qa, quaternion_t& qb, float t) {
 float linear(float a, float b, float t) {
   return (a*(1-t)) + (t*b);
 }
+
+vec3 vec3_linear(vec3 a, vec3 b, float t) {
+  vec3 i;
+  i.x = linear(a.x, b.x, t);
+  i.y = linear(a.y, b.y, t);
+  i.z = linear(a.z, b.z, t);
+  return i;
+}

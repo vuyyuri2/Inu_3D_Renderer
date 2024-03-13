@@ -33,7 +33,7 @@ animation_data_chunk_t* get_anim_data_chunk(int id);
 struct animation_globals_t {
   float anim_time = 0;
   float anim_start_time = 0;
-  float anim_end_time = 2;
+  float anim_end_time = 0;
 };
 
 void update_animations();
