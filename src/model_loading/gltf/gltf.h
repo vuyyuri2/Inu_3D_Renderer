@@ -107,6 +107,7 @@ enum class ACC_ELEMENT_TYPE {
   MAT3,
   MAT4
 };
+int get_num_components_for_gltf_element(ACC_ELEMENT_TYPE el);
 
 struct gltf_accessor_t {
   int buffer_view_idx = -1;
@@ -114,7 +115,6 @@ struct gltf_accessor_t {
   ACC_COMPONENT_TYPE component_type = ACC_COMPONENT_TYPE::BYTE;
   int count = -1;
   ACC_ELEMENT_TYPE element_type = ACC_ELEMENT_TYPE::SCALAR;
-  // std::string type;
 };
 
 struct gltf_image_t {

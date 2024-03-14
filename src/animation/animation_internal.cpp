@@ -4,6 +4,7 @@
 #include "scene/scene.h"
 #include "utils/log.h"
 #include "interpolation.h"
+#include "utils/general.h"
 
 extern std::vector<object_t> objs;
 
@@ -23,15 +24,14 @@ void update_animations() {
   animation_globals.anim_time += app_info.delta_time;
   if (animation_globals.anim_time > animation_globals.anim_end_time) {
     animation_globals.anim_time = animation_globals.anim_start_time;
-    printf("animation_globals.anim_time was reset\n");
   }
 
   for (object_t& obj : objs) {
     for (animation_chunk_data_ref_t& ref : obj.anim_chunk_refs) {
       animation_data_chunk_t* chunk = get_anim_data_chunk(ref.chunk_id);
 
-      quaternion_t* rot_anim_data = static_cast<quaternion_t*>(chunk->keyframe_data); 
-		  vec3* vec3_data = static_cast<vec3*>(chunk->keyframe_data);
+      quaternion_t* rot_anim_data = static_cast<quaternion_t*>((void*)chunk->keyframe_data); 
+		  vec3* vec3_data = static_cast<vec3*>((void*)chunk->keyframe_data);
 
       int left_anim_frame_idx = -1;
       int right_anim_frame_idx = -1;
@@ -40,6 +40,10 @@ void update_animations() {
           left_anim_frame_idx = i;
           right_anim_frame_idx = i+1;
         }
+      }
+
+      if (left_anim_frame_idx != -1) {
+        right_anim_frame_idx = clamp(right_anim_frame_idx, 0, chunk->num_timestamps-1);
       }
 
       if (left_anim_frame_idx == -1) {
@@ -78,7 +82,11 @@ void update_animations() {
         // ANIMATING BETWEEN FRAMES
         float frame_duration = chunk->timestamps[right_anim_frame_idx] - chunk->timestamps[left_anim_frame_idx];
         float time_into_frame = animation_globals.anim_time - chunk->timestamps[left_anim_frame_idx];
-        float t = time_into_frame / frame_duration;
+        float t = 0;
+        // if there is not just one frame
+        if (frame_duration != 0) {
+          t = time_into_frame / frame_duration;
+        }
 
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {

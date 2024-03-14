@@ -12,7 +12,7 @@ struct animation_data_chunk_t {
   int num_timestamps = -1;
   std::vector<float> timestamps; 
   ANIM_INTERPOLATION_MODE interpolation_mode = ANIM_INTERPOLATION_MODE::LINEAR;
-  void* keyframe_data = NULL;
+  float* keyframe_data = NULL;
 };
 
 enum class ANIM_TARGET_ON_NODE {

@@ -1050,6 +1050,28 @@ void gltf_preprocess(const char* filepath) {
   offset = 0;
 }
 
+int get_num_components_for_gltf_element(ACC_ELEMENT_TYPE el) {
+  int num_comps = 0;
+  if (el == ACC_ELEMENT_TYPE::SCALAR) {
+    num_comps = 1;
+  } else if (el == ACC_ELEMENT_TYPE::VEC3) {
+    num_comps = 3; 
+  } else if (el == ACC_ELEMENT_TYPE::VEC2) {
+    num_comps = 2;
+  } else if (el == ACC_ELEMENT_TYPE::VEC4) {
+    num_comps = 4;
+  } else if (el == ACC_ELEMENT_TYPE::MAT2) {
+    num_comps = 4;
+  } else if (el == ACC_ELEMENT_TYPE::MAT3) {
+    num_comps = 9;
+  }  else if (el == ACC_ELEMENT_TYPE::MAT4) {
+    num_comps = 16;
+  } else {
+    inu_assert_msg("this accessor element type is not supported");
+  }
+  return num_comps;
+}
+
 void* gltf_read_accessor_data(int accessor_idx) {
   inu_assert(accessor_idx != -1);
   gltf_accessor_t& acc = gltf_accessors[accessor_idx];
@@ -1083,7 +1105,9 @@ void* gltf_read_accessor_data(int accessor_idx) {
     }
   }
 
-  int size_of_element = 0;
+  int size_of_element = size_of_component * get_num_components_for_gltf_element(acc.element_type);
+
+#if 0
   if (acc.element_type == ACC_ELEMENT_TYPE::SCALAR) {
     size_of_element = size_of_component;
   } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC3) {
@@ -1101,6 +1125,7 @@ void* gltf_read_accessor_data(int accessor_idx) {
   } else {
     inu_assert_msg("this accessor element type is not supported");
   }
+#endif
 
   int size_of_acc_data = size_of_element * acc.count;
 
@@ -1398,10 +1423,46 @@ void gltf_load_file(const char* filepath) {
         float timestamp = *(timestamp_data + i);
         data_chunk.timestamps.push_back(timestamp);
       }
+      printf("timestamps info: num: %i start: %f  end: %f\n", data_chunk.num_timestamps, data_chunk.timestamps[0], data_chunk.timestamps[data_chunk.num_timestamps-1]);
       free(timestamp_data);
 
       // read keyframe data
-      data_chunk.keyframe_data = gltf_read_accessor_data(sampler.output_accessor_idx);
+      void* keyframe_data = gltf_read_accessor_data(sampler.output_accessor_idx);
+      gltf_accessor_t& key_frame_acc = gltf_accessors[sampler.output_accessor_idx];
+      if (key_frame_acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
+        data_chunk.keyframe_data = (float*)keyframe_data;
+      } else {
+        // need to convert keyframe data into floats
+        int num_components = key_frame_acc.count * get_num_components_for_gltf_element(key_frame_acc.element_type);
+        float* float_keyframe_data = (float*)malloc(sizeof(float) * num_components);
+        for (int c = 0; c < num_components; c++) {
+          if (key_frame_acc.component_type == ACC_COMPONENT_TYPE::BYTE) {
+            int8_t* byte_data = (int8_t*)keyframe_data;
+            int8_t int_val = byte_data[c];
+            float f = int_val / 127.0f;
+            float_keyframe_data[c] = fmax(f, -1.0f);
+          } else if (key_frame_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_BYTE) {
+            uint8_t* ubyte_data = (uint8_t*)keyframe_data;
+            uint8_t uint = ubyte_data[c];
+            float f = uint / 255.f;
+            float_keyframe_data[c] = f;
+          } else if (key_frame_acc.component_type == ACC_COMPONENT_TYPE::SHORT) {
+            int16_t* short_data = (int16_t*)keyframe_data;
+            int16_t s = short_data[c];
+            float f = s / 32767.0f;
+            float_keyframe_data[c] = fmax(f, -1.0f);
+          } else if (key_frame_acc.component_type == ACC_COMPONENT_TYPE::BYTE) {
+            uint16_t* ushort_data = (uint16_t*)keyframe_data;
+            uint16_t ushort = ushort_data[c];
+            float f = ushort / 65535.0f;
+            float_keyframe_data[c] = f;
+          } else {
+            inu_assert_msg("this component type for animation data is not supported");
+          }
+        }
+        data_chunk.keyframe_data = float_keyframe_data;
+        free(keyframe_data);
+      }
 
       int internal_chunk_id = register_anim_data_chunk(data_chunk);
       gltf_anim_sampler_id_to_internal_chunk_id[j] = internal_chunk_id;
