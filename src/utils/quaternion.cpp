@@ -1,6 +1,7 @@
 #include "quaternion.h"
 
 #include <math.h>
+#include <stdio.h>
 
 #include "log.h"
 #include "utils/mats.h"
@@ -157,4 +158,8 @@ quaternion_t norm_quat(quaternion_t& q) {
   inu_assert(mag != 0.f, "quaternion is of magntitude 0");
   quaternion_t t = quat_multiply_float(q, (1.f/mag));
   return t;
+}
+
+void print_quat(quaternion_t& q) {
+  printf("%f, %f, %f, %f\n", q.x, q.y, q.z, q.w);
 }

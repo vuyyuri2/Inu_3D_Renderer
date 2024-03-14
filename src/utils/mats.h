@@ -4,6 +4,7 @@
 
 struct mat4 {
   union {
+    float vals[16];
     struct {
       float m11,m21,m31,m41;
       float m12,m22,m32,m42;

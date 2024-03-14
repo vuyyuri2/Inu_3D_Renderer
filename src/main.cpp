@@ -127,7 +127,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     mat4 proj = proj_mat(60.f, 0.01f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
 
-
     mat4 view = get_view_mat();
     shader_set_mat4(material_t::associated_shader, "view", view);
  

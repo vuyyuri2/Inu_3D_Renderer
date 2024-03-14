@@ -154,6 +154,7 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
       return 0;
     }
     case WM_LBUTTONUP: {
+      window.input.left_mouse_up = true;
       break;
     }
     case WM_MOUSEMOVE: {
@@ -182,6 +183,7 @@ void poll_events() {
   window.input.scroll_wheel_delta = 0;
   window.input.middle_mouse_down = false;
   window.input.mouse_pos_diff = {0,0};
+  window.input.left_mouse_up = false;
   MSG msg{};
   while (PeekMessage(&msg, window.win32_wnd, 0, 0, 0)) {
     bool quit_msg = (GetMessage(&msg, NULL, 0, 0) == 0);

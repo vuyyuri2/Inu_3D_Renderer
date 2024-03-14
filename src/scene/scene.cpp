@@ -21,6 +21,7 @@ int create_object(transform_t& transform) {
 }
 
 void attach_model_to_obj(int obj_id, int model_id) {
+  printf("attached model id %i to obj: %i\n", model_id, obj_id);
   objs[obj_id].model_id = model_id;
 }
 
@@ -33,7 +34,17 @@ void set_obj_as_parent(int obj_id) {
 }
 
 void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
+  object_t& obj = objs[obj_id];
+  if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
+    int a = 5;
+  }
   mat4 model = get_model_matrix(objs[obj_id].transform);
+  // if (isnan(model.m11)
+  for (int i = 0; i < 16; i++) {
+    if (isnan(model.vals[i])) {
+      int a = 5;
+    }
+  }
   objs[obj_id].model_mat = mat_multiply_mat(running_model, model);
   for (int child_id : objs[obj_id].child_objects) {
     update_obj_model_mats_recursive(child_id, objs[obj_id].model_mat);
@@ -64,6 +75,10 @@ void render_scene_obj(int obj_id, bool parent) {
   shader_set_mat4(material_t::associated_shader, "model", final_model);
   if (obj.model_id != -1) {
     model_t& model = models[obj.model_id];
+    transform_t final_transform = get_transform_from_matrix(final_model);
+    if (isnan(final_transform.pos.x) || isnan(final_transform.pos.y) || isnan(final_transform.pos.z)) {
+      int a = 5;
+    }
     for (mesh_t& mesh : model.meshes) {
       material_t m = bind_material(mesh.mat_idx);
 

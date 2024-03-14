@@ -1423,7 +1423,7 @@ void gltf_load_file(const char* filepath) {
         float timestamp = *(timestamp_data + i);
         data_chunk.timestamps.push_back(timestamp);
       }
-      printf("timestamps info: num: %i start: %f  end: %f\n", data_chunk.num_timestamps, data_chunk.timestamps[0], data_chunk.timestamps[data_chunk.num_timestamps-1]);
+      // printf("timestamps info: num: %i start: %f  end: %f\n", data_chunk.num_timestamps, data_chunk.timestamps[0], data_chunk.timestamps[data_chunk.num_timestamps-1]);
       free(timestamp_data);
 
       // read keyframe data

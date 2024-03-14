@@ -7,6 +7,10 @@
 quaternion_t spherical_linear(quaternion_t& qa, quaternion_t& qb, float t) {
   float d = quat_dot(qa, qb);
   float d_abs = fabs(d);
+  // close enough such that we can basically consider the two quats the same
+  if (d_abs >= 0.95f) {
+    return qa;
+  }
   float a = acos(d_abs);
   float s = sgn(a);
 

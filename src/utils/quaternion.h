@@ -22,3 +22,4 @@ float quat_dot(quaternion_t& a, quaternion_t& b);
 quaternion_t quat_multiply_float(quaternion_t& q1, float f);
 quaternion_t quat_add_quat(quaternion_t& q1, quaternion_t& q2);
 quaternion_t norm_quat(quaternion_t& q);
+void print_quat(quaternion_t& q);
