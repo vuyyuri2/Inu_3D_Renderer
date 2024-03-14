@@ -69,17 +69,17 @@ mat4 get_view_mat() {
 
   mat4 rot_mat = create_matrix(1.0f);
 
-  rot_mat.sep_cols.first_col.x = right.x;
-  rot_mat.sep_cols.first_col.y = right.y;
-  rot_mat.sep_cols.first_col.z = right.z;
+  rot_mat.first_col.x = right.x;
+  rot_mat.first_col.y = right.y;
+  rot_mat.first_col.z = right.z;
 
-  rot_mat.sep_cols.second_col.x = up.x;
-  rot_mat.sep_cols.second_col.y = up.y;
-  rot_mat.sep_cols.second_col.z = up.z;
+  rot_mat.second_col.x = up.x;
+  rot_mat.second_col.y = up.y;
+  rot_mat.second_col.z = up.z;
 
-  rot_mat.sep_cols.third_col.x = neg_to_fp.x;
-  rot_mat.sep_cols.third_col.y = neg_to_fp.y;
-  rot_mat.sep_cols.third_col.z = neg_to_fp.z;
+  rot_mat.third_col.x = neg_to_fp.x;
+  rot_mat.third_col.y = neg_to_fp.y;
+  rot_mat.third_col.z = neg_to_fp.z;
 
   mat4 inv_rot = transpose(rot_mat);
   return mat_multiply_mat(inv_rot, inv_translate);

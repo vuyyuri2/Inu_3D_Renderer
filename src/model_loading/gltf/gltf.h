@@ -3,6 +3,7 @@
 #include "model_loading/model_internal.h"
 #include "utils/vectors.h"
 #include "utils/quaternion.h"
+#include "utils/mats.h"
 
 #include <vector>
 #include <string>
@@ -202,6 +203,7 @@ std::string gltf_parse_string();
 std::vector<int> gltf_parse_integer_array();
 vec4 gltf_parse_vec4();
 vec3 gltf_parse_vec3();
+mat4 gltf_parse_mat4();
 float gltf_parse_float();
 
 gltf_primitive_t gltf_parse_primitive();

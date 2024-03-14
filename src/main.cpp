@@ -11,6 +11,7 @@
 #include "utils/app_info.h"
 #include "utils/mats.h"
 #include "utils/quaternion.h"
+#include "scene/transform.h"
 
 extern window_t window;
 app_info_t app_info;
@@ -24,6 +25,34 @@ static float fb_height = 960 / 1.f;
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
   create_window(hInstance, fb_width, fb_height);
+
+#if 1
+
+#if 0
+  transform_t test1; 
+  test1.scale = {1,1,1};
+  mat4 m = get_model_matrix(test1);
+  transform_t retained = get_transform_from_matrix(m);
+#endif
+
+#if 0
+  transform_t test1; 
+  test1.scale = {2,1,3};
+  test1.pos = { -200,300,3 };
+  mat4 m = get_model_matrix(test1);
+  transform_t retained = get_transform_from_matrix(m);
+#endif
+
+#if 0
+  transform_t test1; 
+  test1.rot = create_quaternion_w_rot({ 1,1,1 }, -37.5f);
+  test1.scale = {2,1,3};
+  test1.pos = { -200,300,3 };
+  mat4 m = get_model_matrix(test1);
+  transform_t retained = get_transform_from_matrix(m);
+#endif
+
+#endif
 
   if (wcscmp(pCmdLine, L"running_in_vs") == 0) {
     app_info.running_in_vs = true;
@@ -51,7 +80,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "box_textured\\BoxTextured.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_textured_non_power_of_2\\BoxTexturedNonPowerOfTwo.gltf";
   // const char* gltf_file_resources_folder_rel_path = "animated_cube\\AnimatedCube.gltf";
-  const char* gltf_file_resources_folder_rel_path = "box_animated\\BoxAnimated.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "box_animated\\BoxAnimated.gltf";
   // const char* gltf_file_resources_folder_rel_path = "two_cylinder_engine\\2CylinderEngine.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_with_spaces\\Box With Spaces.gltf";
   // const char* gltf_file_resources_folder_rel_path = "box_vertex_colors\\BoxVertexColors.gltf";
@@ -60,8 +89,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
+
+  // TODO: animations on this are acting funky
   // const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "ferrari_enzo\\scene.gltf";
+
+  const char* gltf_file_resources_folder_rel_path = "ferrari_enzo\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "buggy\\Buggy.gltf";
 
   if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0
@@ -92,7 +124,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mat4 proj = proj_mat(60.f, 0.1f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+    mat4 proj = proj_mat(60.f, 0.01f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
     shader_set_mat4(material_t::associated_shader, "projection", proj);
 
 

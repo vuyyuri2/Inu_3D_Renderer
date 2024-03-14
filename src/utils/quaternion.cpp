@@ -75,6 +75,15 @@ vec3 get_rotated_position_raw(vec3& pos, quaternion_t& q) {
   return rotated_pos;
 }
 
+/*
+ ----                                                                                        ----
+ \ (a*a - b*b - c*c + d*d)   (2*a*b - 2*c*d)              (2*a*c + 2*b*d)                    0  \
+ \ (2*a*b + 2*c*d)           (-a*a + b*b - c*c + d*d)     (-2*a*d + 2*b*c)                   0  \
+ \ (2*a*c - 2*b*d)           (2*a*d + 2*b*c)              (-a*a - b*b + c*c + d*d)           0  \
+ \ 0                         0                            0                                  1  \
+ ----                                                                                        ----
+ */
+
 mat4 quat_as_mat4(quaternion_t& q) {
   mat4 m = create_matrix(1.0f);
 
@@ -83,17 +92,17 @@ mat4 quat_as_mat4(quaternion_t& q) {
   float c = q.z;
   float d = q.w;
 
-  m.sep_cols.first_col.x = a*a - b*b - c*c + d*d; 
-  m.sep_cols.first_col.y = 2*a*b + 2*c*d; 
-  m.sep_cols.first_col.z = 2*a*c - 2*b*d; 
+  m.first_col.x = a*a - b*b - c*c + d*d; 
+  m.first_col.y = 2*a*b + 2*c*d; 
+  m.first_col.z = 2*a*c - 2*b*d; 
 
-  m.sep_cols.second_col.x = 2*a*b - 2*c*d;
-  m.sep_cols.second_col.y = -a*a + b*b - c*c + d*d;
-  m.sep_cols.second_col.z = 2*a*d + 2*b*c;
+  m.second_col.x = 2*a*b - 2*c*d;
+  m.second_col.y = -a*a + b*b - c*c + d*d;
+  m.second_col.z = 2*a*d + 2*b*c;
 
-  m.sep_cols.third_col.x = 2*a*c + 2*b*d;
-  m.sep_cols.third_col.y = -2*a*d + 2*b*c;
-  m.sep_cols.third_col.z = -a*a - b*b + c*c + d*d;
+  m.third_col.x = 2*a*c + 2*b*d;
+  m.third_col.y = -2*a*d + 2*b*c;
+  m.third_col.z = -a*a - b*b + c*c + d*d;
 
   return m;
 }
@@ -137,4 +146,15 @@ quaternion_t quat_add_quat(quaternion_t& q1, quaternion_t& q2) {
   q.z = q1.z + q2.z;
   q.w = q1.w + q2.w;
   return q;
+}
+
+float quat_mag(quaternion_t& q) {
+  return quat_dot(q, q);
+}
+
+quaternion_t norm_quat(quaternion_t& q) {
+  float mag = quat_mag(q);
+  inu_assert(mag != 0.f, "quaternion is of magntitude 0");
+  quaternion_t t = quat_multiply_float(q, (1.f/mag));
+  return t;
 }

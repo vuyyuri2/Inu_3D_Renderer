@@ -27,4 +27,7 @@ struct vec4 {
   float y = 0;
   float z = 0;
   float w = 0;
+
+  vec4 operator/(float divider);
 };
+float vec4_length(vec4& v);

@@ -9,19 +9,19 @@ mat4::mat4() {
 
 mat4 create_matrix(float diag_val) {
   mat4 m;
-  m.sep_cols.first_col.x = diag_val;
-  m.sep_cols.second_col.y = diag_val;
-  m.sep_cols.third_col.z = diag_val;
-  m.sep_cols.fourth_col.w = diag_val;
+  m.first_col.x = diag_val;
+  m.second_col.y = diag_val;
+  m.third_col.z = diag_val;
+  m.fourth_col.w = diag_val;
   return m;
 }
 
 mat4 mat_multiply_mat(mat4& m1, mat4& m2) {
   mat4 res;
-  res.sep_cols.first_col = mat_multiply_vec(m1, m2.sep_cols.first_col);
-  res.sep_cols.second_col = mat_multiply_vec(m1, m2.sep_cols.second_col);
-  res.sep_cols.third_col = mat_multiply_vec(m1, m2.sep_cols.third_col);
-  res.sep_cols.fourth_col = mat_multiply_vec(m1, m2.sep_cols.fourth_col);
+  res.first_col = mat_multiply_vec(m1, m2.first_col);
+  res.second_col = mat_multiply_vec(m1, m2.second_col);
+  res.third_col = mat_multiply_vec(m1, m2.third_col);
+  res.fourth_col = mat_multiply_vec(m1, m2.fourth_col);
   return res;
 }
 
@@ -57,7 +57,7 @@ mat4 proj_mat(float fov, float near, float far, float aspect_ratio) {
 
   // brings to origin
   mat4 translate = create_matrix(1.0f);
-  translate.sep_cols.fourth_col.z = (far+near) / 2.f;
+  translate.fourth_col.z = (far+near) / 2.f;
 
   mat4 scale = create_matrix(1.0f);
   scale.cols[0].x = 1/right;

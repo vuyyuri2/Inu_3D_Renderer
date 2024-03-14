@@ -40,3 +40,16 @@ float length(vec3& v) {
 bool operator==(const vec3& v1, const vec3& v2) {
   return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z);
 }
+
+float vec4_length(vec4& v) {
+  return sqrt(v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w);
+}
+
+vec4 vec4::operator/(float divider) {
+  vec4 r;
+  r.x = this->x / divider;
+  r.y = this->y / divider;
+  r.z = this->z / divider;
+  r.w = this->w / divider;
+  return r;
+}

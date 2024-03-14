@@ -166,6 +166,24 @@ vec3 gltf_parse_vec3() {
   return v;
 }
 
+mat4 gltf_parse_mat4() {
+  inu_assert(gltf_peek() == '[');
+  gltf_eat();
+
+  mat4 m;
+  float* cur_float = &m.m11;
+  for (int i = 0; i < 16; i++) {
+    *cur_float = gltf_parse_float();
+    if (gltf_peek() == ',') gltf_eat();
+    cur_float++;
+  }
+
+  inu_assert(gltf_peek() == ']');
+  gltf_eat();
+
+  return m;
+}
+
 vec4 gltf_parse_vec4() {
   inu_assert(gltf_peek() == '[');
   gltf_eat();
@@ -225,6 +243,7 @@ void gltf_parse_node() {
   inu_assert(gltf_peek() == '{');
   gltf_eat();
   bool scale_parsed = false;
+  bool ignore_trs = false;
   while (gltf_peek() != '}') {
 
     std::string key = gltf_parse_string();
@@ -239,16 +258,32 @@ void gltf_parse_node() {
     } else if (key == "mesh") {
       node.gltf_mesh_handle = gltf_parse_integer();
     } else if (key == "translation") {
-      node.translation = gltf_parse_vec3();
+      vec3 t = gltf_parse_vec3();
+      if (!ignore_trs) {
+        node.translation = t;
+      }
     } else if (key == "scale") {
-      node.scale = gltf_parse_vec3();
-      scale_parsed = true;
+      vec3 s = gltf_parse_vec3();
+      if (!ignore_trs) {
+        node.scale = s;
+        scale_parsed = true;
+      }
     } else if (key == "rotation") {
       vec4 rot = gltf_parse_vec4();
-      node.rot.x = rot.x;
-      node.rot.y = rot.y;
-      node.rot.z = rot.z;
-      node.rot.w = rot.w;
+      if (!ignore_trs) {
+        node.rot.x = rot.x;
+        node.rot.y = rot.y;
+        node.rot.z = rot.z;
+        node.rot.w = rot.w;
+      }
+    } else if (key == "matrix") {
+      mat4 mat = gltf_parse_mat4();
+      transform_t t = get_transform_from_matrix(mat);
+      node.translation = t.pos;
+      node.scale = t.scale;
+      node.rot = t.rot;
+      scale_parsed = true;
+      ignore_trs = true;
     } else {
       gltf_skip_section();
     }

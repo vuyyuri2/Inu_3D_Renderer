@@ -48,6 +48,7 @@ void update_animations() {
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
           obj.transform.rot = rot_anim_data[0];
+          obj.transform.rot = norm_quat(obj.transform.rot);
         }
         // position interpolation
 		    else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
@@ -63,6 +64,7 @@ void update_animations() {
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
           obj.transform.rot = rot_anim_data[left_anim_frame_idx];
+          obj.transform.rot = norm_quat(obj.transform.rot);
         }
         // position interpolation
 		    else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
@@ -85,6 +87,7 @@ void update_animations() {
           } else if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::STEP) {
             obj.transform.rot = rot_anim_data[left_anim_frame_idx];
           }
+          obj.transform.rot = norm_quat(obj.transform.rot);
         }
 		    // position interpolation
 		    else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
