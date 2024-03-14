@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <unordered_map>
+#include <cmath>
 
 #include "utils/log.h"
 #include "utils/vectors.h"
@@ -275,6 +276,9 @@ void gltf_parse_node() {
         node.rot.y = rot.y;
         node.rot.z = rot.z;
         node.rot.w = rot.w;
+        if (is_nan_quat(node.rot)) {
+          int a = 5;
+        } 
       }
     } else if (key == "matrix") {
       mat4 mat = gltf_parse_mat4();
@@ -282,6 +286,10 @@ void gltf_parse_node() {
       node.translation = t.pos;
       node.scale = t.scale;
       node.rot = t.rot;
+      if (is_nan_quat(node.rot)) {
+        int a = 5;
+        transform_t t = get_transform_from_matrix(mat);
+      }
       scale_parsed = true;
       ignore_trs = true;
     } else {

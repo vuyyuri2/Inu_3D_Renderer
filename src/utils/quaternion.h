@@ -23,3 +23,4 @@ quaternion_t quat_multiply_float(quaternion_t& q1, float f);
 quaternion_t quat_add_quat(quaternion_t& q1, quaternion_t& q2);
 quaternion_t norm_quat(quaternion_t& q);
 void print_quat(quaternion_t& q);
+bool is_nan_quat(quaternion_t& q);

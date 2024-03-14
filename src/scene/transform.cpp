@@ -53,7 +53,12 @@ transform_t get_transform_from_matrix(mat4& m) {
   // float m11 = m.sep_cols.first_col.x / t.scale.x;
   // float m22 = m.sep_cols.second_col.y / t.scale.y;
   // float m33 = m.sep_cols.third_col.z / t.scale.z;
-  t.rot.w = sqrt((1+rot_mat.m11+rot_mat.m22+rot_mat.m33)/4.f);
+  float n = 1 + rot_mat.m11 + rot_mat.m22 + rot_mat.m33;
+  // solves issue where when n is really really small but not 0, sqrt() returns nan for some reason
+  if (fabs(n) < 0.01f) {
+    n = 0;
+  }
+  t.rot.w = sqrt(n/4.f);
   float d = t.rot.w;
 
   if (d != 0) {
@@ -62,17 +67,29 @@ transform_t get_transform_from_matrix(mat4& m) {
     t.rot.z = (rot_mat.m21 - rot_mat.m12) / (4*d);
   } else {
     // we have a 180 degree rotation
-    t.rot.z = sqrt((rot_mat.m11 + rot_mat.m22) / -2.f);
+    float k = rot_mat.m11 + rot_mat.m22;
+    if (fabs(k) < 0.01f) {
+      k = 0;
+    }
+    t.rot.z = sqrt(k / -2.f);
     if (t.rot.z != 0) {
       float c = t.rot.z;
       t.rot.x = rot_mat.m13 / (2*c);
       t.rot.y = rot_mat.m23 / (2*c);
     } else {
-      t.rot.y = sqrt((rot_mat.m11 + rot_mat.m33) / -2.f);
+      float l = rot_mat.m11 + rot_mat.m33;
+      if (fabs(l) < 0.01f) {
+        l = 0;
+      }
+      t.rot.y = sqrt(l / -2.f);
       if (t.rot.y != 0) {
         t.rot.x = rot_mat.m21 / (2 * t.rot.y);
       } else {
-        t.rot.x = sqrt((rot_mat.m22 + rot_mat.m33) / -2.f);
+        float h = rot_mat.m22 + rot_mat.m33;
+        if (fabs(h) < 0.01f) {
+          h = 0;
+        }
+        t.rot.x = sqrt(h / -2.f);
       }
     }
   }
