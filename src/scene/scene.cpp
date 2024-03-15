@@ -65,12 +65,12 @@ static std::unordered_set<int> updated_idxs;
 void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
   object_t& obj = objs[obj_id];
   if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
-    int a = 5;
+    inu_assert_msg("obj transform pos is nan");
   }
   mat4 model = get_model_matrix(objs[obj_id].transform);
   for (int i = 0; i < 16; i++) {
     if (isnan(model.vals[i])) {
-      int a = 5;
+      inu_assert_msg("obj model matrix from transform is nan");
     }
   }
   objs[obj_id].model_mat = mat_multiply_mat(running_model, model);
@@ -194,7 +194,7 @@ void render_scene_obj(int obj_id, bool parent) {
 
       transform_t final_transform = get_transform_from_matrix(final_model);
       if (isnan(final_transform.pos.x) || isnan(final_transform.pos.y) || isnan(final_transform.pos.z)) {
-        int a = 5;
+        inu_assert_msg("final transform is nan");
       }
     }
 

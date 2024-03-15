@@ -123,21 +123,16 @@ void update_animations() {
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
           if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::LINEAR) {
-            // printf("spherical lin    left quat: ");
-            // print_quat(rot_anim_data[left_anim_frame_idx]);
-            // printf("right quat: ");
-            // print_quat(rot_anim_data[right_anim_frame_idx]);
-              if (strstr(obj.name.c_str(), "neck") != NULL) {
-                  int a = 5;
-            }
             obj.transform.rot = spherical_linear(rot_anim_data[left_anim_frame_idx], rot_anim_data[right_anim_frame_idx], t);
 
             float quat_len = quat_mag(obj.transform.rot);
-            if (isnan(obj.transform.rot.x) || isnan(obj.transform.rot.y) || isnan(obj.transform.rot.z) || isnan(obj.transform.rot.w) || quat_len > 1.02f) {
-              int a = 5;
+            if (isnan(obj.transform.rot.x) || isnan(obj.transform.rot.y) || isnan(obj.transform.rot.z) || isnan(obj.transform.rot.w)) {
+              inu_assert_msg("obj transform rot is nan");
+#if 0
               quaternion_t l = rot_anim_data[left_anim_frame_idx];
               quaternion_t r = rot_anim_data[right_anim_frame_idx];
               quaternion_t test = spherical_linear(l, r, t);
+#endif
             }
               
 
@@ -151,7 +146,7 @@ void update_animations() {
 		      if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::LINEAR) {
 			      obj.transform.pos = vec3_linear(vec3_data[left_anim_frame_idx], vec3_data[right_anim_frame_idx], t);
             if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
-              int a = 5;
+              inu_assert_msg("obj transform pos is nan");
 			        vec3 l = vec3_data[left_anim_frame_idx];
 			        vec3 r = vec3_data[right_anim_frame_idx];
 			        vec3 f = vec3_linear(l, r, t);
@@ -173,10 +168,10 @@ void update_animations() {
     vec3 diff = {obj.transform.pos.x - orig.x, obj.transform.pos.y - orig.y, obj.transform.pos.z - orig.z };
     inu_assert(length(obj.transform.scale) != 0, "scale is 0");
     if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
-      int a = 5;
+      inu_assert_msg("obj transform pos is nan");
     }
     if (isnan(obj.transform.rot.x) || isnan(obj.transform.rot.y) || isnan(obj.transform.rot.z) || isnan(obj.transform.rot.w)) {
-      int a = 5;
+      inu_assert_msg("obj transform rot is nan");
     }
   }
 

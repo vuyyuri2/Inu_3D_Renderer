@@ -7,7 +7,6 @@
 quaternion_t spherical_linear(quaternion_t& qa, quaternion_t& qb, float t) {
   float d = quat_dot(qa, qb);
   float d_abs = fabs(d);
-  // if (d_abs >= 0.9995f) {
   // close enough such that we can basically consider the two quats the same
   // remember the angle between these two quats is the half angle of the acc rot slerp from the point's view
   if (d_abs >= 0.9995f) {
@@ -17,7 +16,6 @@ quaternion_t spherical_linear(quaternion_t& qa, quaternion_t& qb, float t) {
     quaternion_t inter = quat_add_quat(qa_scaled, qb_scaled);
     return inter;
   }
-#if 1
   float a = acos(d_abs);
   float s = sgn(d);
 
@@ -31,33 +29,6 @@ quaternion_t spherical_linear(quaternion_t& qa, quaternion_t& qb, float t) {
 
   quaternion_t inter = quat_add_quat(qa_scaled, qb_scaled);
   return inter;
-#else
-  float half_theta = acos(d);
-  float sin_half_theta = sqrt(1-(d*d));
-  float s = sgn(d);
-
-#if 0
-  float scale_of_qa = -1;
-  float scale_of_qb = -1;
-
-  if (fabs(sin_half_theta) < 0.001f) {
-    scale_of_qa = 1-t; 
-    scale_of_qb = t;
-  } else {
-    scale_of_qa = sin(half_theta * (1-t)) / sin_half_theta;
-    scale_of_qb = sin(half_theta*t) / sin_half_theta;
-  }
-#else
-  // situation where half_theta is near 0 or pi is handle with the d_abs if statement
-  float scale_of_qa = sin(half_theta * (1-t)) / sin_half_theta;
-  float scale_of_qb = s * sin(half_theta*t) / sin_half_theta;
-#endif
-
-  quaternion_t qa_scaled = quat_multiply_float(qa, scale_of_qa);
-  quaternion_t qb_scaled = quat_multiply_float(qb, scale_of_qb);
-  quaternion_t inter = quat_add_quat(qa_scaled, qb_scaled);
-  return inter;
-#endif
 }
 
 float linear(float a, float b, float t) {
