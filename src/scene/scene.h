@@ -9,7 +9,7 @@
 #include "transform.h"
 #include "animation/animation_internal.h"
 
-#define BONES_PER_SKIN_LIMIT 20
+#define BONES_PER_SKIN_LIMIT 40
 
 struct skin_t {
   int id = -1;

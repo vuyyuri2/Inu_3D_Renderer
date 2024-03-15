@@ -120,7 +120,7 @@ void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref) {
   quaternion_t* q_anim_data = (quaternion_t*)data->keyframe_data;
   printf("\n\nobj name: %s\n", obj.name.c_str());
   for (int i = 0; i < data->num_timestamps; i++) {
-    printf("timestamp: %f ", data->timestamps[i]);
+    printf("timestamp: %f frame: %i ", data->timestamps[i], i+1);
     if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
       printf("rot: ");
       print_quat(q_anim_data[i]);
@@ -198,20 +198,17 @@ void render_scene_obj(int obj_id, bool parent) {
       }
     }
 
-    // if (obj.is_joint_obj && strstr(obj.name.c_str(), "neck") != NULL) {
-    if (true) {
-      for (mesh_t& mesh : model.meshes) {
-        material_t& m = bind_material(mesh.mat_idx);
+    for (mesh_t& mesh : model.meshes) {
+      material_t& m = bind_material(mesh.mat_idx);
 
-        if (app_info.render_only_textured && m.base_color_tex.tex_handle == -1) {
-          continue;
-        }
-
-        bind_vao(mesh.vao);
-        draw_ebo(mesh.ebo);
-        unbind_vao();
-        unbind_ebo();
+      if (app_info.render_only_textured && m.base_color_tex.tex_handle == -1) {
+        continue;
       }
+
+      bind_vao(mesh.vao);
+      draw_ebo(mesh.ebo);
+      unbind_vao();
+      unbind_ebo();
     }
   }
 
@@ -245,7 +242,9 @@ int register_skin(skin_t& skin) {
   skin.id = skins.size();
   for (int node_idx : skin.joint_obj_ids) {
     objs[node_idx].is_joint_obj = true;
+#if 0
     objs[node_idx].model_id = skin_t::BONE_MODEL_ID;
+#endif
   }
   skins.push_back(skin);
   return skin.id;

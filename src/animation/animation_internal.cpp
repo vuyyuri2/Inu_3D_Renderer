@@ -19,7 +19,7 @@ extern window_t window;
 static std::vector<animation_data_chunk_t> anim_data_chunks;
 
 static std::unordered_set<float> timestamps_set;
-static int idx = 30;
+static int idx = 0;
 static std::vector<float> timestamps;
 
 animation_data_chunk_t* get_anim_data_chunk(int data_id) {

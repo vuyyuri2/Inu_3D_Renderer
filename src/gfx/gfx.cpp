@@ -270,6 +270,7 @@ int create_material(vec4 color, material_image_t base_color_img) {
 	material_t mat;
 	mat.base_color_tex = base_color_img;
 	mat.color = color;
+	mat.color.w = 1;
 	materials.push_back(mat);
 	return materials.size()-1;
 }
@@ -283,9 +284,13 @@ material_t bind_material(int mat_idx) {
 		texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
 		shader_set_int(shader, "base_color_tex.samp", texture.tex_slot);
 		shader_set_int(shader, "base_color_tex.tex_id", mat.base_color_tex.tex_coords_idx);
+		shader_set_int(shader, "use_mesh_color", 0);
 	} else {
 		shader_set_int(shader, "base_color_tex.samp", 0);
 		shader_set_int(shader, "base_color_tex.tex_id", -1);
+		shader_set_int(shader, "use_mesh_color", 1);
+		vec3 c = {mat.color.x, mat.color.y, mat.color.z};
+		shader_set_vec3(shader, "mesh_color", c);
 	}
 
   bind_shader(shader);

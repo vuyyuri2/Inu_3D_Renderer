@@ -1390,19 +1390,24 @@ void gltf_load_file(const char* filepath) {
         uint16_t* u16_joint_data = (uint16_t*)joint_data;
         for (int j = 0; j < vert_count; j++) {
           vertex_t& vert = mesh.vertices[j];
+          // vert.joints[0] = 3;
+          // continue;
           for (int k = 0; k < 4; k++) {
             int idx_into_joint_data = (j*4) + k;
             unsigned int joint_idx;
+            // issue i think has to do with joint indicies or joint weights
             if (joint_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_BYTE) {
-              joint_idx = (unsigned int)u8_joint_data[idx_into_joint_data];
+              joint_idx = static_cast<unsigned int>(u8_joint_data[idx_into_joint_data]);
             } else if (joint_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_SHORT) {
-              joint_idx = (unsigned int)u16_joint_data[idx_into_joint_data];
+              joint_idx = static_cast<unsigned int>(u16_joint_data[idx_into_joint_data]);
             } else {
               inu_assert_msg("invalid type for joint data");
             }
             inu_assert(joint_idx >= 0);
+            // joint_idx = 3;
             vert.joints[k] = joint_idx;
           }
+          int a = 5;
         }
         free(joint_data);
         inu_assert(prim.attribs.weights_0_accessor_idx != -1, "weights must be specified when joints are");
@@ -1424,7 +1429,8 @@ void gltf_load_file(const char* filepath) {
         uint16_t* u16_weights_data = (uint16_t*)weights_data;
         for (int j = 0; j < vert_count; j++) {
           vertex_t& vert = mesh.vertices[j];
-
+          // vert.weights[0] = 1.f;
+          // continue;
           if (weights_acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
             float f_sum = 0;
             for (int k = 0; k < 4; k++) {
@@ -1455,7 +1461,21 @@ void gltf_load_file(const char* filepath) {
           }
 #undef idx_into_weights_data
 
+          std::unordered_set<unsigned int> seen;
+          for (int k = 0; k < 4; k++) {
+            if (vert.weights[k] > 0) {
+              if (seen.find(vert.joints[k]) == seen.end()) {
+                seen.insert(vert.joints[k]);
+              } else {
+                inu_assert_msg("same joint index has multiple non-zero weights");
+              }
+            }
+          }
+
         }
+
+
+
       }
 
 
