@@ -35,6 +35,7 @@ static std::vector<gltf_texture_t> gltf_textures;
 static std::vector<gltf_sampler_t> gltf_samplers;
 static std::vector<gltf_material_t> gltf_materials;
 static std::vector<gltf_animation_t> gltf_animations;
+static std::vector<gltf_skin_t> gltf_skins;
 
 static std::unordered_map<int, int> gltf_mesh_id_to_internal_model_id;
 
@@ -292,12 +293,17 @@ void gltf_parse_node() {
       }
       scale_parsed = true;
       ignore_trs = true;
+    } else if (key == "skin") {
+      node.gltf_skin_idx = gltf_parse_integer();
+    } else if (key == "name") {
+      node.name = gltf_parse_string();
     } else {
       gltf_skip_section();
     }
     if (gltf_peek() == ',') gltf_eat();
   }
   gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
   
   if (!scale_parsed) {
     node.scale.x = 1;
@@ -361,6 +367,10 @@ gltf_attributes_t gltf_parse_attribs() {
       }
     } else if (key == "COLOR_0") {
       attrib.color_0_accessor_idx = gltf_parse_integer();
+    } else if (key == "JOINTS_0") {
+      attrib.joints_0_accessor_idx = gltf_parse_integer();
+    } else if (key == "WEIGHTS_0") {
+      attrib.weights_0_accessor_idx = gltf_parse_integer();
     } else {
       // not sure if this works for individual elements
       gltf_skip_section();
@@ -970,6 +980,45 @@ void gltf_parse_animations_section() {
   if (gltf_peek() == ',') gltf_eat();
 }
 
+void gltf_parse_skin() {
+  gltf_skin_t skin;
+
+  inu_assert(gltf_peek() == '{');
+  gltf_eat();
+  while (gltf_peek() != '}') {
+    std::string key = gltf_parse_string();
+    inu_assert(gltf_peek() == ':');
+    gltf_eat();
+    if (key == "inverseBindMatrices") {
+      skin.inverse_bind_matrix_acc_idx = gltf_parse_integer();
+    } else if (key == "skeleton") {
+      skin.upper_most_joint_node_idx = gltf_parse_integer();
+    } else if (key == "joints") {
+      skin.joint_node_idxs = gltf_parse_integer_array();
+    } else if (key == "name") {
+      skin.name = gltf_parse_string();
+    } else {
+      gltf_skip_section();
+    }
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+  gltf_skins.push_back(skin);
+}
+
+void gltf_parse_skins_section() {
+  inu_assert(gltf_peek() == '[');
+  gltf_eat();
+
+  while (gltf_peek() != ']') {
+    gltf_parse_skin();
+    if (gltf_peek() == ',') gltf_eat();
+  }
+  gltf_eat();
+  if (gltf_peek() == ',') gltf_eat();
+}
+
 void gltf_parse_section() {
 
   std::string key = gltf_parse_string();
@@ -1003,6 +1052,8 @@ void gltf_parse_section() {
     gltf_parse_materials_section();
   } else if (key == "animations") {
     gltf_parse_animations_section();
+  } else if (key == "skins") {
+    gltf_parse_skins_section();
   } else {
     gltf_skip_section();
   }
@@ -1114,27 +1165,6 @@ void* gltf_read_accessor_data(int accessor_idx) {
   }
 
   int size_of_element = size_of_component * get_num_components_for_gltf_element(acc.element_type);
-
-#if 0
-  if (acc.element_type == ACC_ELEMENT_TYPE::SCALAR) {
-    size_of_element = size_of_component;
-  } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC3) {
-    size_of_element = size_of_component * 3; 
-  } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC2) {
-    size_of_element = size_of_component * 2;
-  } else if (acc.element_type == ACC_ELEMENT_TYPE::VEC4) {
-    size_of_element = size_of_component * 4;
-  } else if (acc.element_type == ACC_ELEMENT_TYPE::MAT2) {
-    size_of_element = size_of_component * 4;
-  } else if (acc.element_type == ACC_ELEMENT_TYPE::MAT3) {
-    size_of_element = size_of_component * 9;
-  }  else if (acc.element_type == ACC_ELEMENT_TYPE::MAT4) {
-    size_of_element = size_of_component * 16;
-  } else {
-    inu_assert_msg("this accessor element type is not supported");
-  }
-#endif
-
   int size_of_acc_data = size_of_element * acc.count;
 
   inu_assert(size_of_acc_data <= buffer_view.byte_length);
@@ -1205,10 +1235,10 @@ void gltf_load_file(const char* filepath) {
   memset(folder_path, 0, 256);
   memcpy(folder_path, filepath, last_slash - filepath);
 
-  // 1. preprocess step
+  // 1. PREPROCESS
   gltf_preprocess(filepath);
 
-  // 2. load meta data step
+  // 2. PARSE FILE
   inu_assert('{' == gltf_peek(), "initial character is not opening curly brace");
   gltf_eat();
 
@@ -1219,7 +1249,7 @@ void gltf_load_file(const char* filepath) {
   free(data);
   data = NULL;
 
-  // 3. load into internal format/ load raw data
+  // 3. LOAD INTO INTERNAL FORMAT/ LOAD RAW DATA
   for (gltf_material_t& mat : gltf_materials) {
     material_image_t base_color_img = gltf_mat_img_to_internal_mat_img(mat.pbr.base_color_tex_info);
     create_material(mat.pbr.base_color_factor, base_color_img);
@@ -1234,6 +1264,8 @@ void gltf_load_file(const char* filepath) {
     for (gltf_primitive_t& prim : gltf_mesh.primitives) {
       mesh_t mesh;
 
+      int vert_count = -1;
+
       inu_assert(prim.attribs.positions_accessor_idx != -1, "mesh must specify positions");
       void* positions_data = gltf_read_accessor_data(prim.attribs.positions_accessor_idx);
       gltf_accessor_t& acc = gltf_accessors[prim.attribs.positions_accessor_idx];
@@ -1243,6 +1275,7 @@ void gltf_load_file(const char* filepath) {
         if (mesh.vertices.size() == 0) {
           mesh.vertices.resize(acc.count);
         }
+        vert_count = acc.count;
         for (int i = 0; i < acc.count; i++) {
           vertex_t& vert = mesh.vertices[i];
           vert.position.x = pos_data[i].x;
@@ -1273,7 +1306,7 @@ void gltf_load_file(const char* filepath) {
         }
         free(index_data);
       } else {
-        for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
+        for (unsigned int i = 0; i < vert_count; i++) {
           mesh.indicies.push_back(i);
         }
       }
@@ -1289,7 +1322,7 @@ void gltf_load_file(const char* filepath) {
           // can do direct static cast b/c vec3 is made up of floats
           vec3* col_data = static_cast<vec3*>(color_data);
           inu_assert(acc.count == mesh.vertices.size(), "count of vertices for color data different from count of actual loading in vertices from position data");
-          for (int i = 0; i < acc.count; i++) {
+          for (int i = 0; i < vert_count; i++) {
             vertex_t& vert = mesh.vertices[i];
             vert.color = col_data[i];
           }
@@ -1298,7 +1331,7 @@ void gltf_load_file(const char* filepath) {
         }
         free(color_data);
       } else {
-        for (int i = 0; i < mesh.vertices.size(); i++) {
+        for (int i = 0; i < vert_count; i++) {
           vertex_t& vert = mesh.vertices[i];
           vert.color.x = 1;
           vert.color.y = 1;
@@ -1325,6 +1358,85 @@ void gltf_load_file(const char* filepath) {
         free(tex_data_void);
       }
 
+      if (prim.attribs.joints_0_accessor_idx != -1) {
+        gltf_accessor_t& joint_acc = gltf_accessors[prim.attribs.joints_0_accessor_idx];
+        inu_assert(joint_acc.count == vert_count);
+        inu_assert(joint_acc.element_type == ACC_ELEMENT_TYPE::VEC4);
+        void* joint_data = gltf_read_accessor_data(prim.attribs.joints_0_accessor_idx);
+        uint8_t* u8_joint_data = (uint8_t*)joint_data;
+        uint16_t* u16_joint_data = (uint16_t*)joint_data;
+        for (int j = 0; j < vert_count; j++) {
+          vertex_t& vert = mesh.vertices[j];
+          for (int k = 0; k < 4; k++) {
+            int idx_into_joint_data = (j*4) + k;
+            unsigned int joint_idx;
+            if (joint_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_BYTE) {
+              joint_idx = (unsigned int)u8_joint_data[idx_into_joint_data];
+            } else if (joint_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_SHORT) {
+              joint_idx = (unsigned int)u16_joint_data[idx_into_joint_data];
+            } else {
+              inu_assert_msg("invalid type for joint data");
+            }
+            inu_assert(joint_idx >= 0);
+            vert.joints[k] = joint_idx;
+            inu_assert(joint_idx < 2);
+          }
+        }
+        free(joint_data);
+        inu_assert(prim.attribs.weights_0_accessor_idx != -1, "weights must be specified when joints are");
+      }
+
+#define idx_into_weights_data ((j*4)+k)
+      if (prim.attribs.weights_0_accessor_idx != -1) {
+        gltf_accessor_t& weights_acc = gltf_accessors[prim.attribs.weights_0_accessor_idx];
+        inu_assert(weights_acc.count == vert_count);
+        inu_assert(weights_acc.element_type == ACC_ELEMENT_TYPE::VEC4);
+        inu_assert(
+          weights_acc.component_type == ACC_COMPONENT_TYPE::FLOAT ||
+          weights_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_BYTE ||
+          weights_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_SHORT
+        );
+        void* weights_data = gltf_read_accessor_data(prim.attribs.weights_0_accessor_idx);
+        float* f_weights_data = (float*)weights_data;
+        uint8_t* u8_weights_data = (uint8_t*)weights_data;
+        uint16_t* u16_weights_data = (uint16_t*)weights_data;
+        for (int j = 0; j < vert_count; j++) {
+          vertex_t& vert = mesh.vertices[j];
+
+          if (weights_acc.component_type == ACC_COMPONENT_TYPE::FLOAT) {
+            float f_sum = 0;
+            for (int k = 0; k < 4; k++) {
+              f_sum += f_weights_data[idx_into_weights_data];
+            }
+            inu_assert(f_sum >= 0.95f);
+            for (int k = 0; k < 4; k++) {
+              vert.weights[k] = f_weights_data[idx_into_weights_data];
+            }
+          } else if (weights_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_BYTE) {
+            uint8_t u8_sum = 0;
+            for (int k = 0; k < 4; k++) {
+              u8_sum += u8_weights_data[idx_into_weights_data];
+            }
+            inu_assert(u8_sum == 255);
+            for (int k = 0; k < 4; k++) {
+              vert.weights[k] = static_cast<float>(u8_weights_data[idx_into_weights_data]) / 255.f;
+            }
+          } else if (weights_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_SHORT) {
+            uint16_t u16_sum = 0;
+            for (int k = 0; k < 4; k++) {
+              u16_sum += u16_weights_data[idx_into_weights_data];
+            }
+            inu_assert(u16_sum == 65535);
+            for (int k = 0; k < 4; k++) {
+              vert.weights[k] = static_cast<float>(u16_weights_data[idx_into_weights_data]) / 65535.f;
+            }
+          }
+#undef idx_into_weights_data
+
+        }
+      }
+
+
       if (prim.material_idx != -1) {
         mesh.mat_idx = prim.material_idx;
       } else {
@@ -1339,7 +1451,7 @@ void gltf_load_file(const char* filepath) {
       }
 
       mesh.vao = create_vao();
-      mesh.vbo = create_vbo((float*)mesh.vertices.data(), mesh.vertices.size() * sizeof(vertex_t));
+      mesh.vbo = create_vbo((void*)mesh.vertices.data(), mesh.vertices.size() * sizeof(vertex_t));
       mesh.ebo = create_ebo(mesh.indicies.data(), mesh.indicies.size() * sizeof(unsigned int));
 
       vao_enable_attribute(mesh.vao, mesh.vbo, 0, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, position));
@@ -1348,6 +1460,8 @@ void gltf_load_file(const char* filepath) {
       vao_enable_attribute(mesh.vao, mesh.vbo, 3, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex2));
       vao_enable_attribute(mesh.vao, mesh.vbo, 4, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex3));
       vao_enable_attribute(mesh.vao, mesh.vbo, 5, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, color));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 6, 4, GL_UNSIGNED_INT, sizeof(vertex_t), offsetof(vertex_t, joints));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 7, 4, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, weights));
       vao_bind_ebo(mesh.vao, mesh.ebo);
       
       model.meshes.push_back(mesh);
@@ -1358,8 +1472,8 @@ void gltf_load_file(const char* filepath) {
     gltf_mesh_idx++; 
   } 
 
-  // 4. store objects in internal node hierarchy
-  int id_offset_diff_gltf_to_internal_obj = -1;
+  // 4. STORE OBJECTS IN INTERNAL NODE HIERARCHY
+  int offset_gltf_node_to_internal_obj_id = -1;
   for (int i = 0; i < gltf_nodes.size(); i++) {
     gltf_node_t& node = gltf_nodes[i];
 
@@ -1385,25 +1499,70 @@ void gltf_load_file(const char* filepath) {
     t.rot.w = node.rot.w;
 
     int obj_id = create_object(t);
-    id_offset_diff_gltf_to_internal_obj = obj_id - i;
+    offset_gltf_node_to_internal_obj_id = obj_id - i;
     if (node.gltf_mesh_handle != -1) {
       attach_model_to_obj(obj_id, gltf_mesh_id_to_internal_model_id[node.gltf_mesh_handle]);
     }
+
+    if (node.gltf_skin_idx != -1) {
+      inu_assert(node.child_node_idxs.size() == 0, "currently do not support children for skinned objects");
+    }
+
     for (int child_id : node.child_node_idxs) {
-      attach_child_obj_to_obj(obj_id, child_id + id_offset_diff_gltf_to_internal_obj);
+      attach_child_obj_to_obj(obj_id, child_id + offset_gltf_node_to_internal_obj_id);
+    } 
+    
+  }
+
+  // parse skins/skeletons
+  int offset_gltf_skin_to_internal_skin_id = -1;
+  for (int i = 0; i < gltf_skins.size(); i++) {
+    gltf_skin_t& gltf_skin = gltf_skins[i];
+    skin_t skin; 
+    inu_assert(gltf_skin.joint_node_idxs.size() <= BONES_PER_SKIN_LIMIT, "too many bones for this skin");
+    skin.num_bones = gltf_skin.joint_node_idxs.size();
+    for (int j = 0; j < gltf_skin.joint_node_idxs.size(); j++) {
+      int gltf_node_idx = gltf_skin.joint_node_idxs[j];
+      skin.joint_obj_ids[j] = gltf_node_idx + offset_gltf_node_to_internal_obj_id;
+    }
+    skin.upper_most_joint_node_idx = gltf_skin.upper_most_joint_node_idx + offset_gltf_node_to_internal_obj_id;
+    skin.name = gltf_skin.name;
+    if (gltf_skin.inverse_bind_matrix_acc_idx != -1) {
+      gltf_accessor_t& acc = gltf_accessors[gltf_skin.inverse_bind_matrix_acc_idx];
+      inu_assert(acc.count >= gltf_skin.joint_node_idxs.size(), "there must be at least the same number of inverse bind matricies as joints in a skin");
+      mat4* inverse_bind_mat_data = (mat4*)gltf_read_accessor_data(gltf_skin.inverse_bind_matrix_acc_idx);
+      for (int j = 0; j < acc.count; j++) {
+        mat4& mat = inverse_bind_mat_data[j];
+        skin.inverse_bind_matricies[j] = mat;
+      }
+      free(inverse_bind_mat_data);
+    }
+    int skin_id = register_skin(skin);
+    offset_gltf_skin_to_internal_skin_id = skin_id - i; 
+  }
+
+  // attach skins and skeletons to objects
+  for (int i = 0; i < gltf_nodes.size(); i++) {
+    gltf_node_t& node = gltf_nodes[i];
+    if (node.gltf_skin_idx != -1) {
+      int obj_id = i + offset_gltf_node_to_internal_obj_id;
+      int skin_id = node.gltf_skin_idx + offset_gltf_skin_to_internal_skin_id;
+      attach_skin_to_obj(obj_id, skin_id);
     }
   }
 
   // mark parent objects
   inu_assert(active_scene != -1, "active scene not defined");
   for (int gltf_node_idx : gltf_scenes[active_scene].root_nodes) {
-    set_obj_as_parent(gltf_node_idx + id_offset_diff_gltf_to_internal_obj);
+    set_obj_as_parent(gltf_node_idx + offset_gltf_node_to_internal_obj_id);
   }
+
+  populate_parent_field_of_nodes();
 
   // update object transforms
   update_obj_model_mats();
 
-  // 5. animation processing
+  // 5. ANIMATION PROCESSING
   for (gltf_animation_t& gltf_anim : gltf_animations) {
 
     // process anim sampler data
@@ -1491,8 +1650,11 @@ void gltf_load_file(const char* filepath) {
         ref.target = ANIM_TARGET_ON_NODE::POSITION;
       }
 
-      int obj_id = id_offset_diff_gltf_to_internal_obj + target.gltf_node_idx;
+      int obj_id = offset_gltf_node_to_internal_obj_id + target.gltf_node_idx;
       attach_anim_chunk_ref_to_obj(obj_id, ref) ;
     }
   }
+
+
+
 }

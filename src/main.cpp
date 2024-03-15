@@ -93,7 +93,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "ferrari_enzo\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "buggy\\Buggy.gltf";
   // const char* gltf_file_resources_folder_rel_path = "stylized_mushrooms\\scene.gltf";
-  const char* gltf_file_resources_folder_rel_path = "little_chestnut\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "little_chestnut\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "milk_truck\\CesiumMilkTruck.gltf";
+  const char* gltf_file_resources_folder_rel_path = "rigged_simple\\RiggedSimple.gltf";
 
   if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0
       || strcmp(gltf_file_resources_folder_rel_path, "ferrari_enzo\\scene.gltf") == 0) {
@@ -129,6 +131,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     mat4 view = get_view_mat();
     shader_set_mat4(material_t::associated_shader, "view", view);
  
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     render_scene();
 
     // online rendering pass

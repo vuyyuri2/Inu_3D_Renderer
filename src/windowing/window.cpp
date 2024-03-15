@@ -135,6 +135,7 @@ void create_window(HINSTANCE h_instance, int width, int height) {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   // glFrontFace(GL_CCW);
+  // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {

@@ -16,7 +16,7 @@ std::vector<material_t> materials;
 extern window_t window;
 
 // VBO
-vbo_t create_vbo(const float* vertices, const int data_size) {
+vbo_t create_vbo(const void* vertices, const int data_size) {
 	vbo_t vbo;
 	glGenBuffers(1, &vbo.id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
@@ -32,7 +32,7 @@ vbo_t create_dyn_vbo(const int data_size) {
 	return vbo;
 }
 
-void update_vbo_data(const vbo_t& vbo, const float* vertices, const int data_size) {
+void update_vbo_data(const vbo_t& vbo, const void* vertices, const int data_size) {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, data_size, vertices);
 }

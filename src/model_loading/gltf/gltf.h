@@ -10,13 +10,14 @@
 
 #define MAX_SUPPORTED_TEX_COORDS 4
 
-// TODO: need to parse transform
 struct gltf_node_t {
   std::vector<int> child_node_idxs;
   int gltf_mesh_handle = -1;
   vec3 translation;
   vec3 scale;
   quaternion_t rot;
+  int gltf_skin_idx = -1;
+  std::string name;
 };
 
 struct gltf_scene_t {
@@ -28,6 +29,8 @@ struct gltf_attributes_t {
   int positions_accessor_idx = -1;
   int color_0_accessor_idx = -1;
   int tex_coord_accessor_indicies[MAX_SUPPORTED_TEX_COORDS];
+  int joints_0_accessor_idx = -1;
+  int weights_0_accessor_idx = -1;
 };
 
 enum class GLTF_PRIMITIVE_MODE {
@@ -196,6 +199,13 @@ struct gltf_animation_t {
   std::string name; 
   std::vector<gltf_channel_t> channels;
   std::vector<gltf_anim_sampler_t> anim_samplers;
+};
+
+struct gltf_skin_t {
+  int inverse_bind_matrix_acc_idx = -1;
+  int upper_most_joint_node_idx = -1;
+  std::vector<int> joint_node_idxs;
+  std::string name;
 };
 
 int gltf_parse_integer();

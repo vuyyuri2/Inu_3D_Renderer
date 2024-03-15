@@ -14,6 +14,8 @@ struct vertex_t {
   vec2 tex2;
   vec2 tex3;
   vec3 color;
+  unsigned int joints[4];
+  float weights[4];
 };
 
 struct mesh_t {

@@ -2,19 +2,39 @@
 
 #include <vector>
 #include <unordered_set>
+#include <string>
 
 #include "utils/vectors.h"
 #include "utils/mats.h"
 #include "transform.h"
 #include "animation/animation_internal.h"
 
+#define BONES_PER_SKIN_LIMIT 20
+
+struct skin_t {
+  int id = -1;
+  int upper_most_joint_node_idx = -1;
+  int joint_obj_ids[BONES_PER_SKIN_LIMIT]{};
+  mat4 inverse_bind_matricies[BONES_PER_SKIN_LIMIT];
+  int num_bones = -1;
+  std::string name;
+  
+  skin_t();
+};
+int register_skin(skin_t& skin);
+skin_t get_skin(int skin_id);
+
 struct object_t {
   int id = -1;
   transform_t transform;
   int model_id = -1;
   std::vector<int> child_objects; 
+  int parent_obj = -1;
   mat4 model_mat;
   std::vector<animation_chunk_data_ref_t> anim_chunk_refs;
+  bool is_joint_obj = false;
+  bool is_skinned = false;
+  int skin_id = -1;
 };
 
 struct scene_t {
@@ -24,7 +44,9 @@ struct scene_t {
 int create_object(transform_t& transform);
 void attach_model_to_obj(int obj_id, int model_id);
 void attach_child_obj_to_obj(int obj_id, int child_obj_id);
-
+void attach_skin_to_obj(int obj_id, int skin_id);
+void populate_parent_field_of_nodes();
+mat4 get_obj_model_mat(int obj_id);
 void set_obj_as_parent(int obj_id);
 void update_obj_model_mats();
 void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref);
