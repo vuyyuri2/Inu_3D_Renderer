@@ -16,6 +16,7 @@ struct vec3 {
   float y = 0;
   float z = 0;
 };
+void print_vec3(vec3& v);
 vec3 norm_vec3(vec3& v);
 vec3 cross_product(vec3& v1, vec3& v2);
 float dot(vec3& v1, vec3& v2);

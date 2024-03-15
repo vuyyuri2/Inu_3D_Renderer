@@ -161,7 +161,7 @@ quaternion_t norm_quat(quaternion_t& q) {
 }
 
 void print_quat(quaternion_t& q) {
-  printf("%f, %f, %f, %f\n", q.x, q.y, q.z, q.w);
+  printf("%f, %f, %f, %f", q.x, q.y, q.z, q.w);
 }
 
 bool is_nan_quat(quaternion_t& q) {

@@ -22,6 +22,10 @@ static std::unordered_set<float> timestamps_set;
 static int idx = 30;
 static std::vector<float> timestamps;
 
+animation_data_chunk_t* get_anim_data_chunk(int data_id) {
+  return &anim_data_chunks[data_id];
+}
+
 int register_anim_data_chunk(animation_data_chunk_t& data) {
   data.id = anim_data_chunks.size();
   animation_globals.anim_end_time = fmax(animation_globals.anim_end_time, data.timestamps[data.num_timestamps-1]);
@@ -77,7 +81,7 @@ void update_animations() {
 
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
-          printf("rot to left of leftmost anim frame\n");
+          // printf("rot to left of leftmost anim frame\n");
           obj.transform.rot = rot_anim_data[0];
           obj.transform.rot = norm_quat(obj.transform.rot);
         }
@@ -94,7 +98,7 @@ void update_animations() {
 
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
-          printf("rot to right of rightmost anim frame\n");
+          // printf("rot to right of rightmost anim frame\n");
           obj.transform.rot = rot_anim_data[left_anim_frame_idx];
           obj.transform.rot = norm_quat(obj.transform.rot);
         }
@@ -119,13 +123,17 @@ void update_animations() {
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
           if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::LINEAR) {
-            printf("spherical lin    left quat: ");
-            print_quat(rot_anim_data[left_anim_frame_idx]);
-            printf("right quat: ");
-            print_quat(rot_anim_data[right_anim_frame_idx]);
+            // printf("spherical lin    left quat: ");
+            // print_quat(rot_anim_data[left_anim_frame_idx]);
+            // printf("right quat: ");
+            // print_quat(rot_anim_data[right_anim_frame_idx]);
+              if (strstr(obj.name.c_str(), "neck") != NULL) {
+                  int a = 5;
+            }
             obj.transform.rot = spherical_linear(rot_anim_data[left_anim_frame_idx], rot_anim_data[right_anim_frame_idx], t);
 
-            if (isnan(obj.transform.rot.x) || isnan(obj.transform.rot.y) || isnan(obj.transform.rot.z) || isnan(obj.transform.rot.w)) {
+            float quat_len = quat_mag(obj.transform.rot);
+            if (isnan(obj.transform.rot.x) || isnan(obj.transform.rot.y) || isnan(obj.transform.rot.z) || isnan(obj.transform.rot.w) || quat_len > 1.02f) {
               int a = 5;
               quaternion_t l = rot_anim_data[left_anim_frame_idx];
               quaternion_t r = rot_anim_data[right_anim_frame_idx];
@@ -176,6 +184,3 @@ void update_animations() {
   update_obj_model_mats();
 }
 
-animation_data_chunk_t* get_anim_data_chunk(int id) {
-  return &anim_data_chunks[id];
-}

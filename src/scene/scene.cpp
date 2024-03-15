@@ -14,6 +14,8 @@ static scene_t scene;
 extern std::vector<model_t> models;
 extern app_info_t app_info;
 
+int skin_t::BONE_MODEL_ID = -1;
+
 int create_object(transform_t& transform) {
   object_t obj;
   static int i = 0;
@@ -59,6 +61,7 @@ mat4 get_obj_model_mat(int obj_id) {
   return objs[obj_id].model_mat;
 }
 
+static std::unordered_set<int> updated_idxs;
 void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
   object_t& obj = objs[obj_id];
   if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
@@ -71,9 +74,14 @@ void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
     }
   }
   objs[obj_id].model_mat = mat_multiply_mat(running_model, model);
+  updated_idxs.insert(obj_id);
   for (int child_id : objs[obj_id].child_objects) {
     update_obj_model_mats_recursive(child_id, objs[obj_id].model_mat);
   }
+}
+
+object_t get_obj(int obj_id) {
+  return objs[obj_id];
 }
 
 // when doing skinned animation, 
@@ -81,6 +89,7 @@ void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
 //  second pass is : then joints + their children (if not handled in first pass)
 //  third pass is: skinned objs that rely on the joints (for now this will be done entirely in the shader)
 void update_obj_model_mats() {
+  updated_idxs.clear();
   for (int parent_id : scene.parent_objs) {
     mat4 running_model_mat = create_matrix(1.0f);
     update_obj_model_mats_recursive(parent_id, running_model_mat);
@@ -93,11 +102,42 @@ void update_obj_model_mats() {
     }
   }
 
+  for (object_t& obj: objs) {
+
+    if (obj.is_joint_obj && updated_idxs.find(obj.id) == updated_idxs.end()) {
+      inu_assert_msg("joint was not updated");
+    }
+  }
+
 }
 
 void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref) {
   object_t& obj = objs[obj_id];
   obj.anim_chunk_refs.push_back(ref);
+
+  animation_data_chunk_t* data = get_anim_data_chunk(ref.chunk_id);
+  vec3* v_anim_data = (vec3*)data->keyframe_data;
+  quaternion_t* q_anim_data = (quaternion_t*)data->keyframe_data;
+  printf("\n\nobj name: %s\n", obj.name.c_str());
+  for (int i = 0; i < data->num_timestamps; i++) {
+    printf("timestamp: %f ", data->timestamps[i]);
+    if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
+      printf("rot: ");
+      print_quat(q_anim_data[i]);
+    } else if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
+      printf("pos: ");
+      print_vec3(v_anim_data[i]);
+    } else if (ref.target == ANIM_TARGET_ON_NODE::SCALE) {
+      printf("scale: ");
+      print_vec3(v_anim_data[i]);
+    }
+    printf("\n");
+  }
+ 
+}
+
+void attach_name_to_obj(int obj_id, std::string& name) {
+  objs[obj_id].name = name;
 }
 
 void attach_skin_to_obj(int obj_id, int skin_id) {
@@ -122,7 +162,7 @@ void render_scene_obj(int obj_id, bool parent) {
   }
   // mat4 final_model = mat_multiply_mat(translate, scale);
   mat4 final_model = mat_multiply_mat(translate, obj.model_mat);
-  if (obj.model_id != -1) {
+  if (obj.model_id != -1) { 
     model_t& model = models[obj.model_id];
     if (obj.is_skinned) {
       skin_t skin = get_skin(obj.skin_id);
@@ -158,17 +198,20 @@ void render_scene_obj(int obj_id, bool parent) {
       }
     }
 
-    for (mesh_t& mesh : model.meshes) {
-      material_t m = bind_material(mesh.mat_idx);
+    // if (obj.is_joint_obj && strstr(obj.name.c_str(), "neck") != NULL) {
+    if (true) {
+      for (mesh_t& mesh : model.meshes) {
+        material_t& m = bind_material(mesh.mat_idx);
 
-      if (app_info.render_only_textured && m.base_color_tex.tex_handle == -1) {
-        continue;
+        if (app_info.render_only_textured && m.base_color_tex.tex_handle == -1) {
+          continue;
+        }
+
+        bind_vao(mesh.vao);
+        draw_ebo(mesh.ebo);
+        unbind_vao();
+        unbind_ebo();
       }
-
-      bind_vao(mesh.vao);
-      draw_ebo(mesh.ebo);
-      unbind_vao();
-      unbind_ebo();
     }
   }
 
@@ -202,6 +245,7 @@ int register_skin(skin_t& skin) {
   skin.id = skins.size();
   for (int node_idx : skin.joint_obj_ids) {
     objs[node_idx].is_joint_obj = true;
+    objs[node_idx].model_id = skin_t::BONE_MODEL_ID;
   }
   skins.push_back(skin);
   return skin.id;

@@ -18,6 +18,8 @@ struct skin_t {
   mat4 inverse_bind_matricies[BONES_PER_SKIN_LIMIT];
   int num_bones = -1;
   std::string name;
+
+  static int BONE_MODEL_ID;
   
   skin_t();
 };
@@ -25,6 +27,7 @@ int register_skin(skin_t& skin);
 skin_t get_skin(int skin_id);
 
 struct object_t {
+  std::string name;
   int id = -1;
   transform_t transform;
   int model_id = -1;
@@ -42,6 +45,7 @@ struct scene_t {
 };
 
 int create_object(transform_t& transform);
+void attach_name_to_obj(int obj_id, std::string& name);
 void attach_model_to_obj(int obj_id, int model_id);
 void attach_child_obj_to_obj(int obj_id, int child_obj_id);
 void attach_skin_to_obj(int obj_id, int skin_id);
@@ -50,5 +54,6 @@ mat4 get_obj_model_mat(int obj_id);
 void set_obj_as_parent(int obj_id);
 void update_obj_model_mats();
 void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref);
+object_t get_obj(int obj_id);
 
 void render_scene();

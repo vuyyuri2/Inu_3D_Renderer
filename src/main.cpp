@@ -95,17 +95,27 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "stylized_mushrooms\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "little_chestnut\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "milk_truck\\CesiumMilkTruck.gltf";
-  const char* gltf_file_resources_folder_rel_path = "rigged_simple\\RiggedSimple.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "rigged_simple\\RiggedSimple.gltf";
+  const char* gltf_file_resources_folder_rel_path = "rigged_figure\\RiggedFigure.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cesium_man\\CesiumMan.gltf";
 
   if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0
-      || strcmp(gltf_file_resources_folder_rel_path, "ferrari_enzo\\scene.gltf") == 0) {
+      || strcmp(gltf_file_resources_folder_rel_path, "ferrari_enzo\\scene.gltf") == 0 //) {
+      || strcmp(gltf_file_resources_folder_rel_path, "rigged_figure\\RiggedFigure.gltf") == 0) {
     app_info.render_only_textured = true;
   }
+
+  char bone_mesh_full_file_path[256]{};
+  // this file pretty much just has a mesh, no nodes
+  sprintf(bone_mesh_full_file_path, "%s\\bone_mesh\\custom_bone_mesh.gltf", resources_path);
+  gltf_load_file(bone_mesh_full_file_path);
+  // int latest_model_id = latest_model_id();
+  skin_t::BONE_MODEL_ID = latest_model_id();
 
   char gltf_full_file_path[256]{};
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);
   gltf_load_file(gltf_full_file_path);
-
+ 
   while (window.running) {
     inu_timer_t frame_timer;
     start_timer(frame_timer);
@@ -131,7 +141,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     mat4 view = get_view_mat();
     shader_set_mat4(material_t::associated_shader, "view", view);
  
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     render_scene();
 
     // online rendering pass

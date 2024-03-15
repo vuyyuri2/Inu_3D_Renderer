@@ -1229,11 +1229,34 @@ material_image_t gltf_mat_img_to_internal_mat_img(gltf_mat_image_info_t& gltf_ma
 
 void gltf_load_file(const char* filepath) {
 
+
   printf("loading gltf file: %s\n", filepath);
 
   const char* last_slash = strrchr(filepath, '\\');
   memset(folder_path, 0, 256);
   memcpy(folder_path, filepath, last_slash - filepath);
+
+  // 0. RESET VALUES
+  char* data = NULL;
+  offset = -1;
+  data_len = -1;
+
+  active_scene = -1;
+  gltf_scenes.clear(); 
+  gltf_nodes.clear(); 
+  gltf_meshes.clear();
+  gltf_buffers.clear();
+  gltf_buffer_views.clear();
+  gltf_accessors.clear(); 
+  gltf_images.clear();
+  gltf_textures.clear();
+  gltf_samplers.clear();
+  gltf_materials.clear();
+  gltf_animations.clear();
+  gltf_skins.clear();
+
+  gltf_mesh_id_to_internal_model_id.clear();
+
 
   // 1. PREPROCESS
   gltf_preprocess(filepath);
@@ -1379,7 +1402,6 @@ void gltf_load_file(const char* filepath) {
             }
             inu_assert(joint_idx >= 0);
             vert.joints[k] = joint_idx;
-            inu_assert(joint_idx < 2);
           }
         }
         free(joint_data);
@@ -1499,6 +1521,7 @@ void gltf_load_file(const char* filepath) {
     t.rot.w = node.rot.w;
 
     int obj_id = create_object(t);
+    attach_name_to_obj(obj_id, node.name);
     offset_gltf_node_to_internal_obj_id = obj_id - i;
     if (node.gltf_mesh_handle != -1) {
       attach_model_to_obj(obj_id, gltf_mesh_id_to_internal_model_id[node.gltf_mesh_handle]);
@@ -1539,6 +1562,7 @@ void gltf_load_file(const char* filepath) {
     }
     int skin_id = register_skin(skin);
     offset_gltf_skin_to_internal_skin_id = skin_id - i; 
+    printf("skin %i has %i bones\n", skin_id, skin.num_bones);
   }
 
   // attach skins and skeletons to objects
@@ -1552,9 +1576,11 @@ void gltf_load_file(const char* filepath) {
   }
 
   // mark parent objects
-  inu_assert(active_scene != -1, "active scene not defined");
-  for (int gltf_node_idx : gltf_scenes[active_scene].root_nodes) {
-    set_obj_as_parent(gltf_node_idx + offset_gltf_node_to_internal_obj_id);
+  // inu_assert(active_scene != -1, "active scene not defined");
+  if (active_scene != -1) {
+    for (int gltf_node_idx : gltf_scenes[active_scene].root_nodes) {
+      set_obj_as_parent(gltf_node_idx + offset_gltf_node_to_internal_obj_id);
+    }
   }
 
   populate_parent_field_of_nodes();
@@ -1654,7 +1680,4 @@ void gltf_load_file(const char* filepath) {
       attach_anim_chunk_ref_to_obj(obj_id, ref) ;
     }
   }
-
-
-
 }

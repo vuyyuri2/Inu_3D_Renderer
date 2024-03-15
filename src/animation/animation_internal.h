@@ -2,11 +2,6 @@
 
 #include <vector>
 
-// when doing skinned animation, 
-//  first pass is: non-skin objs need to be updated
-//  second pass is : then joints + their children (if not handled in first pass)
-//  third pass is: skinned objs that rely on the joints
-
 enum class ANIM_INTERPOLATION_MODE {
   LINEAR,
   STEP

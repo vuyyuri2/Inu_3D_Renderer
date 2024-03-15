@@ -1,6 +1,7 @@
 #include "vectors.h"
 
 #include <math.h>
+#include <stdio.h>
 
 float length(ivec2& v) {
   return sqrt(v.x*v.x + v.y*v.y);
@@ -13,6 +14,10 @@ vec3 norm_vec3(vec3& v) {
   res.y = v.y / length;
   res.z = v.z / length;
   return res;
+}
+
+void print_vec3(vec3& v) {
+  printf("%f, %f, %f", v.x, v.y, v.z);
 }
 
 vec3 cross_product(vec3& v1, vec3& v2) {
