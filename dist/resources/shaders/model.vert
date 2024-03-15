@@ -6,11 +6,18 @@ layout (location = 2) in vec2 tex1;
 layout (location = 3) in vec2 tex2;
 layout (location = 4) in vec2 tex3;
 layout (location = 5) in vec3 color;
+layout (location = 6) in float joints[4];
+layout (location = 7) in float weights[4];
+
+uniform int skinned;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform float angle;
+
+uniform mat4 joint_model_matricies[20];
+uniform mat4 joint_inverse_bind_mats[20];
 
 out vec2 tex_coords[4];
 out vec3 vert_color;
@@ -61,7 +68,20 @@ void main() {
   // gl_Position = projection * model * vec4(pos, 1.0);
 
   // gl_Position = projection * model * vec4(pos, 1.0);
-  gl_Position = projection * view * model * vec4(pos, 1.0);
+
+  if (skinned == 1) {
+    mat4 final_model = mat4(0.0);
+    for (int i = 0; i < 4; i++) {
+      uint ui = uint(joints[i]);
+      mat4 joint_model_mat = joint_model_matricies[ui] * joint_inverse_bind_mats[ui];
+      mat4 scaled_jmm = joint_model_mat * weights[i];
+      final_model += scaled_jmm;
+    }
+    gl_Position = projection * view * final_model * vec4(pos, 1.0);
+  } else {
+    gl_Position = projection * view * model * vec4(pos, 1.0);
+  }
+
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
   tex_coords[2] = tex2;
