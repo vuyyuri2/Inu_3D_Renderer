@@ -17,42 +17,12 @@ extern window_t window;
 app_info_t app_info;
 extern animation_globals_t animation_globals;
 
-// static float fb_width = 1280 / 2.f;
-// static float fb_height = 960 / 2.f;
 static float fb_width = 1280 / 1.f;
 static float fb_height = 960 / 1.f;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
   create_window(hInstance, fb_width, fb_height);
-
-#if 1
-
-#if 0
-  transform_t test1; 
-  test1.scale = {1,1,1};
-  mat4 m = get_model_matrix(test1);
-  transform_t retained = get_transform_from_matrix(m);
-#endif
-
-#if 0
-  transform_t test1; 
-  test1.scale = {2,1,3};
-  test1.pos = { -200,300,3 };
-  mat4 m = get_model_matrix(test1);
-  transform_t retained = get_transform_from_matrix(m);
-#endif
-
-#if 0
-  transform_t test1; 
-  test1.rot = create_quaternion_w_rot({ 1,1,1 }, -37.5f);
-  test1.scale = {2,1,3};
-  test1.pos = { -200,300,3 };
-  mat4 m = get_model_matrix(test1);
-  transform_t retained = get_transform_from_matrix(m);
-#endif
-
-#endif
 
   if (wcscmp(pCmdLine, L"running_in_vs") == 0) {
     app_info.running_in_vs = true;
@@ -117,7 +87,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // this file pretty much just has a mesh, no nodes
   sprintf(bone_mesh_full_file_path, "%s\\bone_mesh\\custom_bone_mesh.gltf", resources_path);
   gltf_load_file(bone_mesh_full_file_path);
-  // int latest_model_id = latest_model_id();
   skin_t::BONE_MODEL_ID = latest_model_id();
 #endif
 
@@ -126,14 +95,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   gltf_load_file(gltf_full_file_path);
 
   play_next_anim();
-  // std::string cur = "Walk";
-  // std::string cur = "";
-  // std::string cur = "Take 001";
-  // play_anim(std::string(cur));
-  // print_animation_data(cur);
-  // play_anim(std::string("Survey"));
-  // play_anim(std::string("Walk"));
-  // play_anim(std::string("Run"));
 
  
   while (window.running) {
@@ -144,24 +105,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     poll_events();
 
     // UPDATE PASS
-
-    if (window.input.right_mouse_up) {
-      print_joint_transform_info();
-    }
-
 #if 1
     if (window.input.right_mouse_up) {
       play_next_anim();
-#if 0
-      if (cur == "Survey") {
-        cur = "Walk";
-      } else if (cur == "Walk") {
-        cur = "Run";
-      } else {
-        cur = "Survey";
-      }
-      play_anim(cur);
-#endif
     }
 #endif
     
@@ -182,7 +128,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     mat4 view = get_view_mat();
     shader_set_mat4(material_t::associated_shader, "view", view);
  
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     render_scene();
 
     // online rendering pass

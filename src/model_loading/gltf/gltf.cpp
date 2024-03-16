@@ -1614,7 +1614,7 @@ void gltf_load_file(const char* filepath) {
 
   // 5. ANIMATION PROCESSING
   for (gltf_animation_t& gltf_anim : gltf_animations) {
-    printf("----------- ANIM NAME: %s ------------ \n\n\n", gltf_anim.name.c_str());
+    // printf("----------- ANIM NAME: %s ------------ \n\n\n", gltf_anim.name.c_str());
     animation_t anim;
     anim.name = gltf_anim.name;
 

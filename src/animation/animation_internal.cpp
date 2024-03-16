@@ -10,6 +10,8 @@
 #include <unordered_set>
 #include <algorithm>
 
+#define STEP_BY_STEP_ANIM 1
+
 extern std::vector<object_t> objs;
 
 animation_globals_t animation_globals;
@@ -19,13 +21,13 @@ extern window_t window;
 static std::vector<animation_data_chunk_t> anim_data_chunks;
 static std::vector<animation_t> animations;
 
+#if STEP_BY_STEP_ANIM
 static std::unordered_set<float> timestamps_set;
-static int idx = 0;
 static std::vector<float> timestamps;
+static int frame_idx = 0;
+#endif
 
 static int playing_anim_idx = -1;
-
-#define STEP_BY_STEP_ANIM 0
 
 int register_animation(animation_t& anim) {
   anim.id = animations.size();
@@ -41,34 +43,32 @@ void play_next_anim() {
     playing_anim_idx = 0;
   } 
 
-#if STEP_BY_STEP_ANIM
-  timestamps_set.clear();
-  timestamps.clear();
-  animation_globals.anim_time = 0;
-  animation_globals.anim_end_time = 0;
-  for (int j = 0; j < anim.data_chunk_ids.size(); j++) {
-    int data_chunk_id = anim.data_chunk_ids[j];
-    animation_data_chunk_t& adc = anim_data_chunks[data_chunk_id];
-    int nt = adc.num_timestamps;
-    animation_globals.anim_end_time = adc.timestamps[nt-1];
-    timestamps_set.insert(adc.timestamps.begin(), adc.timestamps.end());
-  }
-
-  timestamps.insert(timestamps.end(), timestamps_set.begin(), timestamps_set.end());
-  std::sort(timestamps.begin(), timestamps.end());
-#else
-  animation_t& anim = animations[playing_anim_idx];
   if (orig != playing_anim_idx) {
+    animation_t& anim = animations[playing_anim_idx];
+    animation_globals.anim_time = 0;
+    animation_globals.anim_end_time = 0;
+#if STEP_BY_STEP_ANIM
+    timestamps_set.clear();
+    timestamps.clear();
+#endif
     animation_globals.anim_time = 0;
     animation_globals.anim_end_time = 0;
     for (int j = 0; j < anim.data_chunk_ids.size(); j++) {
       int data_chunk_id = anim.data_chunk_ids[j];
       animation_data_chunk_t& adc = anim_data_chunks[data_chunk_id];
       int nt = adc.num_timestamps;
-      animation_globals.anim_end_time = fmax(animation_globals.anim_end_time, adc.timestamps[nt-1]);
-    }
-  }
+      animation_globals.anim_end_time = adc.timestamps[nt-1];
+#if STEP_BY_STEP_ANIM
+      timestamps_set.insert(adc.timestamps.begin(), adc.timestamps.end());
 #endif
+    }
+
+#if STEP_BY_STEP_ANIM
+    timestamps.insert(timestamps.end(), timestamps_set.begin(), timestamps_set.end());
+    std::sort(timestamps.begin(), timestamps.end());
+#endif
+
+  }
 
 }
 
@@ -140,12 +140,12 @@ int register_anim_data_chunk(animation_data_chunk_t& data) {
 void update_animations() {
 #if STEP_BY_STEP_ANIM
   if (window.input.left_mouse_up) {
-    idx++;
-    if (idx >= timestamps.size()) {
-      idx = 0;
+    frame_idx++;
+    if (frame_idx >= timestamps.size()) {
+      frame_idx = 0;
     }
-    printf("anim idx: %i\n", idx);
-    animation_globals.anim_time = timestamps[idx];
+    printf("anim idx: %i\n", frame_idx);
+    animation_globals.anim_time = timestamps[frame_idx];
   } 
 #else 
   animation_globals.anim_time += app_info.delta_time;
@@ -185,7 +185,6 @@ void update_animations() {
 
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
-          // printf("rot to left of leftmost anim frame\n");
           obj.transform.rot = rot_anim_data[0];
           obj.transform.rot = norm_quat(obj.transform.rot);
         }
@@ -202,7 +201,6 @@ void update_animations() {
 
         // quaternion interpolation
         if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
-          // printf("rot to right of rightmost anim frame\n");
           obj.transform.rot = rot_anim_data[left_anim_frame_idx];
           obj.transform.rot = norm_quat(obj.transform.rot);
         }
@@ -251,9 +249,11 @@ void update_animations() {
 			      obj.transform.pos = vec3_linear(vec3_data[left_anim_frame_idx], vec3_data[right_anim_frame_idx], t);
             if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
               inu_assert_msg("obj transform pos is nan");
+#if 0
 			        vec3 l = vec3_data[left_anim_frame_idx];
 			        vec3 r = vec3_data[right_anim_frame_idx];
 			        vec3 f = vec3_linear(l, r, t);
+#endif
             }
 		      } else if (chunk->interpolation_mode == ANIM_INTERPOLATION_MODE::STEP) {
 			      obj.transform.pos = vec3_data[left_anim_frame_idx];
