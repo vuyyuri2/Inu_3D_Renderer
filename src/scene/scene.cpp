@@ -88,9 +88,8 @@ object_t* get_obj(int obj_id) {
 }
 
 // when doing skinned animation, 
-//  first pass is: non-skin objs need to be updated
-//  second pass is : then joints + their children (if not handled in first pass)
-//  third pass is: skinned objs that rely on the joints (for now this will be done entirely in the shader)
+//  first pass is: non-skinned objs need to be updated
+//  second pass is : then joints + their children (if not handled in first pass) - (essentially parent bone nodes which have no parents)
 void update_obj_model_mats() {
   updated_idxs.clear();
   for (int parent_id : scene.parent_objs) {
@@ -214,6 +213,7 @@ void render_scene_obj(int obj_id, bool parent) {
       }
 
 #if SHOW_BONES
+      // only shows bones
       if (obj.is_joint_obj) {
         bind_vao(mesh.vao);
         draw_ebo(mesh.ebo);
@@ -258,12 +258,8 @@ skin_t::skin_t() {
 int register_skin(skin_t& skin) {
   skin.id = skins.size();
   printf("Skin %s at idx %i has %i bones\n", skin.name.c_str(), skin.id, skin.num_bones);
-#if 1
   for (int i = 0; i < skin.num_bones; i++) {
     int node_idx = skin.joint_obj_ids[i];
-#else
-  for (int node_idx : skin.joint_obj_ids) {
-#endif
     objs[node_idx].is_joint_obj = true;
 #if SHOW_BONES
     objs[node_idx].model_id = skin_t::BONE_MODEL_ID;

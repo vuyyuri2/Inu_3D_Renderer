@@ -1350,7 +1350,6 @@ void gltf_load_file(const char* filepath) {
             vert.color = col_data[i];
           }
         } else {
-          // inu_assert_msg("this type for colors data is not supported yet");
           printf("this type for colors data is not supported yet\n");
           for (int i = 0; i < vert_count; i++) {
             vertex_t& vert = mesh.vertices[i];
@@ -1400,7 +1399,6 @@ void gltf_load_file(const char* filepath) {
           for (int k = 0; k < 4; k++) {
             int idx_into_joint_data = (j*4) + k;
             unsigned int joint_idx;
-            // issue i think has to do with joint indicies or joint weights
             if (joint_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_BYTE) {
               joint_idx = static_cast<unsigned int>(u8_joint_data[idx_into_joint_data]);
             } else if (joint_acc.component_type == ACC_COMPONENT_TYPE::UNSIGNED_SHORT) {
@@ -1477,20 +1475,20 @@ void gltf_load_file(const char* filepath) {
       }
 
       if (prim.material_idx != -1) {
-      // if (false) {
         mesh.mat_idx = prim.material_idx;
       } else {
         vec4 color;
-        /*
+#if 0
         color.x = 0;
         color.y = 0;
         color.z = 0;
         color.w = 1;
-        */
+#else
         color.x = rand() / static_cast<float>(RAND_MAX);
         color.y = rand() / static_cast<float>(RAND_MAX);
         color.z = rand() / static_cast<float>(RAND_MAX);
         color.w = 1.f;
+#endif
 
         material_image_t base_img;
         mesh.mat_idx = create_material(color, base_img);
@@ -1600,7 +1598,6 @@ void gltf_load_file(const char* filepath) {
   }
 
   // mark parent objects
-  // inu_assert(active_scene != -1, "active scene not defined");
   if (active_scene != -1) {
     for (int gltf_node_idx : gltf_scenes[active_scene].root_nodes) {
       set_obj_as_parent(gltf_node_idx + offset_gltf_node_to_internal_obj_id);
@@ -1614,7 +1611,6 @@ void gltf_load_file(const char* filepath) {
 
   // 5. ANIMATION PROCESSING
   for (gltf_animation_t& gltf_anim : gltf_animations) {
-    // printf("----------- ANIM NAME: %s ------------ \n\n\n", gltf_anim.name.c_str());
     animation_t anim;
     anim.name = gltf_anim.name;
 
@@ -1643,7 +1639,6 @@ void gltf_load_file(const char* filepath) {
         float timestamp = *(timestamp_data + i);
         data_chunk.timestamps.push_back(timestamp);
       }
-      // printf("timestamps info: num: %i start: %f  end: %f\n", data_chunk.num_timestamps, data_chunk.timestamps[0], data_chunk.timestamps[data_chunk.num_timestamps-1]);
       free(timestamp_data);
 
       // read keyframe data
