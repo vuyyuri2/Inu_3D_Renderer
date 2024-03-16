@@ -9,3 +9,7 @@ int register_model(model_t& model) {
   models.push_back(model);
   return model.id;
 }
+
+int latest_model_id() {
+  return models[models.size()-1].id;
+}

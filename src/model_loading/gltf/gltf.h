@@ -3,19 +3,21 @@
 #include "model_loading/model_internal.h"
 #include "utils/vectors.h"
 #include "utils/quaternion.h"
+#include "utils/mats.h"
 
 #include <vector>
 #include <string>
 
 #define MAX_SUPPORTED_TEX_COORDS 4
 
-// TODO: need to parse transform
 struct gltf_node_t {
   std::vector<int> child_node_idxs;
   int gltf_mesh_handle = -1;
   vec3 translation;
   vec3 scale;
   quaternion_t rot;
+  int gltf_skin_idx = -1;
+  std::string name;
 };
 
 struct gltf_scene_t {
@@ -27,6 +29,8 @@ struct gltf_attributes_t {
   int positions_accessor_idx = -1;
   int color_0_accessor_idx = -1;
   int tex_coord_accessor_indicies[MAX_SUPPORTED_TEX_COORDS];
+  int joints_0_accessor_idx = -1;
+  int weights_0_accessor_idx = -1;
 };
 
 enum class GLTF_PRIMITIVE_MODE {
@@ -97,12 +101,23 @@ enum class ACC_COMPONENT_TYPE {
   FLOAT = 5126
 };
 
+enum class ACC_ELEMENT_TYPE {
+  SCALAR = 0,
+  VEC2,
+  VEC3,
+  VEC4,
+  MAT2,
+  MAT3,
+  MAT4
+};
+int get_num_components_for_gltf_element(ACC_ELEMENT_TYPE el);
+
 struct gltf_accessor_t {
   int buffer_view_idx = -1;
   int byte_offset = 0;
   ACC_COMPONENT_TYPE component_type = ACC_COMPONENT_TYPE::BYTE;
   int count = -1;
-  std::string type;
+  ACC_ELEMENT_TYPE element_type = ACC_ELEMENT_TYPE::SCALAR;
 };
 
 struct gltf_image_t {
@@ -145,11 +160,60 @@ struct gltf_sampler_t {
   SAMPLER_WRAP wrap_t = SAMPLER_WRAP::REPEAT;
 };
 
+enum class CHANNEL_TARGET_PATH {
+  NONE = 0,
+  ROTATION,
+  SCALE,
+  TRANSLATION,
+  WEIGHTS
+};
+
+struct gltf_channel_target_t {
+  int gltf_node_idx = -1; 
+  CHANNEL_TARGET_PATH path = CHANNEL_TARGET_PATH::NONE;
+};
+
+struct gltf_channel_t {
+  int gltf_anim_sampler_idx = -1;
+  gltf_channel_target_t target;
+};
+
+enum class GLTF_INTERPOLATION_MODE {
+  LINEAR,
+  STEP,
+  CUBICSPLINE
+};
+
+struct gltf_anim_sampler_t {
+  int input_accessor_idx = -1;
+  int output_accessor_idx = -1;
+  GLTF_INTERPOLATION_MODE interpolation_mode = GLTF_INTERPOLATION_MODE::LINEAR;
+};
+
+/*
+ - Multiple nodes can be references in one animation
+ - 2 nodes in the same animation can have the same sampler
+ */
+
+struct gltf_animation_t {
+  std::string name; 
+  std::vector<gltf_channel_t> channels;
+  std::vector<gltf_anim_sampler_t> anim_samplers;
+};
+
+struct gltf_skin_t {
+  int inverse_bind_matrix_acc_idx = -1;
+  int upper_most_joint_node_idx = -1;
+  std::vector<int> joint_node_idxs;
+  std::string name;
+};
+
 int gltf_parse_integer();
 std::string gltf_parse_string();
 std::vector<int> gltf_parse_integer_array();
 vec4 gltf_parse_vec4();
 vec3 gltf_parse_vec3();
+mat4 gltf_parse_mat4();
 float gltf_parse_float();
 
 gltf_primitive_t gltf_parse_primitive();

@@ -12,6 +12,7 @@
 // #include <utils/wglext.h>
 
 #include "gfx/gfx.h"
+#include "utils/inu_time.h"
 
 #ifndef UNICODE
 #define UNICODE
@@ -134,6 +135,7 @@ void create_window(HINSTANCE h_instance, int width, int height) {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   // glFrontFace(GL_CCW);
+  // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 }
 
 LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPARAM l_param) {
@@ -153,7 +155,11 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
       return 0;
     }
     case WM_LBUTTONUP: {
-      printf("left button up\n");
+      window.input.left_mouse_up = true;
+      break;
+    }
+    case WM_RBUTTONUP: {
+      window.input.right_mouse_up = true;
       break;
     }
     case WM_MOUSEMOVE: {
@@ -165,14 +171,12 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
 
       window.input.mouse_pos_diff.x = window.input.mouse_pos.x - orig.x;
       window.input.mouse_pos_diff.y = window.input.mouse_pos.y - orig.y;
-      printf("mouse pos diff: (%i,%i) middle mouse down: %i\n", window.input.mouse_pos_diff.x, window.input.mouse_pos_diff.y, window.input.middle_mouse_down);
       break;
     }
     case WM_MOUSEWHEEL: {
       // fwKeys = GET_KEYSTATE_WPARAM(wParam);
       float scroll_wheel_delta = GET_WHEEL_DELTA_WPARAM(w_param);
       window.input.scroll_wheel_delta = scroll_wheel_delta / WHEEL_DELTA;
-      printf("window.input.scroll_wheel_delta: %f\n", window.input.scroll_wheel_delta);
       return 0;
     }
   }
@@ -184,6 +188,8 @@ void poll_events() {
   window.input.scroll_wheel_delta = 0;
   window.input.middle_mouse_down = false;
   window.input.mouse_pos_diff = {0,0};
+  window.input.left_mouse_up = false;
+  window.input.right_mouse_up = false;
   MSG msg{};
   while (PeekMessage(&msg, window.win32_wnd, 0, 0, 0)) {
     bool quit_msg = (GetMessage(&msg, NULL, 0, 0) == 0);

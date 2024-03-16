@@ -2,6 +2,7 @@
 
 #include "utils/vectors.h"
 #include "utils/quaternion.h"
+#include "utils/mats.h"
 
 struct transform_t {
   vec3 pos;
@@ -11,3 +12,5 @@ struct transform_t {
 };
 
 mat4 get_model_matrix(transform_t& t);
+transform_t get_transform_from_matrix(mat4& m);
+void print_transform(transform_t& t);

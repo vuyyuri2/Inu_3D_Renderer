@@ -4,16 +4,25 @@
 
 struct mat4 {
   union {
+    float vals[16];
+    struct {
+      float m11,m21,m31,m41;
+      float m12,m22,m32,m42;
+      float m13,m23,m33,m43;
+      float m14,m24,m34,m44;
+    };
     vec4 cols[4];
     struct {
       vec4 first_col;
       vec4 second_col;
       vec4 third_col;
       vec4 fourth_col;
-    } sep_cols;
+    };
   };
   mat4();
 };
+
+void print_mat4(mat4& mat);
 
 mat4 create_matrix(float diag_val);
 mat4 mat_multiply_mat(mat4& m1, mat4& m2);

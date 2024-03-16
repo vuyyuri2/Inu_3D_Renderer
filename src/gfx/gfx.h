@@ -20,10 +20,10 @@ void delete_ebo(const ebo_t& ebo);
 struct vbo_t {
 	GLuint id = 0;
 };
-vbo_t create_vbo(const float* vertices, const int data_size);
+vbo_t create_vbo(const void* vertices, const int data_size);
 vbo_t create_dyn_vbo(const int data_size);
 void bind_vbo(const vbo_t& vbo);
-void update_vbo_data(const vbo_t& vbo, const float* vertices, const int data_size);
+void update_vbo_data(const vbo_t& vbo, const void* vertices, const int data_size);
 void unbind_vbo();
 void delete_vbo(const vbo_t& vbo);
 
