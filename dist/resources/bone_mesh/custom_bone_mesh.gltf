@@ -23,9 +23,10 @@
                 {
                     "attributes" : {
                         "POSITION" : 0,
-                        "TEXCOORD_0" : 1
+                        "TEXCOORD_0" : 1,
+                        "NORMAL" : 2
                     },
-                    "indices" : 2,
+                    "indices" : 3,
                     "material" : 0
                 }
             ]
@@ -48,27 +49,33 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 14,
+            "count" : 24,
             "max" : [
-                0.012468837201595306,
-                0.022359158843755722,
-                0.012468835338950157
+                0.041509177535772324,
+                0.14334431290626526,
+                0.041509177535772324
             ],
             "min" : [
-                -0.012468833476305008,
-                -0.022359158843755722,
-                -0.012468835338950157
+                -0.041509177535772324,
+                -0.14334431290626526,
+                -0.041509177535772324
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 14,
+            "count" : 24,
             "type" : "VEC2"
         },
         {
             "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 24,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 3,
             "componentType" : 5123,
             "count" : 36,
             "type" : "SCALAR"
@@ -77,20 +84,26 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 168,
+            "byteLength" : 288,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 112,
-            "byteOffset" : 168,
+            "byteLength" : 192,
+            "byteOffset" : 288,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 288,
+            "byteOffset" : 480,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 72,
-            "byteOffset" : 280,
+            "byteOffset" : 768,
             "target" : 34963
         }
     ],
@@ -102,7 +115,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 352,
+            "byteLength" : 840,
             "uri" : "custom_bone_mesh.bin"
         }
     ]

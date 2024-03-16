@@ -18,8 +18,8 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform float angle;
 
-uniform mat4 joint_model_matricies[40];
-uniform mat4 joint_inverse_bind_mats[40];
+uniform mat4 joint_model_matricies[80];
+uniform mat4 joint_inverse_bind_mats[80];
 
 out vec2 tex_coords[4];
 out vec3 vert_color;
