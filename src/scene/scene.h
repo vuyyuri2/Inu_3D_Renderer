@@ -10,6 +10,7 @@
 #include "animation/animation_internal.h"
 
 #define BONES_PER_SKIN_LIMIT 40
+#define SHOW_BONES 0
 
 struct skin_t {
   int id = -1;
@@ -54,6 +55,8 @@ mat4 get_obj_model_mat(int obj_id);
 void set_obj_as_parent(int obj_id);
 void update_obj_model_mats();
 void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref);
-object_t get_obj(int obj_id);
+object_t* get_obj(int obj_id);
+std::vector<int> get_bone_objs();
 
 void render_scene();
+void print_joint_transform_info();

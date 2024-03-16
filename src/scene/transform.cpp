@@ -2,6 +2,7 @@
 
 #define _USE_MATH_DEFINES
 #include "math.h"
+#include <cstdio>
 
 #include "utils/log.h"
 
@@ -130,4 +131,10 @@ transform_t get_transform_from_matrix(mat4& m) {
   // inu_assert(mag >= 0.96f, "quaternion is not close enough to magntitude 1");
   t.rot = norm_quat(t.rot);
   return t;
+}
+
+void print_transform(transform_t& t) {
+  printf("pos: %f, %f, %f\n", t.pos.x, t.pos.y, t.pos.z);
+  printf("quat: %f, %f, %f, %f\n", t.rot.x, t.rot.y, t.rot.z, t.rot.w);
+  printf("scale: %f, %f, %f\n", t.scale.x, t.scale.y, t.scale.z);
 }

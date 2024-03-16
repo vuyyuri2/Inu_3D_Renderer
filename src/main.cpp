@@ -89,7 +89,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "avacado\\Avocado.gltf";
   // const char* gltf_file_resources_folder_rel_path = "suzan\\Suzanne.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cartoon_car\\combined.gltf";
-  const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "stylized_ww1_plane\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "ferrari_enzo\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "buggy\\Buggy.gltf";
   // const char* gltf_file_resources_folder_rel_path = "stylized_mushrooms\\scene.gltf";
@@ -100,8 +100,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "rigged_figure\\blender_export.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cesium_man\\CesiumMan.gltf";
   // const char* gltf_file_resources_folder_rel_path = "brain_stem\\BrainStem.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "fox\\Fox.gltf";
+  const char* gltf_file_resources_folder_rel_path = "fox\\Fox.gltf";
   // const char* gltf_file_resources_folder_rel_path = "virtual_city\\VC.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "sunset\\sunset.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cat_creature\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "cat_creature\\cat\\cat.gltf";
 
   if (strcmp(gltf_file_resources_folder_rel_path, "stylized_ww1_plane\\scene.gltf") == 0
       || strcmp(gltf_file_resources_folder_rel_path, "ferrari_enzo\\scene.gltf") == 0 //) {
@@ -109,7 +112,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app_info.render_only_textured = true;
   }
 
-#if 0
+#if SHOW_BONES
   char bone_mesh_full_file_path[256]{};
   // this file pretty much just has a mesh, no nodes
   sprintf(bone_mesh_full_file_path, "%s\\bone_mesh\\custom_bone_mesh.gltf", resources_path);
@@ -121,6 +124,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   char gltf_full_file_path[256]{};
   sprintf(gltf_full_file_path, "%s\\%s", resources_path, gltf_file_resources_folder_rel_path);
   gltf_load_file(gltf_full_file_path);
+
+  play_next_anim();
+  // std::string cur = "Walk";
+  // std::string cur = "";
+  // std::string cur = "Take 001";
+  // play_anim(std::string(cur));
+  // print_animation_data(cur);
+  // play_anim(std::string("Survey"));
+  // play_anim(std::string("Walk"));
+  // play_anim(std::string("Run"));
+
  
   while (window.running) {
     inu_timer_t frame_timer;
@@ -130,6 +144,27 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     poll_events();
 
     // UPDATE PASS
+
+    if (window.input.right_mouse_up) {
+      print_joint_transform_info();
+    }
+
+#if 1
+    if (window.input.right_mouse_up) {
+      play_next_anim();
+#if 0
+      if (cur == "Survey") {
+        cur = "Walk";
+      } else if (cur == "Walk") {
+        cur = "Run";
+      } else {
+        cur = "Survey";
+      }
+      play_anim(cur);
+#endif
+    }
+#endif
+    
     update_cam();
     update_animations();
 

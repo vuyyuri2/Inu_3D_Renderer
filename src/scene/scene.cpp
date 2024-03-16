@@ -64,6 +64,9 @@ mat4 get_obj_model_mat(int obj_id) {
 static std::unordered_set<int> updated_idxs;
 void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
   object_t& obj = objs[obj_id];
+  if (obj.is_joint_obj) {
+      int a = 5;
+  }
   if (isnan(obj.transform.pos.x) || isnan(obj.transform.pos.y) || isnan(obj.transform.pos.z)) {
     inu_assert_msg("obj transform pos is nan");
   }
@@ -80,8 +83,8 @@ void update_obj_model_mats_recursive(int obj_id, mat4& running_model) {
   }
 }
 
-object_t get_obj(int obj_id) {
-  return objs[obj_id];
+object_t* get_obj(int obj_id) {
+  return &objs[obj_id];
 }
 
 // when doing skinned animation, 
@@ -96,14 +99,13 @@ void update_obj_model_mats() {
   }
 
   for (object_t& obj : objs) {
-    if (obj.is_joint_obj && obj.parent_obj == -1) {
+    if (updated_idxs.find(obj.id) == updated_idxs.end() && obj.is_joint_obj && obj.parent_obj == -1) {
       mat4 running_model_mat = create_matrix(1.0f);
       update_obj_model_mats_recursive(obj.id, running_model_mat);
     }
   }
 
   for (object_t& obj: objs) {
-
     if (obj.is_joint_obj && updated_idxs.find(obj.id) == updated_idxs.end()) {
       inu_assert_msg("joint was not updated");
     }
@@ -115,6 +117,7 @@ void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref) {
   object_t& obj = objs[obj_id];
   obj.anim_chunk_refs.push_back(ref);
 
+#if 0
   animation_data_chunk_t* data = get_anim_data_chunk(ref.chunk_id);
   vec3* v_anim_data = (vec3*)data->keyframe_data;
   quaternion_t* q_anim_data = (quaternion_t*)data->keyframe_data;
@@ -133,7 +136,7 @@ void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref) {
     }
     printf("\n");
   }
- 
+#endif 
 }
 
 void attach_name_to_obj(int obj_id, std::string& name) {
@@ -155,6 +158,8 @@ void attach_skin_to_obj(int obj_id, int skin_id) {
 
 void render_scene_obj(int obj_id, bool parent) {
   object_t& obj = objs[obj_id];
+
+#if 0
   mat4 translate = create_matrix(1.0f);
   if (parent) {
     vec3 t = { 0,0,-0.5f };
@@ -162,6 +167,7 @@ void render_scene_obj(int obj_id, bool parent) {
   }
   // mat4 final_model = mat_multiply_mat(translate, scale);
   mat4 final_model = mat_multiply_mat(translate, obj.model_mat);
+#endif
   if (obj.model_id != -1) { 
     model_t& model = models[obj.model_id];
     if (obj.is_skinned) {
@@ -190,9 +196,11 @@ void render_scene_obj(int obj_id, bool parent) {
       }
     } else {
       shader_set_int(material_t::associated_shader, "skinned", 0);
-      shader_set_mat4(material_t::associated_shader, "model", final_model);
+      // shader_set_mat4(material_t::associated_shader, "model", final_model);
+      shader_set_mat4(material_t::associated_shader, "model", obj.model_mat);
 
-      transform_t final_transform = get_transform_from_matrix(final_model);
+      // transform_t final_transform = get_transform_from_matrix(final_model);
+      transform_t final_transform = get_transform_from_matrix(obj.model_mat);
       if (isnan(final_transform.pos.x) || isnan(final_transform.pos.y) || isnan(final_transform.pos.z)) {
         inu_assert_msg("final transform is nan");
       }
@@ -205,10 +213,19 @@ void render_scene_obj(int obj_id, bool parent) {
         continue;
       }
 
+#if SHOW_BONES
+      if (obj.is_joint_obj) {
+        bind_vao(mesh.vao);
+        draw_ebo(mesh.ebo);
+        unbind_vao();
+        unbind_ebo();
+      }
+#else
       bind_vao(mesh.vao);
       draw_ebo(mesh.ebo);
       unbind_vao();
       unbind_ebo();
+#endif
     }
   }
 
@@ -240,9 +257,15 @@ skin_t::skin_t() {
 
 int register_skin(skin_t& skin) {
   skin.id = skins.size();
+  printf("Skin %s at idx %i has %i bones\n", skin.name.c_str(), skin.id, skin.num_bones);
+#if 1
+  for (int i = 0; i < skin.num_bones; i++) {
+    int node_idx = skin.joint_obj_ids[i];
+#else
   for (int node_idx : skin.joint_obj_ids) {
+#endif
     objs[node_idx].is_joint_obj = true;
-#if 0
+#if SHOW_BONES
     objs[node_idx].model_id = skin_t::BONE_MODEL_ID;
 #endif
   }
@@ -252,4 +275,44 @@ int register_skin(skin_t& skin) {
 
 skin_t get_skin(int skin_id) {
   return skins[skin_id];
+}
+
+void print_joint_transform_info_helper(int obj_id) {
+  object_t& obj = objs[obj_id];
+  if (obj.is_joint_obj) {
+    printf("------bone name: %s----------\n", obj.name.c_str()) ;
+    printf("\n--local transform--\n");
+    print_transform(obj.transform);
+    printf("\n--global model matrix--\n");
+    print_mat4(obj.model_mat);
+    transform_t decoded = get_transform_from_matrix(obj.model_mat);
+    printf("\n--global transform--\n");
+    print_transform(decoded);
+    printf("\n");
+  }
+  for (int c : objs[obj_id].child_objects) {
+    print_joint_transform_info_helper(c);
+  }
+}
+
+void print_joint_transform_info() {
+  for (int parent_id : scene.parent_objs) {
+    print_joint_transform_info_helper(parent_id);
+  }
+
+  for (object_t& obj : objs) {
+    if (obj.is_joint_obj && obj.parent_obj == -1) {
+      print_joint_transform_info_helper(obj.id);
+    }
+  }  
+}
+
+std::vector<int> get_bone_objs() {
+  std::vector<int> bones;
+  for (object_t& obj : objs) {
+    if (obj.is_joint_obj) {
+      bones.push_back(obj.id);
+    }
+  }
+  return bones;
 }

@@ -115,3 +115,10 @@ mat4 transpose(mat4& m) {
   }
   return t;
 }
+
+void print_mat4(mat4& mat) {
+  for (int i = 0; i < 4; i++) {
+    float* start_of_row = (&mat.m11) + i;
+    printf("%f %f %f %f\n", *start_of_row, *(start_of_row+4), *(start_of_row+8), *(start_of_row+12));
+  }
+}

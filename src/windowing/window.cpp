@@ -158,6 +158,10 @@ LRESULT CALLBACK window_procedure(HWND h_window, UINT u_msg, WPARAM w_param, LPA
       window.input.left_mouse_up = true;
       break;
     }
+    case WM_RBUTTONUP: {
+      window.input.right_mouse_up = true;
+      break;
+    }
     case WM_MOUSEMOVE: {
       // bottom left should be (0,0)
       ivec2 orig = {window.input.mouse_pos.x, window.input.mouse_pos.y};
@@ -185,6 +189,7 @@ void poll_events() {
   window.input.middle_mouse_down = false;
   window.input.mouse_pos_diff = {0,0};
   window.input.left_mouse_up = false;
+  window.input.right_mouse_up = false;
   MSG msg{};
   while (PeekMessage(&msg, window.win32_wnd, 0, 0, 0)) {
     bool quit_msg = (GetMessage(&msg, NULL, 0, 0) == 0);

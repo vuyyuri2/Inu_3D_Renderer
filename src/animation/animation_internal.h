@@ -1,6 +1,15 @@
 #pragma once
 
 #include <vector>
+#include <string>
+
+struct animation_t {
+  int id = -1;
+  std::string name;
+  std::vector<int> data_chunk_ids;
+};
+int register_animation(animation_t& anim);
+void play_next_anim();
 
 enum class ANIM_INTERPOLATION_MODE {
   LINEAR,
@@ -37,3 +46,5 @@ struct animation_globals_t {
 };
 
 void update_animations();
+void print_animation_data(std::string& anim_name);
+bool is_chunk_in_anim(animation_t& anim, int chunk_id);

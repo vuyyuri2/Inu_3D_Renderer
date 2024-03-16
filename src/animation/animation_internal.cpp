@@ -17,33 +17,128 @@ extern app_info_t app_info;
 extern window_t window;
 
 static std::vector<animation_data_chunk_t> anim_data_chunks;
+static std::vector<animation_t> animations;
 
 static std::unordered_set<float> timestamps_set;
 static int idx = 0;
 static std::vector<float> timestamps;
 
+static int playing_anim_idx = -1;
+
+#define STEP_BY_STEP_ANIM 0
+
+int register_animation(animation_t& anim) {
+  anim.id = animations.size();
+  animations.push_back(anim);
+  return anim.id;
+}
+
+void play_next_anim() {
+  int orig = playing_anim_idx;
+
+  playing_anim_idx++;
+  if (playing_anim_idx >= animations.size()) {
+    playing_anim_idx = 0;
+  } 
+
+#if STEP_BY_STEP_ANIM
+  timestamps_set.clear();
+  timestamps.clear();
+  animation_globals.anim_time = 0;
+  animation_globals.anim_end_time = 0;
+  for (int j = 0; j < anim.data_chunk_ids.size(); j++) {
+    int data_chunk_id = anim.data_chunk_ids[j];
+    animation_data_chunk_t& adc = anim_data_chunks[data_chunk_id];
+    int nt = adc.num_timestamps;
+    animation_globals.anim_end_time = adc.timestamps[nt-1];
+    timestamps_set.insert(adc.timestamps.begin(), adc.timestamps.end());
+  }
+
+  timestamps.insert(timestamps.end(), timestamps_set.begin(), timestamps_set.end());
+  std::sort(timestamps.begin(), timestamps.end());
+#else
+  animation_t& anim = animations[playing_anim_idx];
+  if (orig != playing_anim_idx) {
+    animation_globals.anim_time = 0;
+    animation_globals.anim_end_time = 0;
+    for (int j = 0; j < anim.data_chunk_ids.size(); j++) {
+      int data_chunk_id = anim.data_chunk_ids[j];
+      animation_data_chunk_t& adc = anim_data_chunks[data_chunk_id];
+      int nt = adc.num_timestamps;
+      animation_globals.anim_end_time = fmax(animation_globals.anim_end_time, adc.timestamps[nt-1]);
+    }
+  }
+#endif
+
+}
+
 animation_data_chunk_t* get_anim_data_chunk(int data_id) {
   return &anim_data_chunks[data_id];
 }
 
+bool is_chunk_in_anim(animation_t& anim, int chunk_id) {
+  return std::find(anim.data_chunk_ids.begin(), anim.data_chunk_ids.end(), chunk_id) != anim.data_chunk_ids.end();
+}
+
+void print_animation_data(std::string& anim_name) {
+  for (animation_t& anim : animations) {
+    if (anim.name != anim_name) continue;
+    printf("--- ANIM: %s ---\n", anim_name.c_str());
+    std::vector<int> bones = get_bone_objs();
+    for (int bone_obj_id : bones) {
+      object_t* bone = get_obj(bone_obj_id);
+      printf("\n--------- BONE %s --------\n", bone->name.c_str());
+      for (animation_chunk_data_ref_t& ref : bone->anim_chunk_refs) {
+        if (is_chunk_in_anim(anim, ref.chunk_id)) {
+          animation_data_chunk_t* chunk = get_anim_data_chunk(ref.chunk_id);
+
+          if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
+            printf("\n----- POSITION -----\n");
+          } else if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
+            printf("\n----- QUAT -----\n");
+          } else if (ref.target == ANIM_TARGET_ON_NODE::SCALE) {
+            printf("\n----- SCALE -----\n");
+          }
+
+          vec3* vkeyframe = (vec3*)chunk->keyframe_data;
+          quaternion_t* qkeyframe = (quaternion_t*)chunk->keyframe_data;
+          for (int i = 0; i < chunk->num_timestamps; i++) {
+            printf(" [  frame %i  ] ", i);
+            // print anim chunk info
+            if (ref.target == ANIM_TARGET_ON_NODE::POSITION) {
+              print_vec3(vkeyframe[i]);
+            } else if (ref.target == ANIM_TARGET_ON_NODE::ROTATION) {
+              print_quat(qkeyframe[i]);
+            } else if (ref.target == ANIM_TARGET_ON_NODE::SCALE) {
+              print_vec3(vkeyframe[i]);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 int register_anim_data_chunk(animation_data_chunk_t& data) {
   data.id = anim_data_chunks.size();
-  animation_globals.anim_end_time = fmax(animation_globals.anim_end_time, data.timestamps[data.num_timestamps-1]);
   anim_data_chunks.push_back(data);
+#if 0
+  animation_globals.anim_end_time = fmax(animation_globals.anim_end_time, data.timestamps[data.num_timestamps-1]);
   timestamps_set.insert(data.timestamps.begin(), data.timestamps.end());
   timestamps.clear();
+  printf("timestamps: ");
+  for (int i = 0; i < data.num_timestamps; i++) {
+    printf("%f ", data.timestamps[i]);
+  }
+  printf("\n");
   timestamps.insert(timestamps.end(), timestamps_set.begin(), timestamps_set.end());
   std::sort(timestamps.begin(), timestamps.end());
+#endif
   return data.id;
 }
 
 void update_animations() {
-#if 1
-  animation_globals.anim_time += app_info.delta_time;
-  if (animation_globals.anim_time > animation_globals.anim_end_time) {
-    animation_globals.anim_time = animation_globals.anim_start_time;
-  }
-#else
+#if STEP_BY_STEP_ANIM
   if (window.input.left_mouse_up) {
     idx++;
     if (idx >= timestamps.size()) {
@@ -51,6 +146,11 @@ void update_animations() {
     }
     printf("anim idx: %i\n", idx);
     animation_globals.anim_time = timestamps[idx];
+  } 
+#else 
+  animation_globals.anim_time += app_info.delta_time;
+  if (animation_globals.anim_time > animation_globals.anim_end_time) {
+    animation_globals.anim_time = animation_globals.anim_start_time;
   }
 #endif
 
@@ -59,6 +159,10 @@ void update_animations() {
     quaternion_t orig_rot = obj.transform.rot;
     for (animation_chunk_data_ref_t& ref : obj.anim_chunk_refs) {	
       animation_data_chunk_t* chunk = get_anim_data_chunk(ref.chunk_id);
+      std::vector<int>& cur_anim_chunks = animations[playing_anim_idx].data_chunk_ids;
+      if (std::find(cur_anim_chunks.begin(), cur_anim_chunks.end(), chunk->id) == cur_anim_chunks.end()) {
+        continue;
+      }
 
       quaternion_t* rot_anim_data = static_cast<quaternion_t*>((void*)chunk->keyframe_data); 
       vec3* vec3_data = static_cast<vec3*>((void*)chunk->keyframe_data);

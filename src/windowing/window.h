@@ -11,6 +11,7 @@ struct input_t {
   float scroll_wheel_delta = 0;
   bool middle_mouse_down = false;
   bool left_mouse_up = false;
+  bool right_mouse_up = false;
 };
 
 struct window_t {

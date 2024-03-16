@@ -25,5 +25,6 @@ void main() {
   } else {
     frag_color = texture(base_color_tex.samp, tex_coords[base_color_tex.tex_id]);
   }
+  // frag_color = vec4(mesh_color, 1);
   // frag_color = vec4(1,0,0,1);
 }

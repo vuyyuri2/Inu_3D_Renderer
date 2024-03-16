@@ -22,6 +22,8 @@ struct mat4 {
   mat4();
 };
 
+void print_mat4(mat4& mat);
+
 mat4 create_matrix(float diag_val);
 mat4 mat_multiply_mat(mat4& m1, mat4& m2);
 vec4 vec_multiply_float(vec4& v, float f);

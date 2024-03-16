@@ -1350,7 +1350,14 @@ void gltf_load_file(const char* filepath) {
             vert.color = col_data[i];
           }
         } else {
-          inu_assert_msg("this type for colors data is not supported yet");
+          // inu_assert_msg("this type for colors data is not supported yet");
+          printf("this type for colors data is not supported yet\n");
+          for (int i = 0; i < vert_count; i++) {
+            vertex_t& vert = mesh.vertices[i];
+		        vert.color.x = 1;
+		        vert.color.y = 1;
+		        vert.color.z = 1;
+          }
         }
         free(color_data);
       } else {
@@ -1470,13 +1477,20 @@ void gltf_load_file(const char* filepath) {
       }
 
       if (prim.material_idx != -1) {
+      // if (false) {
         mesh.mat_idx = prim.material_idx;
       } else {
         vec4 color;
+        /*
         color.x = 0;
         color.y = 0;
         color.z = 0;
         color.w = 1;
+        */
+        color.x = rand() / static_cast<float>(RAND_MAX);
+        color.y = rand() / static_cast<float>(RAND_MAX);
+        color.z = rand() / static_cast<float>(RAND_MAX);
+        color.w = 1.f;
 
         material_image_t base_img;
         mesh.mat_idx = create_material(color, base_img);
@@ -1600,6 +1614,9 @@ void gltf_load_file(const char* filepath) {
 
   // 5. ANIMATION PROCESSING
   for (gltf_animation_t& gltf_anim : gltf_animations) {
+    printf("----------- ANIM NAME: %s ------------ \n\n\n", gltf_anim.name.c_str());
+    animation_t anim;
+    anim.name = gltf_anim.name;
 
     // process anim sampler data
     std::unordered_map<int,int> gltf_anim_sampler_id_to_internal_chunk_id;
@@ -1669,6 +1686,7 @@ void gltf_load_file(const char* filepath) {
 
       int internal_chunk_id = register_anim_data_chunk(data_chunk);
       gltf_anim_sampler_id_to_internal_chunk_id[j] = internal_chunk_id;
+      anim.data_chunk_ids.push_back(internal_chunk_id);
     }
 
     // process channel data
@@ -1689,5 +1707,9 @@ void gltf_load_file(const char* filepath) {
       int obj_id = offset_gltf_node_to_internal_obj_id + target.gltf_node_idx;
       attach_anim_chunk_ref_to_obj(obj_id, ref) ;
     }
+
+    register_animation(anim);
+
   }
+
 }
