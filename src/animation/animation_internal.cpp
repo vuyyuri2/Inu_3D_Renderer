@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <algorithm>
 
-#define STEP_BY_STEP_ANIM 1
+#define STEP_BY_STEP_ANIM 0
 
 extern std::vector<object_t> objs;
 
@@ -36,6 +36,7 @@ int register_animation(animation_t& anim) {
 }
 
 void play_next_anim() {
+  if (animations.size() == 0) return;
   int orig = playing_anim_idx;
 
   playing_anim_idx++;
@@ -69,7 +70,6 @@ void play_next_anim() {
 #endif
 
   }
-
 }
 
 animation_data_chunk_t* get_anim_data_chunk(int data_id) {

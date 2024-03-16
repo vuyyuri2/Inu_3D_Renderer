@@ -262,7 +262,8 @@ int register_skin(skin_t& skin) {
     int node_idx = skin.joint_obj_ids[i];
     objs[node_idx].is_joint_obj = true;
 #if SHOW_BONES
-    objs[node_idx].model_id = skin_t::BONE_MODEL_ID;
+    // objs[node_idx].model_id = skin_t::BONE_MODEL_ID;
+    attach_model_to_obj(skin_t::BONE_MODEL_ID);
 #endif
   }
   skins.push_back(skin);
