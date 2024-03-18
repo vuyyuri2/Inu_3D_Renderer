@@ -462,6 +462,23 @@ void gltf_parse_meshes_section() {
   gltf_eat();
 }
 
+bool gltf_parse_boolean() {
+  char* start = data + offset; 
+  while (gltf_peek() != ',' && gltf_peek() != '}' && gltf_peek() != ']') {
+    gltf_eat();
+  }
+  char c = data[offset];
+  data[offset] = 0;
+  if (strcmp(start, "true") == 0) {
+    data[offset] = c;
+    return true;
+  } else if (strcmp(start, "false") == 0) {
+    data[offset] = c;
+    return false;
+  }
+  inu_assert_msg("boolean parameter does not have true or false");
+}
+
 int gltf_parse_integer() {
   char* start = data + offset; 
   int val = -1;
@@ -738,7 +755,7 @@ void gltf_parse_samplers_section() {
   if (gltf_peek() == ',') gltf_eat();
 }
 
-gltf_mat_image_info_t gltf_parse_base_color_texture() {
+gltf_mat_image_info_t gltf_parse_mat_image_info() {
   gltf_mat_image_info_t info;
   inu_assert(gltf_peek() == '{');
   gltf_eat();
@@ -751,7 +768,7 @@ gltf_mat_image_info_t gltf_parse_base_color_texture() {
     } else if (key == "texCoord") {
       info.tex_coord_idx = gltf_parse_integer();
     } else {
-      gltf_skip_section();
+      info.extra_params[key] = gltf_parse_string();
     }
     if (gltf_peek() == ',') gltf_eat();
   }
@@ -771,10 +788,15 @@ gltf_pbr_metallic_roughness_t gltf_parse_pbr_met_rough() {
     gltf_eat();
     if (key == "baseColorFactor") {
       pbr.base_color_factor = gltf_parse_vec4();
+      pbr.base_color_tex_multiplers = pbr.base_color_factor;
+    } else if (key == "baseColorTexture") {
+      pbr.base_color_tex_info = gltf_parse_mat_image_info();
     } else if (key == "metallicFactor") {
       pbr.metallic_factor = gltf_parse_float();
-    } else if (key == "baseColorTexture") {
-      pbr.base_color_tex_info = gltf_parse_base_color_texture();
+    } else if (key == "roughnessFactor") {
+      pbr.metallic_factor = gltf_parse_float();
+    } else if (key == "metallicRoughnessTexture") {
+      pbr.metal_rough_tex_info = gltf_parse_mat_image_info();
     } else {
       gltf_skip_section();
     }
@@ -784,6 +806,33 @@ gltf_pbr_metallic_roughness_t gltf_parse_pbr_met_rough() {
   if (gltf_peek() == ',') gltf_eat();
 
   return pbr;
+}
+
+gltf_normal_tex_info_t gltf_parse_normal_tex_info() {
+  gltf_mat_image_info_t info = gltf_parse_mat_image_info();
+
+  gltf_normal_tex_info_t normal_tex_info;
+  normal_tex_info.tex_info.gltf_texture_idx = info.gltf_texture_idx;
+  normal_tex_info.tex_info.tex_coord_idx = info.tex_coord_idx;
+  if (info.tex_info.extra_params.find("scale") != info.tex_info.extra_params.end()) {
+    std::string scale_str = info.tex_info.extra_params["scale"];
+    normal_tex_info.x_y_normals_scale = atof(scale_str.c_str());
+  }
+   
+  return normal_tex_info;
+}
+
+gltf_occ_tex_info_t gltf_parse_occ_tex_info() {
+  gltf_mat_image_info_t info = gltf_parse_mat_image_info();
+
+  gltf_occ_tex_info_t occ_tex_info;
+  occ_tex_info.tex_info.gltf_texture_idx = info.gltf_texture_idx;
+  occ_tex_info.tex_info.tex_coord_idx = info.tex_coord_idx;
+  if (info.tex_info.extra_params.find("strength") != info.tex_info.extra_params.end()) {
+    std::string strength_str = info.tex_info.extra_params["strength"];
+    occ_tex_info.tex_info.strength = atof(strength_str.c_str());
+  }
+  return occ_tex_info;
 }
 
 void gltf_parse_material() {
@@ -800,6 +849,27 @@ void gltf_parse_material() {
       mat.pbr = gltf_parse_pbr_met_rough();
     } else if (key == "name") {
       mat.name = gltf_parse_string();
+    } else if (key == "alphaMode") {
+      std::string alpha_mode_str = gltf_parse_string();
+      if (alpha_mode_str == "OPAQUE") {
+        mat.alpha_mode = ALPHA_MODE::OPAQUE;
+      } else if (alpha_mode_str == "MASK") {
+        mat.alpha_mode = ALPHA_MODE::MASK;
+      } else if (alpha_mode_str == "BLEND") {
+        mat.alpha_mode = ALPHA_MODE::BLEND;
+      }
+    } else if (key == "alphaCutoff") {
+      mat.alpha_cutoff = gltf_parse_float();
+    } else if (key == "doubleSided") {
+      mat.double_sided = gltf_parse_boolean();
+    } else if (key == "normalTexture") {
+      mat.normal_tex_info = gltf_parse_normal_tex_info();
+    } else if (key == "occlusionTexture") {
+      mat.occ_tex_info = gltf_parse_occ_tex_info();
+    } else if (key == "emissiveTexture") {
+      mat.emissive_tex_info = gltf_parse_mat_image_info();
+    } else if (key == "emissiveFactor") {
+      mat.emissive_factor = gltf_parse_vec3();
     } else {
       gltf_skip_section();
     }

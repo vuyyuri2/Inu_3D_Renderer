@@ -62,13 +62,16 @@ texture_t bind_texture(int tex_id);
 void unbind_texture();
 
 struct material_image_t {
+	// the internal texture handle
 	int tex_handle = -1;
+	// which texture coordinatest to use for this texture
 	int tex_coords_idx = 0;
 };
 
 struct material_t {
 	static shader_t associated_shader;
 	material_image_t base_color_tex;
+	material_image_t metal_rough_tex;
 	vec4 color;
 };
 int create_material(vec4 color, material_image_t base_color_img);
