@@ -107,11 +107,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     poll_events();
 
     // UPDATE PASS
-#if 1
     if (window.input.right_mouse_up) {
       play_next_anim();
     }
-#endif
     
     update_cam();
     update_animations();

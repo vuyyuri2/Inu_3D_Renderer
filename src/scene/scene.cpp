@@ -208,7 +208,7 @@ void render_scene_obj(int obj_id, bool parent) {
     for (mesh_t& mesh : model.meshes) {
       material_t& m = bind_material(mesh.mat_idx);
 
-      if (app_info.render_only_textured && m.base_color_tex.tex_handle == -1) {
+      if (app_info.render_only_textured && m.albedo.base_color_img.tex_handle == -1) {
         continue;
       }
 

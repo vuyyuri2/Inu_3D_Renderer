@@ -814,8 +814,8 @@ gltf_normal_tex_info_t gltf_parse_normal_tex_info() {
   gltf_normal_tex_info_t normal_tex_info;
   normal_tex_info.tex_info.gltf_texture_idx = info.gltf_texture_idx;
   normal_tex_info.tex_info.tex_coord_idx = info.tex_coord_idx;
-  if (info.tex_info.extra_params.find("scale") != info.tex_info.extra_params.end()) {
-    std::string scale_str = info.tex_info.extra_params["scale"];
+  if (info.extra_params.find("scale") != info.extra_params.end()) {
+    std::string scale_str = info.extra_params["scale"];
     normal_tex_info.x_y_normals_scale = atof(scale_str.c_str());
   }
    
@@ -828,9 +828,9 @@ gltf_occ_tex_info_t gltf_parse_occ_tex_info() {
   gltf_occ_tex_info_t occ_tex_info;
   occ_tex_info.tex_info.gltf_texture_idx = info.gltf_texture_idx;
   occ_tex_info.tex_info.tex_coord_idx = info.tex_coord_idx;
-  if (info.tex_info.extra_params.find("strength") != info.tex_info.extra_params.end()) {
-    std::string strength_str = info.tex_info.extra_params["strength"];
-    occ_tex_info.tex_info.strength = atof(strength_str.c_str());
+  if (info.extra_params.find("strength") != info.extra_params.end()) {
+    std::string strength_str = info.extra_params["strength"];
+    occ_tex_info.strength = atof(strength_str.c_str());
   }
   return occ_tex_info;
 }
@@ -852,7 +852,7 @@ void gltf_parse_material() {
     } else if (key == "alphaMode") {
       std::string alpha_mode_str = gltf_parse_string();
       if (alpha_mode_str == "OPAQUE") {
-        mat.alpha_mode = ALPHA_MODE::OPAQUE;
+        mat.alpha_mode = ALPHA_MODE::OPQUE;
       } else if (alpha_mode_str == "MASK") {
         mat.alpha_mode = ALPHA_MODE::MASK;
       } else if (alpha_mode_str == "BLEND") {

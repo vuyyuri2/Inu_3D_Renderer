@@ -61,6 +61,13 @@ int create_texture(const char* img_path);
 texture_t bind_texture(int tex_id);
 void unbind_texture();
 
+enum class MATERIAL_PARAM_VARIANT {
+	FLOAT,
+	VEC3,
+	VEC4,
+	MAT_IMG
+};
+
 struct material_image_t {
 	// the internal texture handle
 	int tex_handle = -1;
@@ -68,11 +75,47 @@ struct material_image_t {
 	int tex_coords_idx = 0;
 };
 
+struct emission_param_t {
+	union {
+		vec3 emission_factor = {1,1,1};
+		material_image_t emissive_tex_info;
+	};
+	MATERIAL_PARAM_VARIANT variant = MATERIAL_PARAM_VARIANT::VEC3;
+};
+
+struct metallic_roughness_param_t {
+	union {
+		struct {
+			float metallic_factor;
+  		float roughness_factor;	
+		};
+		material_image_t met_rough_tex;
+	};
+	MATERIAL_PARAM_VARIANT variant = MATERIAL_PARAM_VARIANT::FLOAT;
+	metallic_roughness_param_t();
+};
+
+struct albedo_param_t {	
+	union {
+		vec4 color_factor;
+		struct {
+			vec4 multipliers;
+			material_image_t base_color_img;
+		};
+	};
+	MATERIAL_PARAM_VARIANT variant = MATERIAL_PARAM_VARIANT::VEC4;
+	albedo_param_t();
+};
+
 struct material_t {
 	static shader_t associated_shader;
-	material_image_t base_color_tex;
-	material_image_t metal_rough_tex;
-	vec4 color;
+	albedo_param_t albedo;
+	metallic_roughness_param_t metal_rough;
+	material_image_t normals_tex;
+	material_image_t occlusion_tex;
+	emission_param_t emission;
+
+	material_t();
 };
 int create_material(vec4 color, material_image_t base_color_img);
 material_t bind_material(int mat_idx);

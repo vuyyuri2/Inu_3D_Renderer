@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #define MAX_SUPPORTED_TEX_COORDS 4
 
@@ -97,8 +98,8 @@ struct gltf_occ_tex_info_t {
   float strength = -1;
 };
 
-enum ALPHA_MODE {
-  OPAQUE,
+enum class ALPHA_MODE {
+  OPQUE = 0,
   MASK,
   BLEND
 };
@@ -137,7 +138,7 @@ struct gltf_material_t {
   gltf_mat_image_info_t emissive_tex_info;
 
   // alpha settings
-  ALPHA_MODE alpha_mode = ALPHA_MODE::OPAQUE;
+  ALPHA_MODE alpha_mode = ALPHA_MODE::OPQUE;
   float alpha_cutoff = 0.5f;
 
   // double-sidedness

@@ -266,11 +266,17 @@ void unbind_texture() {
 // MATERIALS
 shader_t material_t::associated_shader;
 
+metallic_roughness_param_t::metallic_roughness_param_t() {}
+
+albedo_param_t::albedo_param_t() {}
+
+material_t::material_t() {}
+
 int create_material(vec4 color, material_image_t base_color_img) {
 	material_t mat;
-	mat.base_color_tex = base_color_img;
-	mat.color = color;
-	mat.color.w = 1;
+	mat.albedo.base_color_img = base_color_img;
+	mat.albedo.color_factor = color;
+	mat.albedo.color_factor.w = 1;
 	materials.push_back(mat);
 	return materials.size()-1;
 }
@@ -280,16 +286,17 @@ material_t bind_material(int mat_idx) {
 	shader_t& shader = material_t::associated_shader;
 
 	material_t& mat = materials[mat_idx];
-	if (mat.base_color_tex.tex_handle != -1) {
-		texture_t& texture = bind_texture(mat.base_color_tex.tex_handle);
+	if (mat.albedo.base_color_img.tex_handle != -1) {
+		material_image_t& color_tex = mat.albedo.base_color_img;
+		texture_t& texture = bind_texture(color_tex.tex_handle);
 		shader_set_int(shader, "base_color_tex.samp", texture.tex_slot);
-		shader_set_int(shader, "base_color_tex.tex_id", mat.base_color_tex.tex_coords_idx);
+		shader_set_int(shader, "base_color_tex.tex_id", color_tex.tex_coords_idx);
 		shader_set_int(shader, "use_mesh_color", 0);
 	} else {
 		shader_set_int(shader, "base_color_tex.samp", 0);
 		shader_set_int(shader, "base_color_tex.tex_id", -1);
 		shader_set_int(shader, "use_mesh_color", 1);
-		vec3 c = {mat.color.x, mat.color.y, mat.color.z};
+		vec3 c = {mat.albedo.color_factor.x, mat.albedo.color_factor.y, mat.albedo.color_factor.z};
 		shader_set_vec3(shader, "mesh_color", c);
 	}
 
