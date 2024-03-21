@@ -6,15 +6,32 @@
 #include "gfx/gfx.h"
 #include "model_loading/model_internal.h"
 #include "utils/app_info.h"
+#include "gfx/light.h"
+#include "gfx/gfx.h"
+#include "utils/mats.h"
+#include "windowing/window.h"
+#include "camera.h"
 
 std::vector<object_t> objs;
 std::vector<skin_t> skins;
+
 static scene_t scene;
+static float fb_width = 1280 / 1.f;
+static float fb_height = 960 / 1.f;
+
+framebuffer_t offline_fb;
+framebuffer_t light_pass_fb;
 
 extern std::vector<model_t> models;
 extern app_info_t app_info;
+extern window_t window;
 
 int skin_t::BONE_MODEL_ID = -1;
+
+void init_scene_rendering() {
+  offline_fb = create_framebuffer(fb_width, fb_height);
+  light_pass_fb = create_framebuffer(fb_width, fb_height, true);
+}
 
 int create_object(transform_t& transform) {
   object_t obj;
@@ -155,7 +172,7 @@ void attach_skin_to_obj(int obj_id, int skin_id) {
   }
 }
 
-void render_scene_obj(int obj_id, bool parent) {
+void render_scene_obj(int obj_id, bool parent, bool light_pass) {
   object_t& obj = objs[obj_id];
 
 #if 0
@@ -167,36 +184,70 @@ void render_scene_obj(int obj_id, bool parent) {
   // mat4 final_model = mat_multiply_mat(translate, scale);
   mat4 final_model = mat_multiply_mat(translate, obj.model_mat);
 #endif
-  if (obj.model_id != -1) { 
+#if SHOW_LIGHTS
+  bool not_render_obj = (obj.model_id == -1) || (light_pass && obj.model_id == light_t::LIGHT_MESH_ID);
+#else
+  bool not_render_obj = obj.model_id == -1;
+#endif
+  if (!not_render_obj) { 
     model_t& model = models[obj.model_id];
     if (obj.is_skinned) {
       skin_t skin = get_skin(obj.skin_id);
-      shader_set_int(material_t::associated_shader, "skinned", 1);
+      if (light_pass) {
+        shader_set_int(light_t::light_shader, "skinned", 1);
+      } else {
+        shader_set_int(material_t::associated_shader, "skinned", 1);
+      }
       for (int i = 0; i < skin.num_bones; i++) {
         char mat4_name[64]{};
         sprintf(mat4_name, "joint_inverse_bind_mats[%i]", i);
-        shader_set_mat4(material_t::associated_shader, mat4_name, skin.inverse_bind_matricies[i]);
+        if (light_pass) {
+          shader_set_mat4(light_t::light_shader, mat4_name, skin.inverse_bind_matricies[i]);
+        } else {
+          shader_set_mat4(material_t::associated_shader, mat4_name, skin.inverse_bind_matricies[i]);
+        }
 
         memset(mat4_name, 0, sizeof(mat4_name));
         sprintf(mat4_name, "joint_model_matricies[%i]", i);
         mat4 joint_model_matrix = get_obj_model_mat(skin.joint_obj_ids[i]);
-        shader_set_mat4(material_t::associated_shader, mat4_name, joint_model_matrix);
+        if (light_pass) {
+          shader_set_mat4(light_t::light_shader, mat4_name, joint_model_matrix);
+        } else {
+          shader_set_mat4(material_t::associated_shader, mat4_name, joint_model_matrix);
+        }
       }
 
-      // setting to defaults
+      // setting the rest to defaults
       for (int i = skin.num_bones; i < BONES_PER_SKIN_LIMIT; i++) {
         char mat4_name[64]{};
         sprintf(mat4_name, "joint_inverse_bind_mats[%i]", i);
-        shader_set_mat4(material_t::associated_shader, mat4_name, create_matrix(1.0f));
+        if (light_pass) {
+          shader_set_mat4(light_t::light_shader, mat4_name, create_matrix(1.0f));
+        } else {
+          shader_set_mat4(material_t::associated_shader, mat4_name, create_matrix(1.0f));
+        }
 
         memset(mat4_name, 0, sizeof(mat4_name));
         sprintf(mat4_name, "joint_model_matricies[%i]", i);
-        shader_set_mat4(material_t::associated_shader, mat4_name, create_matrix(1.0f));
+        if (light_pass) {
+          shader_set_mat4(light_t::light_shader, mat4_name, create_matrix(1.0f));
+        } else {
+          shader_set_mat4(material_t::associated_shader, mat4_name, create_matrix(1.0f));
+        }
       }
     } else {
-      shader_set_int(material_t::associated_shader, "skinned", 0);
+      // shader_set_int(material_t::associated_shader, "skinned", 0);
+      if (light_pass) {
+        shader_set_int(light_t::light_shader, "skinned", 0);
+      } else {
+        shader_set_int(material_t::associated_shader, "skinned", 0);
+      }
       // shader_set_mat4(material_t::associated_shader, "model", final_model);
-      shader_set_mat4(material_t::associated_shader, "model", obj.model_mat);
+      if (light_pass) {
+        shader_set_mat4(light_t::light_shader, "model", obj.model_mat);
+      } else {
+        shader_set_mat4(material_t::associated_shader, "model", obj.model_mat);
+      }
 
       // transform_t final_transform = get_transform_from_matrix(final_model);
       transform_t final_transform = get_transform_from_matrix(obj.model_mat);
@@ -206,7 +257,24 @@ void render_scene_obj(int obj_id, bool parent) {
     }
 
     for (mesh_t& mesh : model.meshes) {
-      material_t& m = bind_material(mesh.mat_idx);
+
+#if 1
+      if (!light_pass) {
+        if (obj.model_id == light_t::LIGHT_MESH_ID) {
+          shader_set_int(material_t::associated_shader, "override_color_bool", 1);
+        } else {
+          shader_set_int(material_t::associated_shader, "override_color_bool", 0);
+        }
+      }
+#endif
+
+      material_t m;
+      if (!light_pass) {
+        m = bind_material(mesh.mat_idx);
+      } else {
+        m = get_material(mesh.mat_idx);
+        bind_shader(light_t::light_shader);
+      }
 
       if (app_info.render_only_textured && m.albedo.base_color_img.tex_handle == -1) {
         continue;
@@ -230,17 +298,79 @@ void render_scene_obj(int obj_id, bool parent) {
   }
 
   for (int child : obj.child_objects) {
-    render_scene_obj(child, false);
+    render_scene_obj(child, false, light_pass);
   }
 }
 
 void render_scene() {
+  mat4 proj = proj_mat(60.f, 0.01f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+  mat4 view = get_cam_view_mat();
+
+  // LIGHT PASS
+  bind_framebuffer(light_pass_fb);
+  clear_framebuffer(light_pass_fb);
+
+  light_t l = get_light();
+  // vec3 fp = vec3_add(l.transform.pos, l.dir);
+  vec3 fp;
+  mat4 light_view = get_view_mat(l.transform.pos, fp);
+  float light_near_plane = 0.1f;
+  float light_far_plane = 50.f;
+  mat4 light_proj = proj_mat(60.f, light_near_plane, light_far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+  shader_set_mat4(light_t::light_shader, "light_view", light_view);
+  shader_set_mat4(light_t::light_shader, "light_projection", light_proj); 
+
+  set_lights_in_shader();
+
   for (int parent_id : scene.parent_objs) {
-    render_scene_obj(parent_id, true);
+    render_scene_obj(parent_id, true, true);
   }
   for (object_t& obj : objs) {
     if (obj.is_skinned) {
-      render_scene_obj(obj.id, false);
+      render_scene_obj(obj.id, false, true);
+    }
+  }
+
+  unbind_shader();
+  unbind_framebuffer();
+
+  // OFFLINE RENDER PASS
+  bind_framebuffer(offline_fb);
+
+  // glClearColor(0.f, 0.f, 0.f, 1.f);
+  // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  clear_framebuffer(offline_fb);
+
+  shader_set_mat4(material_t::associated_shader, "projection", proj);
+  shader_set_mat4(material_t::associated_shader, "view", view);
+
+#if 0
+  vec4 pt1 = {0,0,10.f - 0.01f,1};
+  vec4 pt2 = {0,0,9.8999999f,1};
+  vec4 pt3 = {0,0,9.899f,1};
+  vec4 pt4 = {0,0,0,1};
+
+  vec4 f_pt1 = mat_multiply_vec(proj, mat_multiply_vec(view, pt1));
+  vec4 f_pt2 = mat_multiply_vec(proj, mat_multiply_vec(view, pt2));
+  vec4 f_pt3 = mat_multiply_vec(proj, mat_multiply_vec(view, pt3));
+  vec4 f_pt4 = mat_multiply_vec(proj, mat_multiply_vec(view, pt4));
+#endif
+
+  shader_set_mat4(material_t::associated_shader, "light_view", light_view);
+  shader_set_mat4(material_t::associated_shader, "light_projection", light_proj);
+  shader_set_int(material_t::associated_shader, "light_pass_depth_tex", 1);
+  shader_set_int(material_t::associated_shader, "light_pass_depth_tex", 1);
+  shader_set_float(material_t::associated_shader, "light_near", light_near_plane);
+  shader_set_float(material_t::associated_shader, "light_far", light_far_plane);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, light_pass_fb.depth_att);
+
+  for (int parent_id : scene.parent_objs) {
+    render_scene_obj(parent_id, true, false);
+  }
+  for (object_t& obj : objs) {
+    if (obj.is_skinned) {
+      render_scene_obj(obj.id, false, false);
     }
   }
   unbind_shader();

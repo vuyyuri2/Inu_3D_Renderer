@@ -5,24 +5,28 @@
 #include "model_loading/gltf/gltf.h"
 #include "gfx/gfx.h"
 #include "gfx/online_renderer.h"
+#include "gfx/light.h"
 #include "scene/scene.h"
 #include "scene/camera.h"
+#include "scene/transform.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
 #include "utils/quaternion.h"
-#include "scene/transform.h"
+
+static float win_width = 1280.f;
+static float win_height = 960.f;
 
 extern window_t window;
-app_info_t app_info;
 extern animation_globals_t animation_globals;
+extern framebuffer_t offline_fb;
+extern framebuffer_t light_pass_fb;
 
-static float fb_width = 1280 / 1.f;
-static float fb_height = 960 / 1.f;
+app_info_t app_info;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 
-  create_window(hInstance, fb_width, fb_height);
+  create_window(hInstance, win_width, win_height);
 
   if (wcscmp(pCmdLine, L"running_in_vs") == 0) {
     app_info.running_in_vs = true;
@@ -37,7 +41,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   get_resources_folder_path(resources_path);
   printf("resources_path: %s\n", resources_path);
 
-  framebuffer_t offline_fb = create_framebuffer(fb_width, fb_height);
+  init_scene_rendering();
 
   char vert_shader_path[256]{};
   sprintf(vert_shader_path, "%s\\shaders\\model.vert", resources_path);
@@ -69,10 +73,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "rigged_figure\\RiggedFigure.gltf";
   // const char* gltf_file_resources_folder_rel_path = "rigged_figure\\blender_export.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cesium_man\\CesiumMan.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "brain_stem\\BrainStem.gltf";
-  const char* gltf_file_resources_folder_rel_path = "fox\\Fox.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "virtual_city\\VC.gltf";
+  const char* gltf_file_resources_folder_rel_path = "brain_stem\\BrainStem.gltf";
   // const char* gltf_file_resources_folder_rel_path = "medieval_fantasy_book\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "shadow_test\\test.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "fox\\Fox.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "virtual_city\\VC.gltf";
   // const char* gltf_file_resources_folder_rel_path = "low-poly_truck_car_drifter\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "yusuke_urameshi\\scene.gltf";
   // const char* gltf_file_resources_folder_rel_path = "junkrat\\scene.gltf";
@@ -98,7 +103,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
   play_next_anim();
 
- 
+  init_light_data();
+#if 1
+  create_light({2,3,0});
+#else
+  create_light({0,30,0});
+#endif
+
   while (window.running) {
     inu_timer_t frame_timer;
     start_timer(frame_timer);
@@ -116,22 +127,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     // RENDERING PASS
 
-    // offline rendering pass
-    bind_framebuffer(offline_fb);
-
-    glClearColor(0.f, 0.f, 0.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    mat4 proj = proj_mat(60.f, 0.01f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
-    shader_set_mat4(material_t::associated_shader, "projection", proj);
-
-    mat4 view = get_view_mat();
-    shader_set_mat4(material_t::associated_shader, "view", view);
- 
+    // offline rendering pass  
     render_scene();
 
     // online rendering pass
-    render_online(offline_fb);
+#define RENDER_DEPTH 0
+    if (RENDER_DEPTH == 0) {
+      render_online(offline_fb.color_att, 0);
+    } else {
+      // render_online(offline_fb.depth_att);
+      render_online(light_pass_fb.depth_att, 1);
+    }
 
     swap_buffers();
 

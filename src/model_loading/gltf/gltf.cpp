@@ -1355,6 +1355,8 @@ void gltf_load_file(const char* filepath) {
     
     // each prim could have its own vao, vbo, and ebo
     for (gltf_primitive_t& prim : gltf_mesh.primitives) {
+      inu_assert(prim.mode == GLTF_PRIMITIVE_MODE::TRIANGLES, "meshes right now can only be triangles");
+
       mesh_t mesh;
 
       int vert_count = -1;
@@ -1405,7 +1407,18 @@ void gltf_load_file(const char* filepath) {
       }
 
       if (prim.attribs.normals_accessor_idx != -1) {
-        // void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
+        void* normals_data = gltf_read_accessor_data(prim.attribs.normals_accessor_idx);
+        gltf_accessor_t& normals_acc = gltf_accessors[prim.attribs.normals_accessor_idx];
+        inu_assert(normals_acc.component_type == ACC_COMPONENT_TYPE::FLOAT, "normals need to be of float type");
+        inu_assert(normals_acc.element_type == ACC_ELEMENT_TYPE::VEC3, "normals need to be of vec3 type");
+        // can do direct cast b/c vec3 is made of floats
+        vec3* v_normals_data = static_cast<vec3*>(normals_data);
+        for (int i = 0; i < acc.count; i++) {
+          vertex_t& vert = mesh.vertices[i];
+          vec3 n = v_normals_data[i];
+          vert.normal = norm_vec3(n);
+        }
+        free(normals_data);
       } 
 
       if (prim.attribs.color_0_accessor_idx != -1) {
@@ -1571,11 +1584,18 @@ void gltf_load_file(const char* filepath) {
       vao_enable_attribute(mesh.vao, mesh.vbo, 0, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, position));
       vao_enable_attribute(mesh.vao, mesh.vbo, 1, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex0));
       vao_enable_attribute(mesh.vao, mesh.vbo, 2, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex1));
+#if 0
       vao_enable_attribute(mesh.vao, mesh.vbo, 3, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex2));
       vao_enable_attribute(mesh.vao, mesh.vbo, 4, 2, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, tex3));
       vao_enable_attribute(mesh.vao, mesh.vbo, 5, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, color));
       vao_enable_attribute(mesh.vao, mesh.vbo, 6, 4, GL_UNSIGNED_INT, sizeof(vertex_t), offsetof(vertex_t, joints));
       vao_enable_attribute(mesh.vao, mesh.vbo, 7, 4, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, weights));
+#else
+      vao_enable_attribute(mesh.vao, mesh.vbo, 3, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, color));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 4, 4, GL_UNSIGNED_INT, sizeof(vertex_t), offsetof(vertex_t, joints));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 5, 4, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, weights));
+      vao_enable_attribute(mesh.vao, mesh.vbo, 6, 3, GL_FLOAT, sizeof(vertex_t), offsetof(vertex_t, normal));
+#endif
       vao_bind_ebo(mesh.vao, mesh.ebo);
       
       model.meshes.push_back(mesh);

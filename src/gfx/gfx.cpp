@@ -154,6 +154,9 @@ shader_t create_shader(const char* vert_source_path, const char* frag_source_pat
 	free(vert_source);
 	free(frag_source);
 
+	shader.vert_name = vert_source_path;
+	shader.frag_name = frag_source_path;
+
 	return shader;
 }
 
@@ -281,6 +284,10 @@ int create_material(vec4 color, material_image_t base_color_img) {
 	return materials.size()-1;
 }
 
+material_t get_material(int mat_idx) {
+	return materials[mat_idx];
+}
+
 material_t bind_material(int mat_idx) {
 	inu_assert(mat_idx < materials.size(), "mat idx out of bounds");
 	shader_t& shader = material_t::associated_shader;
@@ -304,7 +311,7 @@ material_t bind_material(int mat_idx) {
   return mat;
 }
 
-framebuffer_t create_framebuffer(int width, int height) {
+framebuffer_t create_framebuffer(int width, int height, bool use_depth_tex_not_rb) {
 	framebuffer_t fb;
 	glGenFramebuffers(1, &fb.id);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);	
@@ -316,12 +323,26 @@ framebuffer_t create_framebuffer(int width, int height) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.color_att, 0);
 
-	unsigned int rbo;
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	if (!use_depth_tex_not_rb) {
+		unsigned int rbo;
+		glGenRenderbuffers(1, &rbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	} else {
+		glGenTextures(1, &fb.depth_att);
+		glBindTexture(GL_TEXTURE_2D, fb.depth_att);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, fb.depth_att, 0);
+	}
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		inu_assert_msg("framebuffer not made successfully");
@@ -341,5 +362,10 @@ void bind_framebuffer(framebuffer_t& fb) {
 void unbind_framebuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window.window_dim.x, window.window_dim.y);
+}
+
+void clear_framebuffer(framebuffer_t& fb) {
+	glClearColor(0.f, 0.f, 0.f, 1.f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

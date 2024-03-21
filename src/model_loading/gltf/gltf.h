@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 
-#define MAX_SUPPORTED_TEX_COORDS 4
+#define MAX_SUPPORTED_TEX_COORDS 2
 
 struct gltf_param_t {
   std::string key;

@@ -16,6 +16,10 @@ vec3 norm_vec3(vec3& v) {
   return res;
 }
 
+vec3 vec3_add(vec3& v1, vec3& v2) {
+  return {v1.x+v2.x, v1.y+v2.y, v1.z+v2.z};
+}
+
 void print_vec3(vec3& v) {
   printf("%f, %f, %f", v.x, v.y, v.z);
 }

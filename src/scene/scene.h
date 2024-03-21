@@ -58,5 +58,6 @@ void attach_anim_chunk_ref_to_obj(int obj_id, animation_chunk_data_ref_t& ref);
 object_t* get_obj(int obj_id);
 std::vector<int> get_bone_objs();
 
+void init_scene_rendering();
 void render_scene();
 void print_joint_transform_info();

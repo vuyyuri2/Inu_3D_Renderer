@@ -39,6 +39,8 @@ void delete_vao(const vao_t& vao);
 
 struct shader_t {
 	GLuint id = 0;
+	std::string vert_name;
+	std::string frag_name;
 };
 shader_t create_shader(const char* vert_source_path, const char* frag_source_path);
 void bind_shader(shader_t& shader);
@@ -119,15 +121,18 @@ struct material_t {
 };
 int create_material(vec4 color, material_image_t base_color_img);
 material_t bind_material(int mat_idx);
+material_t get_material(int mat_idx);
 
 struct framebuffer_t {
 	GLuint id = -1;
 
 	GLuint color_att = -1;
+	GLuint depth_att = -1;
 
 	int width = -1;
 	int height = -1;
 };
-framebuffer_t create_framebuffer(int width, int height);
+framebuffer_t create_framebuffer(int width, int height, bool use_depth_tex_not_rb = false);
 void bind_framebuffer(framebuffer_t& fb);
+void clear_framebuffer(framebuffer_t& fb);
 void unbind_framebuffer();

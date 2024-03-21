@@ -55,17 +55,8 @@ mat4 proj_mat(float fov, float near, float far, float aspect_ratio) {
   float top = near * tan(fov * multipler / 2.f);
   float right = top * aspect_ratio;
 
-  // brings to origin
-  mat4 translate = create_matrix(1.0f);
-  translate.fourth_col.z = (far+near) / 2.f;
-
-  mat4 scale = create_matrix(1.0f);
-  scale.cols[0].x = 1/right;
-  scale.cols[1].y = 1/top;
-  scale.cols[2].z = -2.f/(far-near);
   
-  mat4 ortho = mat_multiply_mat(scale, translate);
-
+  // pers proj keeps +z as out of screen and -z into screen
   mat4 pers = create_matrix(1.0f);
   pers.cols[0].x = near;
 
@@ -76,6 +67,21 @@ mat4 proj_mat(float fov, float near, float far, float aspect_ratio) {
 
   pers.cols[3].z = near * far;
   pers.cols[3].w = 0.f;
+
+  // ortho matrix brings (-right,right) to (-1,1)
+  // brings (-top,top) to (-1,1)
+  // brings (near,far) to (-1,1)
+  // brings to origin
+  mat4 translate = create_matrix(1.0f);
+  translate.fourth_col.z = (far+near) / 2.f;
+
+  mat4 scale = create_matrix(1.0f);
+  scale.cols[0].x = 1/right;
+  scale.cols[1].y = 1/top;
+  // the negative is b/c in world space, +z comes out of the screen and -z goes into the screen, even after perspective matrix is applied
+  // we flip this when doing this ortho projection so that -1 is out of screen and +1 is into the screen
+  scale.cols[2].z = -2.f/(far-near);
+  mat4 ortho = mat_multiply_mat(scale, translate);
 
   mat4 proj = mat_multiply_mat(ortho, pers);
   return proj;
