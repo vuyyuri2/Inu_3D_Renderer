@@ -34,9 +34,9 @@ function(configure_project)
         src/utils/quaternion.cpp
         src/utils/vectors.cpp
         src/utils/inu_time.cpp
+        src/utils/transform.cpp
 
         src/scene/scene.cpp
-        src/scene/transform.cpp
         src/scene/camera.cpp
 
         src/animation/interpolation.cpp

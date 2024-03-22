@@ -3,7 +3,6 @@
 #include <algorithm>
 
 #include "utils/mats.h"
-#include "gfx/gfx.h"
 #include "model_loading/model_internal.h"
 #include "utils/app_info.h"
 #include "gfx/light.h"
@@ -12,15 +11,17 @@
 #include "windowing/window.h"
 #include "camera.h"
 
+#define NUM_LIGHTS_SUPPORTED_IN_SHADER 3
+
 std::vector<object_t> objs;
 std::vector<skin_t> skins;
 
 static scene_t scene;
-static float fb_width = 1280 / 1.f;
-static float fb_height = 960 / 1.f;
+float fb_width = 1280 / 1.f;
+float fb_height = 960 / 1.f;
 
 framebuffer_t offline_fb;
-framebuffer_t light_pass_fb;
+// framebuffer_t light_pass_fb;
 
 extern std::vector<model_t> models;
 extern app_info_t app_info;
@@ -30,7 +31,7 @@ int skin_t::BONE_MODEL_ID = -1;
 
 void init_scene_rendering() {
   offline_fb = create_framebuffer(fb_width, fb_height);
-  light_pass_fb = create_framebuffer(fb_width, fb_height, true);
+  // light_pass_fb = create_framebuffer(fb_width, fb_height, true);
 }
 
 int create_object(transform_t& transform) {
@@ -307,63 +308,73 @@ void render_scene() {
   mat4 view = get_cam_view_mat();
 
   // LIGHT PASS
-  bind_framebuffer(light_pass_fb);
-  clear_framebuffer(light_pass_fb);
+  for (int i = 0; i < get_num_lights(); i++) {
+    setup_light_for_rendering(i);
 
-  light_t l = get_light();
-  // vec3 fp = vec3_add(l.transform.pos, l.dir);
-  vec3 fp;
-  mat4 light_view = get_view_mat(l.transform.pos, fp);
-  float light_near_plane = 0.1f;
-  float light_far_plane = 50.f;
-  mat4 light_proj = proj_mat(60.f, light_near_plane, light_far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
-  shader_set_mat4(light_t::light_shader, "light_view", light_view);
-  shader_set_mat4(light_t::light_shader, "light_projection", light_proj); 
-
-  set_lights_in_shader();
-
-  for (int parent_id : scene.parent_objs) {
-    render_scene_obj(parent_id, true, true);
-  }
-  for (object_t& obj : objs) {
-    if (obj.is_skinned) {
-      render_scene_obj(obj.id, false, true);
+    for (int parent_id : scene.parent_objs) {
+      render_scene_obj(parent_id, true, true);
     }
+    for (object_t& obj : objs) {
+      if (obj.is_skinned) {
+        render_scene_obj(obj.id, false, true);
+      }
+    }
+
+    remove_light_from_rendering();
   }
 
-  unbind_shader();
-  unbind_framebuffer();
 
   // OFFLINE RENDER PASS
   bind_framebuffer(offline_fb);
 
-  // glClearColor(0.f, 0.f, 0.f, 1.f);
-  // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   clear_framebuffer(offline_fb);
 
   shader_set_mat4(material_t::associated_shader, "projection", proj);
   shader_set_mat4(material_t::associated_shader, "view", view);
 
-#if 0
-  vec4 pt1 = {0,0,10.f - 0.01f,1};
-  vec4 pt2 = {0,0,9.8999999f,1};
-  vec4 pt3 = {0,0,9.899f,1};
-  vec4 pt4 = {0,0,0,1};
+  int num_lights = get_num_lights();
+  for (int i = 0; i < NUM_LIGHTS_SUPPORTED_IN_SHADER; i++) {
+    mat4 identity = create_matrix(1.0f);
+    bool inactive = (i >= num_lights);
 
-  vec4 f_pt1 = mat_multiply_vec(proj, mat_multiply_vec(view, pt1));
-  vec4 f_pt2 = mat_multiply_vec(proj, mat_multiply_vec(view, pt2));
-  vec4 f_pt3 = mat_multiply_vec(proj, mat_multiply_vec(view, pt3));
-  vec4 f_pt4 = mat_multiply_vec(proj, mat_multiply_vec(view, pt4));
-#endif
+    char var_name[64]{};
+    sprintf(var_name, "lights_mat_data[%i].light_view", i);
+    if (inactive) {
+      shader_set_mat4(material_t::associated_shader, var_name, identity);
+    } else {
+      mat4 light_view = get_light_view_mat(i);
+      shader_set_mat4(material_t::associated_shader, var_name, light_view);
+    }
+    
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_mat_data[%i].light_projection", i);
+    if (inactive) {
+      shader_set_mat4(material_t::associated_shader, var_name, identity);
+    } else {
+      mat4 light_proj = get_light_proj_mat(i);
+      shader_set_mat4(material_t::associated_shader, var_name, light_proj);
+    }
 
-  shader_set_mat4(material_t::associated_shader, "light_view", light_view);
-  shader_set_mat4(material_t::associated_shader, "light_projection", light_proj);
-  shader_set_int(material_t::associated_shader, "light_pass_depth_tex", 1);
-  shader_set_int(material_t::associated_shader, "light_pass_depth_tex", 1);
-  shader_set_float(material_t::associated_shader, "light_near", light_near_plane);
-  shader_set_float(material_t::associated_shader, "light_far", light_far_plane);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, light_pass_fb.depth_att);
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_plane_data[%i].depth_tex", i);
+    if (inactive) {
+      shader_set_int(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_int(material_t::associated_shader, var_name, i+1);
+      glActiveTexture(GL_TEXTURE0 + (i+1));
+      GLuint depth_att = get_light_fb_depth_tex(i);
+      glBindTexture(GL_TEXTURE_2D, depth_att);
+    }
+
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_plane_data[%i].light_active", i);
+    if (inactive) {
+      shader_set_int(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_int(material_t::associated_shader, var_name, 1);
+    }
+    
+  }
 
   for (int parent_id : scene.parent_objs) {
     render_scene_obj(parent_id, true, false);
@@ -392,7 +403,6 @@ int register_skin(skin_t& skin) {
     int node_idx = skin.joint_obj_ids[i];
     objs[node_idx].is_joint_obj = true;
 #if SHOW_BONES
-    // objs[node_idx].model_id = skin_t::BONE_MODEL_ID;
     attach_model_to_obj(skin_t::BONE_MODEL_ID);
 #endif
   }

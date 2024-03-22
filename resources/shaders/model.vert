@@ -8,71 +8,49 @@ layout (location = 4) in vec4 joints;
 layout (location = 5) in vec4 weights;
 layout (location = 6) in vec3 vert_normal;
 
-// layout (location = 3) in vec2 tex2;
-// layout (location = 4) in vec2 tex3;
-// layout (location = 5) in vec3 color;
-// layout (location = 6) in vec4 joints;
-// layout (location = 7) in vec4 weights;
-
 uniform int skinned;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform float angle;
-
-uniform mat4 light_view;
-uniform mat4 light_projection;
 
 uniform mat4 joint_model_matricies[80];
 uniform mat4 joint_inverse_bind_mats[80];
 
+// light 4x4 matrix info
+struct light_mat_data_t {
+  mat4 light_view;
+  mat4 light_projection;
+};
+uniform light_mat_data_t lights_mat_data[3];
+
 out vec2 tex_coords[2];
 out vec3 color;
 out vec3 normal;
-out vec4 light_rel_screen_pos;
-out vec2 light_pass_depth_tex_coord;
+
+out vec4 light_rel_screen_pos0;
+out vec2 light_pass_depth_tex_coord0;
+
+out vec4 light_rel_screen_pos1;
+out vec2 light_pass_depth_tex_coord1;
+
+out vec4 light_rel_screen_pos2;
+out vec2 light_pass_depth_tex_coord2;
+
+struct light_rel_data_t {
+  vec4 screen_rel_pos;
+  vec2 depth_tex_coord;
+};
+
+light_rel_data_t calc_light_rel_data(mat4 light_projection, mat4 light_view, mat4 model) {
+  light_rel_data_t data;
+  data.screen_rel_pos = light_projection * light_view * model * vec4(vert_pos, 1.0);
+  data.screen_rel_pos = data.screen_rel_pos / data.screen_rel_pos.w;
+  data.depth_tex_coord = (data.screen_rel_pos.xy + vec2(1,1)) / 2;
+  return data;
+}
 
 void main() {
-
-  float c = cos(radians(angle));
-  float s = sin(radians(angle));
-
-  float c90 = cos(radians(90));
-  float s90 = sin(radians(90));
-  mat4 rotate_z = mat4(
-    c90,s90,0,0,
-    -s90,c90,0,0,
-    0,0,1,0,
-    0,0,0,1
-  );
-
-
-  mat4 rot_x_90 = mat4(
-    1,0,0,0,
-    0,c90,-s90,0,
-    0,s90,c90,0,
-    0,0,0,1
-  );
-
-  /*
-  mat4 rotate_y = mat4(
-    c,0,-s,0,
-    0,1,0,0,
-    s,0,c,0,
-    0,0,0,1
-  );
-  */
-  mat4 rotate_y = mat4(
-    c,0,s,0,
-    0,1,0,0,
-    -s,0,c,0,
-    0,0,0,1
-  );
-  // gl_Position = projection * model * rotate_y * rot_x_90 * vec4(vert_pos, 1.0);
-  // gl_Position = projection * model * vec4(vert_pos, 1.0);
-
-  // gl_Position = projection * model * vec4(vert_pos, 1.0);
 
   mat4 final_model = mat4(0.0);
   if (skinned == 1) {
@@ -108,17 +86,26 @@ void main() {
   }
 
   gl_Position = projection * view * final_model * vec4(vert_pos, 1.0);
-  light_rel_screen_pos = light_projection * light_view * final_model * vec4(vert_pos, 1.0);
-  light_rel_screen_pos = light_rel_screen_pos / light_rel_screen_pos.w;
-  // z_pos = light_rel_screen_pos.z;
-
-  light_pass_depth_tex_coord = (light_rel_screen_pos.xy + vec2(1,1)) / 2;
 
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
-  // tex_coords[2] = tex2;
-  // tex_coords[3] = tex3;
   color = vert_color;
   normal = vert_normal;
+
+  // light_rel_screen_pos0 = light_projection * light_view * final_model * vec4(vert_pos, 1.0);
+  // light_rel_screen_pos0 = light_rel_screen_pos / light_rel_screen_pos.w;
+  // light_pass_depth_tex_coord = (light_rel_screen_pos0.xy + vec2(1,1)) / 2;
+
+  light_rel_data_t light_rel_data0 = calc_light_rel_data(lights_mat_data[0].light_projection, lights_mat_data[0].light_view, final_model);
+  light_rel_screen_pos0 = light_rel_data0.screen_rel_pos;
+  light_pass_depth_tex_coord0 = light_rel_data0.depth_tex_coord;
+
+  light_rel_data_t light_rel_data1 = calc_light_rel_data(lights_mat_data[1].light_projection, lights_mat_data[1].light_view, final_model);
+  light_rel_screen_pos1 = light_rel_data1.screen_rel_pos;
+  light_pass_depth_tex_coord1 = light_rel_data1.depth_tex_coord;
+
+  light_rel_data_t light_rel_data2 = calc_light_rel_data(lights_mat_data[2].light_projection, lights_mat_data[2].light_view, final_model);
+  light_rel_screen_pos2 = light_rel_data2.screen_rel_pos;
+  light_pass_depth_tex_coord2 = light_rel_data2.depth_tex_coord;
 }
 

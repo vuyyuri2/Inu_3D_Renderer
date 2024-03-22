@@ -1,7 +1,8 @@
 #pragma once
 
 #include "gfx/gfx.h"
-#include "scene/transform.h"
+#include "utils/transform.h"
+#include "utils/mats.h"
 
 #define SHOW_LIGHTS 1
 
@@ -16,9 +17,18 @@ struct light_t {
   static int LIGHT_MESH_ID;
 #endif
   static shader_t light_shader;
+  framebuffer_t light_pass_fb;
+
+  mat4 view;
+  mat4 proj;
 };
 
 void init_light_data();
 int create_light(vec3 pos);
-void set_lights_in_shader();
-light_t get_light();
+void setup_light_for_rendering(int light_id);
+void remove_light_from_rendering();
+light_t get_light(int light_id);
+int get_num_lights();
+GLuint get_light_fb_depth_tex(int light_id);
+mat4 get_light_proj_mat(int light_id);
+mat4 get_light_view_mat(int light_id);

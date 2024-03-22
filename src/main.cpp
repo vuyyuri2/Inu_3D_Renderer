@@ -8,7 +8,7 @@
 #include "gfx/light.h"
 #include "scene/scene.h"
 #include "scene/camera.h"
-#include "scene/transform.h"
+#include "utils/transform.h"
 #include "utils/general.h"
 #include "utils/app_info.h"
 #include "utils/mats.h"
@@ -20,7 +20,7 @@ static float win_height = 960.f;
 extern window_t window;
 extern animation_globals_t animation_globals;
 extern framebuffer_t offline_fb;
-extern framebuffer_t light_pass_fb;
+// extern framebuffer_t light_pass_fb;
 
 app_info_t app_info;
 
@@ -73,9 +73,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "rigged_figure\\RiggedFigure.gltf";
   // const char* gltf_file_resources_folder_rel_path = "rigged_figure\\blender_export.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cesium_man\\CesiumMan.gltf";
-  const char* gltf_file_resources_folder_rel_path = "brain_stem\\BrainStem.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "brain_stem\\BrainStem.gltf";
   // const char* gltf_file_resources_folder_rel_path = "medieval_fantasy_book\\scene.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "shadow_test\\test.gltf";
+  const char* gltf_file_resources_folder_rel_path = "shadow_test\\test.gltf";
   // const char* gltf_file_resources_folder_rel_path = "fox\\Fox.gltf";
   // const char* gltf_file_resources_folder_rel_path = "virtual_city\\VC.gltf";
   // const char* gltf_file_resources_folder_rel_path = "low-poly_truck_car_drifter\\scene.gltf";
@@ -105,7 +105,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
   init_light_data();
 #if 1
-  create_light({2,3,0});
+  // create_light({2,10,0});
+  create_light({-2,5,0});
+  create_light({-5,5,0});
 #else
   create_light({0,30,0});
 #endif
@@ -130,14 +132,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // offline rendering pass  
     render_scene();
 
+
     // online rendering pass
 #define RENDER_DEPTH 0
     if (RENDER_DEPTH == 0) {
       render_online(offline_fb.color_att, 0);
     } else {
       // render_online(offline_fb.depth_att);
-      render_online(light_pass_fb.depth_att, 1);
+      GLuint depth_att = get_light_fb_depth_tex(0);
+      render_online(depth_att, 1);
     }
+#undef RENDER_DEPTH
 
     swap_buffers();
 

@@ -57,7 +57,7 @@ void init_online_renderer() {
   vao_bind_ebo(offline_to_online_quad.vao, offline_to_online_quad.ebo);
 }
 
-extern framebuffer_t light_pass_fb;
+// extern framebuffer_t light_pass_fb;
 // void render_online(framebuffer_t& final_offline_fb) {
 void render_online(GLuint final_att, int render_depth) {
   unbind_framebuffer();
@@ -66,8 +66,8 @@ void render_online(GLuint final_att, int render_depth) {
   if (online_renderer.first_render || window.resized) {
     online_renderer.first_render = false;
     // need to change this logic to not rely on another fbo but rather just the online fbo and/or window dimensions
-    // update_online_vertices(offline_fb);
-    update_online_vertices(light_pass_fb);
+    update_online_vertices(offline_fb);
+    // update_online_vertices(light_pass_fb);
   }
 
   shader_set_int(online_renderer.offline_to_online_shader, "render_depth", render_depth);
