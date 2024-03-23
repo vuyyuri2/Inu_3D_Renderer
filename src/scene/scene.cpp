@@ -304,8 +304,6 @@ void render_scene_obj(int obj_id, bool parent, bool light_pass) {
 }
 
 void render_scene() {
-  mat4 proj = proj_mat(60.f, 0.01f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
-  mat4 view = get_cam_view_mat();
 
   // LIGHT PASS
   for (int i = 0; i < get_num_lights(); i++) {
@@ -326,9 +324,10 @@ void render_scene() {
 
   // OFFLINE RENDER PASS
   bind_framebuffer(offline_fb);
-
   clear_framebuffer(offline_fb);
 
+  mat4 proj = proj_mat(60.f, 0.01f, 1000.f, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+  mat4 view = get_cam_view_mat();
   shader_set_mat4(material_t::associated_shader, "projection", proj);
   shader_set_mat4(material_t::associated_shader, "view", view);
 

@@ -33,7 +33,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   }
 
   transform_t t;
-  t.pos.z = 10.f;
+  t.pos.y = 10.f;
+  t.pos.x = 2.f;
   create_camera(t);
   init_online_renderer();
 
@@ -106,12 +107,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   init_light_data();
 #if 1
   // create_light({2,10,0});
-  create_light({-2,5,0});
-  create_light({-5,5,0});
+  // create_light({-2,3,0});
+  create_light({2,8,0});
+  // create_light({-5,3,0});
 #else
   create_light({0,30,0});
 #endif
 
+  int RENDER_DEPTH = 0;
   while (window.running) {
     inu_timer_t frame_timer;
     start_timer(frame_timer);
@@ -122,6 +125,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // UPDATE PASS
     if (window.input.right_mouse_up) {
       play_next_anim();
+      RENDER_DEPTH = 1-RENDER_DEPTH;
     }
     
     update_cam();
@@ -134,7 +138,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 
     // online rendering pass
-#define RENDER_DEPTH 0
     if (RENDER_DEPTH == 0) {
       render_online(offline_fb.color_att, 0);
     } else {
@@ -142,7 +145,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
       GLuint depth_att = get_light_fb_depth_tex(0);
       render_online(depth_att, 1);
     }
-#undef RENDER_DEPTH
 
     swap_buffers();
 

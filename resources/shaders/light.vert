@@ -61,4 +61,5 @@ void main() {
   } else {
     gl_Position = light_projection * light_view * model * vec4(vert_pos, 1.0);
   } 
+  // gl_Position = gl_Position / gl_Position.w;
 }
