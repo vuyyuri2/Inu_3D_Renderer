@@ -6,6 +6,7 @@
 #include "scene/scene.h"
 #include "scene/camera.h"
 #include "model_loading/gltf/gltf.h"
+#include "scene/scene.h"
 
 #include <vector>
 
@@ -44,6 +45,11 @@ extern float fb_width;
 extern float fb_height;
 
 int create_light(vec3 pos) {
+  if (lights.size() >= NUM_LIGHTS_SUPPORTED_IN_SHADER) {
+    char buffer[256]{};
+    sprintf(buffer, "can't support more than %i", NUM_LIGHTS_SUPPORTED_IN_SHADER);
+    inu_assert_msg(buffer);
+  }
   light_t light;
   light.id = lights.size();
   light.transform.pos = pos;

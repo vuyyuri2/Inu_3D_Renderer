@@ -134,7 +134,7 @@ void main() {
 
   float max_in_light = max(max(in_light0.amount_in_light, in_light1.amount_in_light), in_light2.amount_in_light);
 
-  float shadow_damp_factor = 0.4;
+  float shadow_damp_factor = 0.2;
   float multiplier = ((1.0 - max_in_light) * shadow_damp_factor) + max_in_light;
 
   frag_color.x *= multiplier;

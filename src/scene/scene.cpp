@@ -11,8 +11,6 @@
 #include "windowing/window.h"
 #include "camera.h"
 
-#define NUM_LIGHTS_SUPPORTED_IN_SHADER 3
-
 std::vector<object_t> objs;
 std::vector<skin_t> skins;
 

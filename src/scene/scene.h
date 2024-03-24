@@ -11,6 +11,7 @@
 
 #define BONES_PER_SKIN_LIMIT 80
 #define SHOW_BONES 0
+#define NUM_LIGHTS_SUPPORTED_IN_SHADER 3
 
 struct skin_t {
   int id = -1;

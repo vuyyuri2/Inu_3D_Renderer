@@ -108,10 +108,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 #if 1
   // create_light({2,10,0});
   // create_light({-2,3,0});
-  // create_light({2,8,0});
+  create_light({2,8,0});
   create_light({-20,6,0});
   create_light({10,5,-5});
-  create_light({-8,5,-5});
+  // create_light({-8,5,-5});
   // create_light({-5,3,0});
 #else
   create_light({0,30,0});
