@@ -10,6 +10,8 @@ struct light_t {
   int id = -1;
   transform_t transform;
   float radius = 1.f;
+  static const float NEAR_PLANE;
+  static const float FAR_PLANE;
   vec3 dir;
   vec3 color;
 

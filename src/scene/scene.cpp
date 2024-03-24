@@ -355,7 +355,7 @@ void render_scene() {
     }
 
     memset(var_name, 0, sizeof(var_name));
-    sprintf(var_name, "lights_plane_data[%i].depth_tex", i);
+    sprintf(var_name, "lights_data[%i].depth_tex", i);
     if (inactive) {
       shader_set_int(material_t::associated_shader, var_name, 0);
     } else {
@@ -366,13 +366,44 @@ void render_scene() {
     }
 
     memset(var_name, 0, sizeof(var_name));
-    sprintf(var_name, "lights_plane_data[%i].light_active", i);
+    sprintf(var_name, "lights_data[%i].light_active", i);
     if (inactive) {
       shader_set_int(material_t::associated_shader, var_name, 0);
     } else {
       shader_set_int(material_t::associated_shader, var_name, 1);
     }
+
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_data[%i].shadow_map_width", i);
+    if (inactive) {
+      shader_set_int(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_int(material_t::associated_shader, var_name, fb_width);
+    }
+
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_data[%i].shadow_map_height", i);
+    if (inactive) {
+      shader_set_int(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_int(material_t::associated_shader, var_name, fb_height);
+    }
     
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_data[%i].near_plane", i);
+    if (inactive) {
+      shader_set_float(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_float(material_t::associated_shader, var_name, light_t::NEAR_PLANE);
+    }
+
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_data[%i].far_plane", i);
+    if (inactive) {
+      shader_set_float(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_float(material_t::associated_shader, var_name, light_t::FAR_PLANE);
+    }
   }
 
   for (int parent_id : scene.parent_objs) {

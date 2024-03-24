@@ -18,6 +18,8 @@ int light_t::LIGHT_MESH_ID = -1;
 #endif
 
 shader_t light_t::light_shader;
+const float light_t::NEAR_PLANE = 0.1f;
+const float light_t::FAR_PLANE = 50.f;
 
 void init_light_data() {
   char resources_path[256]{};
@@ -83,9 +85,9 @@ void setup_light_for_rendering(int light_id) {
   vec3 fp = {light.transform.pos.x, light.transform.pos.y - 1, light.transform.pos.z};
   // fp.x = ;
   light.view = get_view_mat(light.transform.pos, fp);
-  float light_near_plane = 0.1f;
-  float light_far_plane = 50.f;
-  light.proj = proj_mat(60.f, light_near_plane, light_far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+  // float light_near_plane = 0.1f;
+  // float light_far_plane = 50.f;
+  light.proj = proj_mat(60.f, light_t::NEAR_PLANE, light_t::FAR_PLANE, static_cast<float>(window.window_dim.x) / window.window_dim.y);
   shader_set_mat4(light_t::light_shader, "light_view", light.view);
   shader_set_mat4(light_t::light_shader, "light_projection", light.proj); 
 
