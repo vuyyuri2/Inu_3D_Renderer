@@ -29,24 +29,24 @@ out vec3 color;
 out vec3 normal;
 
 out vec4 light_rel_screen_pos0;
-out vec2 light_pass_depth_tex_coord0;
+// out vec2 light_pass_depth_tex_coord0;
 
 out vec4 light_rel_screen_pos1;
-out vec2 light_pass_depth_tex_coord1;
+// out vec2 light_pass_depth_tex_coord1;
 
 out vec4 light_rel_screen_pos2;
-out vec2 light_pass_depth_tex_coord2;
+// out vec2 light_pass_depth_tex_coord2;
 
 struct light_rel_data_t {
   vec4 screen_rel_pos;
-  vec2 depth_tex_coord;
+  // vec2 depth_tex_coord;
 };
 
 light_rel_data_t calc_light_rel_data(mat4 light_projection, mat4 light_view, mat4 model) {
   light_rel_data_t data;
   data.screen_rel_pos = light_projection * light_view * model * vec4(vert_pos, 1.0);
-  data.screen_rel_pos = data.screen_rel_pos / data.screen_rel_pos.w;
-  data.depth_tex_coord = (data.screen_rel_pos.xy + vec2(1,1)) / 2;
+  // data.screen_rel_pos = data.screen_rel_pos / data.screen_rel_pos.w;
+  // data.depth_tex_coord = (data.screen_rel_pos.xy + vec2(1,1)) / 2;
   return data;
 }
 
@@ -98,14 +98,14 @@ void main() {
 
   light_rel_data_t light_rel_data0 = calc_light_rel_data(lights_mat_data[0].light_projection, lights_mat_data[0].light_view, final_model);
   light_rel_screen_pos0 = light_rel_data0.screen_rel_pos;
-  light_pass_depth_tex_coord0 = light_rel_data0.depth_tex_coord;
+  // light_pass_depth_tex_coord0 = light_rel_data0.depth_tex_coord;
 
   light_rel_data_t light_rel_data1 = calc_light_rel_data(lights_mat_data[1].light_projection, lights_mat_data[1].light_view, final_model);
   light_rel_screen_pos1 = light_rel_data1.screen_rel_pos;
-  light_pass_depth_tex_coord1 = light_rel_data1.depth_tex_coord;
+  // light_pass_depth_tex_coord1 = light_rel_data1.depth_tex_coord;
 
   light_rel_data_t light_rel_data2 = calc_light_rel_data(lights_mat_data[2].light_projection, lights_mat_data[2].light_view, final_model);
   light_rel_screen_pos2 = light_rel_data2.screen_rel_pos;
-  light_pass_depth_tex_coord2 = light_rel_data2.depth_tex_coord;
+  // light_pass_depth_tex_coord2 = light_rel_data2.depth_tex_coord;
 }
 
