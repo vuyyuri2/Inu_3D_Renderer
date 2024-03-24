@@ -75,8 +75,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // const char* gltf_file_resources_folder_rel_path = "rigged_figure\\blender_export.gltf";
   // const char* gltf_file_resources_folder_rel_path = "cesium_man\\CesiumMan.gltf";
   // const char* gltf_file_resources_folder_rel_path = "brain_stem\\BrainStem.gltf";
-  // const char* gltf_file_resources_folder_rel_path = "medieval_fantasy_book\\scene.gltf";
-  const char* gltf_file_resources_folder_rel_path = "shadow_test\\test.gltf";
+  const char* gltf_file_resources_folder_rel_path = "medieval_fantasy_book\\scene.gltf";
+  // const char* gltf_file_resources_folder_rel_path = "shadow_test\\test.gltf";
   // const char* gltf_file_resources_folder_rel_path = "fox\\Fox.gltf";
   // const char* gltf_file_resources_folder_rel_path = "virtual_city\\VC.gltf";
   // const char* gltf_file_resources_folder_rel_path = "low-poly_truck_car_drifter\\scene.gltf";
@@ -108,7 +108,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 #if 1
   // create_light({2,10,0});
   // create_light({-2,3,0});
-  create_light({2,8,0});
+  // create_light({2,8,0});
+  create_light({-20,6,0});
+  create_light({10,5,-5});
+  create_light({-8,5,-5});
   // create_light({-5,3,0});
 #else
   create_light({0,30,0});

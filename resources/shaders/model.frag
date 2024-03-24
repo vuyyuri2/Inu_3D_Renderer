@@ -47,14 +47,15 @@ vec4 quantize_color(vec4 c) {
 }
 
 struct is_in_light_info_t {
-  vec2 tc;
   float amount_in_light;
   float closest_depth;
   float depth;
 };
 
-is_in_light_info_t is_in_light(light_data_t light_data, vec2 tex_coords, vec4 light_rel_pos) {
+is_in_light_info_t is_in_light(light_data_t light_data, vec4 light_rel_pos) {
   is_in_light_info_t info;
+
+  vec2 tex_coords = ((light_rel_pos.xy / light_rel_pos.w) + vec2(1,1)) / 2;
 
 #if 0
   if ((light_data.light_active == 0) || tex_coords.x < 0 || tex_coords.x > 1 || tex_coords.y < 0 || tex_coords.y > 1) {
@@ -65,44 +66,53 @@ is_in_light_info_t is_in_light(light_data_t light_data, vec2 tex_coords, vec4 li
   }
 #endif
 
-  // vec2 tex_coords = (light_rel_pos.xy + vec2(1,1)) / 2;
-
   float amount_in_light = 0.0;
+  float central_bias = 0.00001;
+  // float non_central_bias = 0.001;
+  float non_central_bias = central_bias;
+  // float bias = 0.0;
 
   // z position of the vertex relative to the light, still [-1,1] for near to far
   info.depth = light_rel_pos.z / light_rel_pos.w;
   // depth [0,1] relative to light
   info.depth = (info.depth+1)/2;
+
+#if 0
   info.tc = tex_coords;
   info.closest_depth = texture(light_data.depth_tex, info.tc).r;
   // info.closest_depth = texture(light_data.depth_tex, vec2(0.5,0.5)).r;
-  float bias = 0.0001;
-  // float bias = 0.0;
   if (info.depth < (info.closest_depth + bias)) {
     info.amount_in_light = 1 * light_data.light_active;
   } else {
     info.amount_in_light = 0;
   }
-
-#if 0
-  int pcf = 0;
+#else
+  int pcf = 3;
 
   // float tex_bias = 0.001;
   float tex_bias = 0;
+#if 1
   for (int x_offset = -(pcf/2); x_offset <= (pcf/2); x_offset++) {
     for (int y_offset = -(pcf/2); y_offset <= (pcf/2); y_offset++) {
-      // vec2 new_tex_coords = tex_coords + (vec2(x_offset * 0.00078125, y_offset * 0.00138889));
-      vec2 new_tex_coords = tex_coords;
+#else
+  pcf = 0;
+  int x_off = 0;
+  int y_off = -1;
+  for (int x_offset = x_off; x_offset <= x_off; x_offset++) {
+    for (int y_offset = y_off; y_offset <= y_off; y_offset++) {
+#endif
+      int bias_t = int(sign(abs(x_offset) + abs(y_offset)));
+      float bias = (central_bias * (1-bias_t)) + (non_central_bias * bias_t);
+      vec2 new_tex_coords = tex_coords + (vec2(x_offset * 0.00078125, y_offset * 0.00138889));
+      // vec2 new_tex_coords = tex_coords;
       if (new_tex_coords.x < tex_bias || new_tex_coords.x > (1 - tex_bias) || new_tex_coords.y < tex_bias || new_tex_coords.y > (1-tex_bias)) continue;
-
 
       // depth buffer stores 0 to 1, for near to far respectively
       // so closest_depth is between 0 to 1
-      info.closest_depth = texture(light_data.depth_tex, new_tex_coords).r;
+      // info.closest_depth = texture(light_data.depth_tex, new_tex_coords).r;
+      info.closest_depth = textureOffset(light_data.depth_tex, tex_coords, ivec2(x_offset, y_offset)).r;
+      // info.closest_depth = textureOffset(light_data.depth_tex, tex_coords, ivec2(0,0)).r;
 
-      // float diff = depth - closest_depth;
-      // float s = sign(diff);
-      
       // z pos is closer to light than the texture sample says
       if (info.depth < (info.closest_depth + bias)) {
         // light
@@ -148,19 +158,19 @@ void main() {
 
   // light_data_t lp0 = lights_plane_data[0];
   vec2 light_pass_depth_tex_coord0 = ((light_rel_screen_pos0.xy / light_rel_screen_pos0.w) + vec2(1,1)) / 2;
-  is_in_light_info_t in_light0 = is_in_light(lights_plane_data[0], light_pass_depth_tex_coord0, light_rel_screen_pos0);
+  is_in_light_info_t in_light0 = is_in_light(lights_plane_data[0],  light_rel_screen_pos0);
   // * lights_plane_data[0].light_active;
   // float in_light0 = is_in_light(lights_plane_data[0].depth_tex, light_rel_screen_pos0) * lights_plane_data[0].light_active;
 
   // light_data_t lp1 = lights_plane_data[1];
   vec2 light_pass_depth_tex_coord1 = (light_rel_screen_pos1.xy + vec2(1,1)) / 2;
-  is_in_light_info_t in_light1 = is_in_light(lights_plane_data[1], light_pass_depth_tex_coord1, light_rel_screen_pos1);
+  is_in_light_info_t in_light1 = is_in_light(lights_plane_data[1], light_rel_screen_pos1);
   //* lights_plane_data[1].light_active;
   // float in_light1 = is_in_light(lights_plane_data[1].depth_tex, light_rel_screen_pos1) * lights_plane_data[1].light_active;
 
   // light_data_t lp2 = lights_plane_data[2];
   vec2 light_pass_depth_tex_coord2 = (light_rel_screen_pos2.xy + vec2(1,1)) / 2;
-  is_in_light_info_t in_light2 = is_in_light(lights_plane_data[2], light_pass_depth_tex_coord2, light_rel_screen_pos2);
+  is_in_light_info_t in_light2 = is_in_light(lights_plane_data[2], light_rel_screen_pos2);
   // * lights_plane_data[2].light_active;
   // float in_light2 = is_in_light(lights_plane_data[2].depth_tex, light_rel_screen_pos2) * lights_plane_data[2].light_active;
 
@@ -182,7 +192,7 @@ void main() {
   frag_color.y *= multiplier;
   frag_color.z *= multiplier;
 
-  frag_color = vec4(max_in_light, max_in_light, max_in_light, 1);
+  // frag_color = vec4(max_in_light, max_in_light, max_in_light, 1);
   // frag_color = vec4(multiplier, multiplier, multiplier, 1);
   // float v = pow(in_light0.depth, 100);
   // frag_color = vec4(v,v,v,1);

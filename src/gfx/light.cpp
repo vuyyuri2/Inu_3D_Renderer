@@ -80,7 +80,8 @@ void setup_light_for_rendering(int light_id) {
   bind_framebuffer(light.light_pass_fb);
   clear_framebuffer(light.light_pass_fb);
 
-  vec3 fp;
+  vec3 fp = {light.transform.pos.x, light.transform.pos.y - 1, light.transform.pos.z};
+  // fp.x = ;
   light.view = get_view_mat(light.transform.pos, fp);
   float light_near_plane = 0.1f;
   float light_far_plane = 50.f;
