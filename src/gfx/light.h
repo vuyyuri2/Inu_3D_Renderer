@@ -12,6 +12,8 @@ struct light_t {
   float radius = 1.f;
   static const float NEAR_PLANE;
   static const float FAR_PLANE;
+  static const float SHADOW_MAP_WIDTH;
+  static const float SHADOW_MAP_HEIGHT;
   vec3 dir;
   vec3 color;
 

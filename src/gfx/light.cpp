@@ -19,8 +19,14 @@ int light_t::LIGHT_MESH_ID = -1;
 #endif
 
 shader_t light_t::light_shader;
+
+extern float fb_width;
+extern float fb_height;
+
 const float light_t::NEAR_PLANE = 0.1f;
 const float light_t::FAR_PLANE = 50.f;
+const float light_t::SHADOW_MAP_WIDTH = fb_width / 4.f;
+const float light_t::SHADOW_MAP_HEIGHT = fb_height / 4.f;
 
 void init_light_data() {
   char resources_path[256]{};
@@ -41,9 +47,6 @@ void init_light_data() {
 
 }
 
-extern float fb_width;
-extern float fb_height;
-
 int create_light(vec3 pos) {
   if (lights.size() >= NUM_LIGHTS_SUPPORTED_IN_SHADER) {
     char buffer[256]{};
@@ -54,7 +57,7 @@ int create_light(vec3 pos) {
   light.id = lights.size();
   light.transform.pos = pos;
   light.dir = {0,-1,0};
-  light.light_pass_fb = create_framebuffer(fb_width, fb_height, true);
+  light.light_pass_fb = create_framebuffer(light_t::SHADOW_MAP_WIDTH, light_t::SHADOW_MAP_HEIGHT, true);
   lights.push_back(light);
   transform_t obj_t;
   obj_t.pos = pos;

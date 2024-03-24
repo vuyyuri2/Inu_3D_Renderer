@@ -376,7 +376,7 @@ void render_scene() {
     if (inactive) {
       shader_set_int(material_t::associated_shader, var_name, 0);
     } else {
-      shader_set_int(material_t::associated_shader, var_name, fb_width);
+      shader_set_int(material_t::associated_shader, var_name, light_t::SHADOW_MAP_WIDTH);
     }
 
     memset(var_name, 0, sizeof(var_name));
@@ -384,7 +384,7 @@ void render_scene() {
     if (inactive) {
       shader_set_int(material_t::associated_shader, var_name, 0);
     } else {
-      shader_set_int(material_t::associated_shader, var_name, fb_height);
+      shader_set_int(material_t::associated_shader, var_name, light_t::SHADOW_MAP_HEIGHT);
     }
     
     memset(var_name, 0, sizeof(var_name));
