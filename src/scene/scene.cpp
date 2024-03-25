@@ -364,6 +364,15 @@ void render_scene() {
     }
 
     memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "lights_data[%i].pos", i);
+    if (inactive) {
+      shader_set_vec3(material_t::associated_shader, var_name, {0,0,0});
+    } else {
+      vec3 p = get_light_pos(i);
+      shader_set_vec3(material_t::associated_shader, var_name, p);
+    }
+
+    memset(var_name, 0, sizeof(var_name));
     sprintf(var_name, "lights_data[%i].light_active", i);
     if (inactive) {
       shader_set_int(material_t::associated_shader, var_name, 0);

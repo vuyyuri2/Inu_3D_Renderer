@@ -1419,7 +1419,9 @@ void gltf_load_file(const char* filepath) {
           vert.normal = norm_vec3(n);
         }
         free(normals_data);
-      } 
+      } else {
+        inu_assert_msg("this model does not have normals");
+      }
 
       if (prim.attribs.color_0_accessor_idx != -1) {
         void* color_data = gltf_read_accessor_data(prim.attribs.color_0_accessor_idx);

@@ -3,6 +3,7 @@
 #include "gfx/gfx.h"
 #include "utils/transform.h"
 #include "utils/mats.h"
+#include "utils/vectors.h"
 
 #define SHOW_LIGHTS 1
 
@@ -36,3 +37,4 @@ int get_num_lights();
 GLuint get_light_fb_depth_tex(int light_id);
 mat4 get_light_proj_mat(int light_id);
 mat4 get_light_view_mat(int light_id);
+vec3 get_light_pos(int light_id);

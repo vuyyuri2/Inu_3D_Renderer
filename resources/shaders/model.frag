@@ -11,6 +11,7 @@
 #define VIEW_LIGHT0_CALCULATED_UVs 0
 #define VIEW_LIGHT1_CALCULATED_UVs 0
 #define VIEW_LIGHT2_CALCULATED_UVs 0
+#define VIEW_NORMALS 0
 #define ENABLE_QUANTIZING 1
 
 struct shader_tex {
@@ -25,6 +26,7 @@ uniform int use_mesh_color;
 uniform int override_color_bool;
 
 struct light_data_t {
+  vec3 pos;
   sampler2D depth_tex;
   int light_active;
   int shadow_map_width;
@@ -37,7 +39,9 @@ uniform light_data_t lights_data[3];
 
 in vec2 tex_coords[2];
 in vec3 color;
-in vec3 normal;
+in vec4 normal;
+
+in vec4 pos;
 
 in vec4 light_rel_screen_pos0;
 in vec4 light_rel_screen_pos1;
@@ -51,10 +55,8 @@ float linearize_depth(light_data_t light_data, vec4 light_rel_screen_pos) {
   float light_far = light_data.far_plane;
   float light_rel_z_pos = -light_rel_screen_pos.w;
   float linear_z = (-(light_rel_z_pos + light_near)) / (light_far - light_near);
+
   return linear_z * light_data.light_active;
-  // frag_color = vec4(linear_z, linear_z, linear_z, 1);
-  
-  // return 0.0;
 }
 
 vec4 quantize_color(vec4 c) {
@@ -134,12 +136,23 @@ void main() {
 
   float max_in_light = max(max(in_light0.amount_in_light, in_light1.amount_in_light), in_light2.amount_in_light);
 
-  float shadow_damp_factor = 0.2;
-  float multiplier = ((1.0 - max_in_light) * shadow_damp_factor) + max_in_light;
+  // float shadow_damp_factor = 0.2;
+  // float multiplier = ((1.0 - max_in_light) * shadow_damp_factor) + max_in_light;
+
+  // frag_color = vec4(normal, 1.0);
+  vec4 normalized_pos = pos / pos.w;
+  vec4 normal_norm = normal / normal.w;
+  float albedo_factor = max(0, dot(normalize(normal.xyz), normalize(lights_data[0].pos - normalized_pos.xyz)));
+
+  float ambient_factor = 0.2;
+
+  float multiplier = ambient_factor + (max_in_light * albedo_factor);
+  multiplier = max(0, min(1, multiplier));
 
   frag_color.x *= multiplier;
   frag_color.y *= multiplier;
-  frag_color.z *= multiplier;
+  frag_color.z *= multiplier; 
+
 
 #if VIEW_AMOUNT_IN_LIGHT
   frag_color = vec4(max_in_light, max_in_light, max_in_light, 1);
@@ -175,11 +188,13 @@ void main() {
   frag_color = vec4(in_light2.tex_coords.x,0,0,1);
   frag_color = vec4(0,in_light2.tex_coords.y,0,1);
   // frag_color = vec4(in_light2.tex_coords.xy,0,1);
+#elif VIEW_NORMALS
+  frag_color = normal_norm;
 #endif 
 
 #if ENABLE_QUANTIZING
   frag_color = quantize_color(frag_color);
-#endif
+#endif 
 
   if (override_color_bool == 1) {
     frag_color = vec4(1,1,1,1);

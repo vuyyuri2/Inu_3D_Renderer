@@ -26,7 +26,8 @@ uniform light_mat_data_t lights_mat_data[3];
 
 out vec2 tex_coords[2];
 out vec3 color;
-out vec3 normal;
+out vec4 normal;
+out vec4 pos;
 
 out vec4 light_rel_screen_pos0;
 // out vec2 light_pass_depth_tex_coord0;
@@ -85,12 +86,15 @@ void main() {
     final_model = model;
   }
 
-  gl_Position = projection * view * final_model * vec4(vert_pos, 1.0);
+  vec4 global = final_model * vec4(vert_pos, 1.0);
+  gl_Position = projection * view * global;
 
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
   color = vert_color;
-  normal = vert_normal;
+  // must convert normal to global version
+  normal = transpose(inverse(final_model)) * vec4(vert_normal, 0.0);
+  pos = global;
 
   // light_rel_screen_pos0 = light_projection * light_view * final_model * vec4(vert_pos, 1.0);
   // light_rel_screen_pos0 = light_rel_screen_pos / light_rel_screen_pos.w;
@@ -107,5 +111,6 @@ void main() {
   light_rel_data_t light_rel_data2 = calc_light_rel_data(lights_mat_data[2].light_projection, lights_mat_data[2].light_view, final_model);
   light_rel_screen_pos2 = light_rel_data2.screen_rel_pos;
   // light_pass_depth_tex_coord2 = light_rel_data2.depth_tex_coord;
+
 }
 

@@ -119,3 +119,8 @@ mat4 get_light_proj_mat(int light_id) {
 mat4 get_light_view_mat(int light_id) {
   return lights[light_id].view;
 }
+
+vec3 get_light_pos(int light_id) {
+  return lights[light_id].transform.pos;
+}
+
