@@ -46,8 +46,6 @@ struct light_rel_data_t {
 light_rel_data_t calc_light_rel_data(mat4 light_projection, mat4 light_view, mat4 model) {
   light_rel_data_t data;
   data.screen_rel_pos = light_projection * light_view * model * vec4(vert_pos, 1.0);
-  // data.screen_rel_pos = data.screen_rel_pos / data.screen_rel_pos.w;
-  // data.depth_tex_coord = (data.screen_rel_pos.xy + vec2(1,1)) / 2;
   return data;
 }
 

@@ -60,11 +60,23 @@ float linearize_depth(light_data_t light_data, vec4 light_rel_screen_pos) {
 }
 
 vec4 quantize_color(vec4 c) {
+  
+  float num_bins = 32.0;
+  float bin_size = 256.0 / num_bins;
+
+  vec3 scaled_up = c.rgb * vec3(255.0);
+  // ivec3 iscaled_up = ivec3(scaled_up.r, scaled_up.g, scaled_up.b);
+  vec3 binned = scaled_up / vec3(bin_size);
+  vec3 ceil_binned = vec3(floor(binned.x), floor(binned.y), floor(binned.z));
+  vec3 quantized_color = ceil_binned * vec3(bin_size) / vec3(255.0);
+  return vec4(quantized_color.rgb, 1.0);
+#if 0
   vec4 quantized = vec4(0,0,0,1);
   quantized.x = (16 * (int(c.x * 255) / int(16))) / 255.0;
   quantized.y = (16 * (int(c.y * 255) / int(16))) / 255.0;
   quantized.z = (16 * (int(c.z * 255) / int(16))) / 255.0;
   return quantized;
+#endif
 }
 
 struct is_in_light_info_t {
@@ -77,7 +89,7 @@ struct is_in_light_info_t {
 is_in_light_info_t is_in_light(light_data_t light_data, vec4 light_rel_pos) {
   is_in_light_info_t info;
 
-  vec2 tex_coords = ((light_rel_pos.xy / light_rel_pos.w) + vec2(1,1)) / 2;
+  vec2 tex_coords = ((light_rel_pos.xy / light_rel_pos.w) + vec2(1)) / 2;
   tex_coords = tex_coords * vec2(light_data.light_active, light_data.light_active);
   info.tex_coords = tex_coords;
 
@@ -113,7 +125,14 @@ is_in_light_info_t is_in_light(light_data_t light_data, vec4 light_rel_pos) {
     }
   }
 
+#if 0
   info.amount_in_light = min(max(0.0, amount_in_light), 1.0) * light_data.light_active;
+#else
+  vec4 normalized_pos = pos / pos.w;
+  vec4 normal_norm = normal / normal.w;
+  float albedo_factor = max(0, dot(normalize(normal.xyz), normalize(light_data.pos - normalized_pos.xyz)));
+  info.amount_in_light = amount_in_light * albedo_factor;
+#endif
 
   return info;
 }
@@ -140,13 +159,15 @@ void main() {
   // float multiplier = ((1.0 - max_in_light) * shadow_damp_factor) + max_in_light;
 
   // frag_color = vec4(normal, 1.0);
+  float ambient_factor = 0.2;
+#if 0
   vec4 normalized_pos = pos / pos.w;
   vec4 normal_norm = normal / normal.w;
   float albedo_factor = max(0, dot(normalize(normal.xyz), normalize(lights_data[0].pos - normalized_pos.xyz)));
-
-  float ambient_factor = 0.2;
-
   float multiplier = ambient_factor + (max_in_light * albedo_factor);
+#else
+  float multiplier = ambient_factor + max_in_light;
+#endif
   multiplier = max(0, min(1, multiplier));
 
   frag_color.x *= multiplier;
