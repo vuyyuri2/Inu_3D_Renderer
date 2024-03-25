@@ -1,10 +1,15 @@
 
 #include "utils/transform.h"
+#include "utils/mats.h"
 
 struct camera_t {
   // scale doesn't matter
   transform_t transform;
   vec3 focal_pt;
+  mat4 view;
+  mat4 proj;
+  float near_plane;
+  float far_plane;
 };
 
 void create_camera(transform_t& t);
