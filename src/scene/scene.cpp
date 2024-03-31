@@ -429,6 +429,72 @@ void render_scene() {
     }
   }
 
+  // set up dir lights in offline shader
+  for (int i = 0; i < 1; i++) {
+    mat4 identity = create_matrix(1.0f);
+    bool inactive = (i >= 1);
+
+    dir_light_t* dir_light = get_dir_light(i);
+
+    for (int j = 0; j < NUM_SM_CASCADES; j++) {
+      char var_name[64]{};
+      sprintf(var_name, "dir_light_mat_data.light_views[%i]", j);
+      if (inactive) {
+        shader_set_mat4(material_t::associated_shader, var_name, identity);
+      } else {
+        // mat4 light_view = get_light_view_mat(i);
+        shader_set_mat4(material_t::associated_shader, var_name, dir_light->light_views[j]);
+      }
+
+      memset(var_name, 0, sizeof(var_name));
+      sprintf(var_name, "dir_light_mat_data.light_projs[%i]", j);
+      if (inactive) {
+        shader_set_mat4(material_t::associated_shader, var_name, identity);
+      } else {
+        // mat4 light_view = get_light_view_mat(i);
+        shader_set_mat4(material_t::associated_shader, var_name, dir_light->light_orthos[j]);
+      }
+
+      memset(var_name, 0, sizeof(var_name));
+      sprintf(var_name, "dir_light_mat_data.cascade_depths[%i]", j);
+      if (inactive) {
+        shader_set_float(material_t::associated_shader, var_name, 0);
+      } else {
+        // mat4 light_view = get_light_view_mat(i);
+        shader_set_float(material_t::associated_shader, var_name, dir_light->cacade_depths[j]);
+      }
+    }
+    
+    char var_name[64]{};
+    sprintf(var_name, "dir_light_mat_data.cascade_depths[%i]", NUM_SM_CASCADES);
+    if (inactive) {
+      shader_set_float(material_t::associated_shader, var_name, 0);
+    } else {
+      // mat4 light_view = get_light_view_mat(i);
+      shader_set_float(material_t::associated_shader, var_name, dir_light->cacade_depths[NUM_SM_CASCADES]);
+    }
+    
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "dir_light_data.shadow_map");
+    if (inactive) {
+      shader_set_int(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_int(material_t::associated_shader, var_name, DIR_LIGHT_SHADOW_MAP_TEX);
+      glActiveTexture(GL_TEXTURE0 + DIR_LIGHT_SHADOW_MAP_TEX);
+      GLuint depth_att = dir_light->light_pass_fb.depth_att;
+      glBindTexture(GL_TEXTURE_2D_ARRAY, depth_att);
+    }
+
+    memset(var_name, 0, sizeof(var_name));
+    sprintf(var_name, "dir_light_data.light_active");
+    if (inactive) {
+      shader_set_int(material_t::associated_shader, var_name, 0);
+    } else {
+      shader_set_int(material_t::associated_shader, var_name, 1);
+    }
+
+  }
+
   for (int parent_id : scene.parent_objs) {
     render_scene_obj(parent_id, true, false, material_t::associated_shader);
   }

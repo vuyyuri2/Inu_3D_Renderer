@@ -1,5 +1,7 @@
 #version 410 core
 
+#define NUM_CASCADES 3
+
 #define VIEW_AMOUNT_IN_LIGHT 0
 #define VIEW_LIGHT_MULTIPLIER 0
 #define VIEW_LIGHT0_CLOSEST_DEPTH 0
@@ -12,7 +14,7 @@
 #define VIEW_LIGHT1_CALCULATED_UVs 0
 #define VIEW_LIGHT2_CALCULATED_UVs 0
 #define VIEW_NORMALS 0
-#define ENABLE_QUANTIZING 1
+#define ENABLE_QUANTIZING 0
 
 struct shader_tex {
   sampler2D samp; 
@@ -35,7 +37,14 @@ struct light_data_t {
   float far_plane;
 };
 
+struct dir_light_data_t {
+  sampler2DArray shadow_map;
+  int light_active;
+};
+
 uniform light_data_t lights_data[3];
+
+uniform dir_light_data_t dir_light_data;
 
 in vec2 tex_coords[2];
 in vec3 color;
@@ -46,6 +55,9 @@ in vec4 pos;
 in vec4 light_rel_screen_pos0;
 in vec4 light_rel_screen_pos1;
 in vec4 light_rel_screen_pos2;
+
+in vec4 dir_light_rel_screen_pos;
+flat in int dir_light_layer;
 
 out vec4 frag_color;
 
@@ -137,6 +149,80 @@ is_in_light_info_t is_in_light(light_data_t light_data, vec4 light_rel_pos) {
   return info;
 }
 
+struct is_in_dir_light_info_t {
+  float amount_in_light;
+  float closest_depth;
+  float depth;
+  vec3 tex_coords;
+};
+
+is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data) {
+  is_in_dir_light_info_t info;
+
+  vec2 tex_coords = ((dir_light_rel_screen_pos.xy / dir_light_rel_screen_pos.w) + vec2(1)) / 2;
+  tex_coords = tex_coords * vec2(dir_light_data.light_active, dir_light_data.light_active);
+  info.tex_coords = vec3(tex_coords, dir_light_layer);
+
+  float amount_in_light = 0.0;
+  float bias = 0.00001;
+
+  // z position of the vertex relative to the light, still [-1,1] for near to far
+  info.depth = dir_light_rel_screen_pos.z / dir_light_rel_screen_pos.w;
+  // depth [0,1] relative to light
+  info.depth = dir_light_data.light_active * ((info.depth+1)/2);
+
+#if 1
+  info.closest_depth = 1;
+  if (info.tex_coords.x >= 0 && info.tex_coords.x <= 1 && info.tex_coords.y >= 0 && info.tex_coords.y <= 1) {
+    info.closest_depth = dir_light_data.light_active * texture(dir_light_data.shadow_map, info.tex_coords).r;
+  }
+
+  if (info.depth < (info.closest_depth + bias)) {
+    // light
+    amount_in_light = 1.0;
+  }
+#else
+  
+  info.closest_depth = 1;
+  if (tex_coords.x >= 0 && tex_coords.x <= 1 && tex_coords.y >= 0 && tex_coords.y <= 1) {
+    info.closest_depth = light_data.light_active * texture(light_data.depth_tex, info.tex_coords).r;
+  }
+
+  int pcf = 3;
+
+  for (int x_offset = -(pcf/2); x_offset <= (pcf/2); x_offset++) {
+    for (int y_offset = -(pcf/2); y_offset <= (pcf/2); y_offset++) {
+
+      vec2 new_tex_coord = tex_coords + vec2(x_offset / light_data.shadow_map_width, y_offset / light_data.shadow_map_height);
+      if (new_tex_coord.x < 0 || new_tex_coord.x > 1 || new_tex_coord.y < 0 || new_tex_coord.y > 1) continue;
+
+      // depth buffer stores 0 to 1, for near to far respectively
+      // so closest_depth is between 0 to 1
+      float closest_depth = light_data.light_active * textureOffset(light_data.depth_tex, tex_coords, ivec2(x_offset, y_offset)).r;
+
+      // z pos is closer to light than the texture sample says
+      if (info.depth < (closest_depth + bias)) {
+        // light
+        amount_in_light += (1.0 / max(0.1, float(pcf * pcf)));
+      }
+    }
+  }
+
+#if 0
+  info.amount_in_light = min(max(0.0, amount_in_light), 1.0) * light_data.light_active;
+#else
+  vec4 normalized_pos = pos / pos.w;
+  vec4 normal_norm = normal / normal.w;
+  float albedo_factor = max(0, dot(normalize(normal.xyz), normalize(light_data.pos - normalized_pos.xyz)));
+  info.amount_in_light = amount_in_light * albedo_factor;
+#endif
+
+
+#endif
+
+  return info;
+}
+
 void main() {
 
   if (base_color_tex.tex_id == -1) {
@@ -152,6 +238,8 @@ void main() {
   is_in_light_info_t in_light0 = is_in_light(lights_data[0],  light_rel_screen_pos0);
   is_in_light_info_t in_light1 = is_in_light(lights_data[1], light_rel_screen_pos1);
   is_in_light_info_t in_light2 = is_in_light(lights_data[2], light_rel_screen_pos2);
+
+  is_in_dir_light_info_t in_dir0 = is_in_dir_light(dir_light_data);
 
   float max_in_light = max(max(in_light0.amount_in_light, in_light1.amount_in_light), in_light2.amount_in_light);
 

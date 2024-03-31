@@ -231,6 +231,9 @@ void gen_dir_light_matricies(int light_id, camera_t* camera) {
 
     float z_near = (0.5f*n*pow(f/n, i/N_f)) + (0.5f*(n+(i/N_f*(f-n))));
     float z_far = (0.5f*n*pow(f/n, (i+1)/N_f)) + (0.5f*(n+((i+1)/N_f*(f-n))));
+
+    dir_light.cacade_depths[i] = z_near;
+    dir_light.cacade_depths[i+1] = z_far;
     
     float zs[2] = {z_near, z_far};
     for (int i = 0; i < 2; i++) {
@@ -362,4 +365,8 @@ void setup_dir_light_for_rendering_debug(int light_id, camera_t* camera, int cas
 void remove_dir_light_from_rendering_debug() {
   unbind_shader();
   unbind_framebuffer();
+}
+
+dir_light_t* get_dir_light(int id) {
+  return &dir_lights[id];
 }

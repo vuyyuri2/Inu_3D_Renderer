@@ -34,7 +34,7 @@ void update_cam() {
 
 void create_camera(transform_t& t) {
   cam.near_plane = 0.01f;
-  cam.far_plane = 20.f;
+  cam.far_plane = 30.f;
 
   cam.transform.pos.x = t.pos.x;
   cam.transform.pos.y = t.pos.y;

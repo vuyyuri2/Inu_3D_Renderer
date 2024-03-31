@@ -59,6 +59,7 @@ struct dir_light_t {
 
   mat4 light_views[NUM_SM_CASCADES];
   mat4 light_orthos[NUM_SM_CASCADES];
+  float cacade_depths[NUM_SM_CASCADES+1];
 };
 
 int create_dir_light(vec3 dir);
@@ -68,3 +69,5 @@ void remove_dir_light_from_rendering();
 
 void setup_dir_light_for_rendering_debug(int light_id, camera_t* camera, int cascade);
 void remove_dir_light_from_rendering_debug();
+
+dir_light_t* get_dir_light(int id);
