@@ -7,6 +7,7 @@
 
 #define SHOW_LIGHTS 1
 #define NUM_SM_CASCADES 3
+#define HAVE_DIR_LIGHT 0
 
 // will hopefully use shadow volumes at some pt
 struct light_t {

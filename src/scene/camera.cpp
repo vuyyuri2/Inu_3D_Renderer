@@ -27,9 +27,17 @@ void update_cam() {
     cam_move_rotate(lat, vert);
   }
 
+#define USE_PERS 1
+
   // cam.view = get_cam_view_mat();
   cam.view = get_view_mat(cam.transform.pos, cam.focal_pt);
+#if USE_PERS
   cam.proj = proj_mat(60.f, cam.near_plane, cam.far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+#else
+  cam.proj = ortho_mat(-10.f, 10.f, -15.f, 15.f, -cam.far_plane, -cam.near_plane);
+#endif
+  // cam.proj = proj_mat(60.f, cam.near_plane, cam.far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
+#undef USE_PERS
 }
 
 void create_camera(transform_t& t) {

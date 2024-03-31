@@ -294,6 +294,7 @@ void render_scene() {
     remove_light_from_rendering();
   }
 
+#if HAVE_DIR_LIGHT
   // DIR light
   int num_dir_lights = 1;
   camera_t* cam = get_cam();
@@ -331,6 +332,7 @@ void render_scene() {
 
     remove_dir_light_from_rendering();
   }
+#endif
 
   // OFFLINE RENDER PASS
   bind_framebuffer(offline_fb);
@@ -430,7 +432,7 @@ void render_scene() {
   }
 
   // set up dir lights in offline shader
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < HAVE_DIR_LIGHT; i++) {
     mat4 identity = create_matrix(1.0f);
     bool inactive = (i >= 1);
 

@@ -147,7 +147,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // create_light({0,30,0});
 #endif
 
+#if HAVE_DIR_LIGHT
   create_dir_light({-1,-1,0});
+#endif
 
   int RENDER_DEPTH = 0;
   while (window.running) {
