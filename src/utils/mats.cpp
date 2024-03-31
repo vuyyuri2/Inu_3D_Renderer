@@ -3,6 +3,44 @@
 #include <memory>
 #include <cmath>
 
+// mat 2x2
+mat2::mat2() {
+  memset(cols, 0, sizeof(cols));
+}
+
+float determinant(mat2& m) {
+  return (m.a*m.d) - (m.b*m.c);
+}
+
+// mat 3x3
+mat3::mat3() {
+  memset(cols, 0, sizeof(cols));
+}
+
+float determinant(mat3& m) {
+  int sign = 1; 
+  float d = 0;
+  for (int row = 0; row < 3; row++) {
+    float place_sign = sign * m.first_col[row];
+    sign *= -1;
+    mat2 minor;
+    float* f_p = &minor.m11;
+
+    for (int tbt_col = 1; tbt_col < 3; tbt_col++) {
+      for (int tbt_row = 0; tbt_row < 3; tbt_row++) {
+        if (tbt_row == row) continue;
+        *f_p = m.cols[tbt_col][tbt_row];
+        f_p++;
+      }
+    }
+
+    float minor_val = determinant(minor);
+    d += (minor_val * place_sign);
+  }
+
+  return d;
+}
+
 mat4::mat4() {
   memset(cols, 0, sizeof(cols));
 }
@@ -48,6 +86,34 @@ vec4 mat_multiply_vec(mat4& m, vec4& v) {
   res.w = c0.w + c1.w + c2.w + c3.w;
 
   return res;
+}
+
+
+// z_min is further away dir light, this is far
+// z_max to closer to dir light, this is near
+// z_min needs to be put to 1
+// z_max needs to be put to -1
+mat4 ortho_mat(float x_min, float x_max, float y_min, float y_max, float z_min, float z_max) {
+  // ortho matrix brings (-right,right) to (-1,1)
+  // brings (-top,top) to (-1,1)
+  // brings (near [z_max], far[z_min]) to (-1,1)
+  // brings to origin
+  mat4 translate = create_matrix(1.0f);
+  translate.fourth_col.x = (x_max+x_min) / -2.f;
+  translate.fourth_col.y = (y_max+y_min) / -2.f;
+  translate.fourth_col.z = (z_max+z_min) / -2.f;
+
+  float hor_scale = (x_max - x_min) / 2.f;
+  float ver_scale = (y_max - y_min) / 2.f;
+  float forwards_scale = (z_max - z_min) / -2.f;
+
+  mat4 scale = create_matrix(1.0f);
+  scale.cols[0].x = 1/hor_scale;
+  scale.cols[1].y = 1/ver_scale;
+  scale.cols[2].z = 1/forwards_scale;
+  mat4 ortho = mat_multiply_mat(scale, translate);
+
+  return ortho;
 }
 
 mat4 proj_mat(float fov, float near, float far, float aspect_ratio) {
@@ -127,4 +193,52 @@ void print_mat4(mat4& mat) {
     float* start_of_row = (&mat.m11) + i;
     printf("%f %f %f %f\n", *start_of_row, *(start_of_row+4), *(start_of_row+8), *(start_of_row+12));
   }
+}
+
+mat3 mat4_minor(mat4& m, int row, int col) {
+  mat3 minor;
+  float* f_p = &minor.m11;
+
+  for (int tbt_col = 0; tbt_col < 4; tbt_col++) {
+    for (int tbt_row = 0; tbt_row < 4; tbt_row++) {
+      if (tbt_row == row || tbt_col == col) continue;
+      *f_p = m.cols[tbt_col][tbt_row];
+      f_p++;
+    }
+  }
+
+  return minor;
+}
+
+float determinant(mat4& m) {
+  int sign = 1;
+  float d = 0;
+  for (int row = 0; row < 4; row++) {
+    float place_sign = sign * m.first_col[row];
+    sign *= -1;
+
+    mat3 minor = mat4_minor(m, row, 0);
+
+    float minor_val = determinant(minor);
+    d += (minor_val * place_sign);
+  }
+
+  return d;
+}
+
+mat4 mat4_inverse(mat4& m) {
+  mat4 inv;
+  float det = determinant(m); 
+
+  for (int j = 0; j < 4; j++) {
+    for (int i = 0; i < 4; i++) {
+      mat3 minor = mat4_minor(m, j, i);
+      float d3 = determinant(minor);
+      int sign = pow(-1, i+j);
+      vec4& col = inv.cols[j];
+      col[i] = sign * d3 / det;
+    }
+  }
+
+  return inv;
 }

@@ -1275,21 +1275,21 @@ void* gltf_read_accessor_data(int accessor_idx) {
   return (void*)data;
 }
 
-int gltf_read_texture(int gltf_tex_idx) {
+int gltf_read_texture(int gltf_tex_idx, int tex_slot) {
   inu_assert(gltf_tex_idx < gltf_textures.size());
   gltf_texture_t& gltf_tex = gltf_textures[gltf_tex_idx];
   gltf_image_t& img = gltf_images[gltf_tex.image_source_idx];
   std::string& img_file_name = img.uri;
   char img_full_path[256]{};
   sprintf(img_full_path, "%s\\%s", folder_path, img_file_name.c_str());
-  return create_texture(img_full_path);
+  return create_texture(img_full_path, tex_slot);
 }
 
-material_image_t gltf_mat_img_to_internal_mat_img(gltf_mat_image_info_t& gltf_mat_image_info) {
+material_image_t gltf_mat_img_to_internal_mat_img(gltf_mat_image_info_t& gltf_mat_image_info, int tex_slot) {
   int mat_gltf_tex_idx = gltf_mat_image_info.gltf_texture_idx;
   int tex_handle = -1;
   if (mat_gltf_tex_idx != -1) {
-    tex_handle = gltf_read_texture(mat_gltf_tex_idx);
+    tex_handle = gltf_read_texture(mat_gltf_tex_idx, tex_slot);
   }
   material_image_t mat_img;
   mat_img.tex_handle = tex_handle;
@@ -1344,7 +1344,7 @@ void gltf_load_file(const char* filepath) {
 
   // 3. LOAD INTO INTERNAL FORMAT/ LOAD RAW DATA
   for (gltf_material_t& mat : gltf_materials) {
-    material_image_t base_color_img = gltf_mat_img_to_internal_mat_img(mat.pbr.base_color_tex_info);
+    material_image_t base_color_img = gltf_mat_img_to_internal_mat_img(mat.pbr.base_color_tex_info, ALBEDO_IMG_TEX_SLOT);
     create_material(mat.pbr.base_color_factor, base_color_img);
   }
  
@@ -1498,6 +1498,7 @@ void gltf_load_file(const char* filepath) {
         free(joint_data);
         inu_assert(prim.attribs.weights_0_accessor_idx != -1, "weights must be specified when joints are");
       }
+      
 
 #define idx_into_weights_data ((j*4)+k)
       if (prim.attribs.weights_0_accessor_idx != -1) {
@@ -1798,5 +1799,7 @@ void gltf_load_file(const char* filepath) {
     register_animation(anim);
 
   }
+
+  printf("finished gltf file: %s\n", filepath);
 
 }

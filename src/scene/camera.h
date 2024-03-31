@@ -14,10 +14,14 @@ struct camera_t {
 
 void create_camera(transform_t& t);
 mat4 get_cam_view_mat();
+mat4 get_cam_proj_mat();
 mat4 get_view_mat(vec3 pos, vec3 focal_pt);
 void cam_move_forward(float amount);
 void cam_move_rotate(float lat_amount, float vert_amount);
+
+#if 0
 mat4 get_cam_view_mat(vec3& diff);
+#endif
+
 void update_cam();
-
-
+camera_t* get_cam();

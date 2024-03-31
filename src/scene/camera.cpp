@@ -26,9 +26,16 @@ void update_cam() {
     float vert = window.input.mouse_pos_diff.y * 1.f * sensitivity;
     cam_move_rotate(lat, vert);
   }
+
+  // cam.view = get_cam_view_mat();
+  cam.view = get_view_mat(cam.transform.pos, cam.focal_pt);
+  cam.proj = proj_mat(60.f, cam.near_plane, cam.far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
 }
 
 void create_camera(transform_t& t) {
+  cam.near_plane = 0.01f;
+  cam.far_plane = 20.f;
+
   cam.transform.pos.x = t.pos.x;
   cam.transform.pos.y = t.pos.y;
   cam.transform.pos.z = t.pos.z;
@@ -65,7 +72,6 @@ mat4 get_view_mat(vec3 pos, vec3 focal_pt) {
     right = cross_product(to_fp, world_up);
   }
 
-  vec3 neg_to_fp = {-to_fp.x, -to_fp.y, -to_fp.z};
   vec3 up = cross_product(right, to_fp);
 
   mat4 rot_mat = create_matrix(1.0f);
@@ -78,12 +84,17 @@ mat4 get_view_mat(vec3 pos, vec3 focal_pt) {
   rot_mat.second_col.y = up.y;
   rot_mat.second_col.z = up.z;
 
+  vec3 neg_to_fp = {-to_fp.x, -to_fp.y, -to_fp.z};
   rot_mat.third_col.x = neg_to_fp.x;
   rot_mat.third_col.y = neg_to_fp.y;
   rot_mat.third_col.z = neg_to_fp.z;
 
   mat4 inv_rot = transpose(rot_mat);
   return mat_multiply_mat(inv_rot, inv_translate);
+}
+
+mat4 get_cam_proj_mat() {
+  return cam.proj;
 }
 
 mat4 get_cam_view_mat() {
@@ -119,17 +130,21 @@ mat4 get_cam_view_mat() {
 
   mat4 inv_rot = transpose(rot_mat);
   return mat_multiply_mat(inv_rot, inv_translate);
-#else
+#elif 0
   return get_view_mat(cam.transform.pos, cam.focal_pt);
+#else
+  return cam.view;
 #endif
 }
 
+#if 0
 mat4 get_cam_view_mat(vec3& diff) {
   cam.transform.pos.x += diff.x;
   cam.transform.pos.y += diff.y;
   cam.transform.pos.z += diff.z;
   return get_cam_view_mat();
 }
+#endif
 
 void cam_move_forward(float amount) {
   vec3 diff;
@@ -179,3 +194,8 @@ void cam_move_rotate(float lat_amount, float vert_amount) {
 
   cam.transform.pos = get_rotated_position(cam.transform.pos, q);
 }
+
+camera_t* get_cam() {
+  return &cam; 
+}
+

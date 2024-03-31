@@ -1,5 +1,7 @@
 #include "vectors.h"
 
+#include "utils/log.h"
+
 #include <math.h>
 #include <stdio.h>
 
@@ -23,6 +25,20 @@ vec3 vec3_add(vec3& v1, vec3& v2) {
 void print_vec3(vec3& v) {
   printf("%f, %f, %f", v.x, v.y, v.z);
 }
+
+float& vec3::operator[](int idx) {
+  inu_assert(idx < 3, "idx cannot be more than 2");
+  float* f = &x;
+  return *(f+idx);
+}
+
+#if 0
+float vec3::operator[](int idx) {
+  inu_assert(idx < 3, "idx cannot be more than 2");
+  float* f = &x;
+  return *(f+idx);
+}
+#endif
 
 vec3 cross_product(vec3& v1, vec3& v2) {
   vec3 c;
@@ -54,6 +70,12 @@ float vec4_length(vec4& v) {
   return sqrt(v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w);
 }
 
+float& vec4::operator[](int idx) {
+  inu_assert(idx < 4, "idx cannot be more than 4");
+  float* f = &x;
+  return *(f+idx);
+}
+
 vec4 vec4::operator/(float divider) {
   vec4 r;
   r.x = this->x / divider;
@@ -61,4 +83,20 @@ vec4 vec4::operator/(float divider) {
   r.z = this->z / divider;
   r.w = this->w / divider;
   return r;
+}
+
+vec4::vec4() {}
+
+vec4::vec4(float _x, float _y, float _z, float _w) {
+  x = _x;
+  y = _y;
+  z = _z;
+  w = _w;
+}
+
+vec4::vec4(vec3& v, float _w) {
+  x = v.x;
+  y = v.y;
+  z = v.z;
+  w = _w;
 }

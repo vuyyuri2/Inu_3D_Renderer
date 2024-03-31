@@ -24,7 +24,32 @@ extern framebuffer_t offline_fb;
 
 app_info_t app_info;
 
+#if 0
+struct test_t {
+  int a = 5;
+  int b = 10;
+
+  test_t() {}
+  test_t(int _a) {
+    a = _a;
+  }
+#if 0
+  test_t(int _a, int _b) {
+    a = _a;
+    b = _b;
+  }
+#endif
+};
+#endif
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+
+#if 0
+  test_t t0;
+  test_t t1(15);
+  // test_t t2(15, 25);
+  test_t t3 = { 15,25 };
+#endif
 
   create_window(hInstance, win_width, win_height);
 
@@ -105,7 +130,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   play_next_anim();
 
   init_light_data();
-#if 1
+#if 0
   // create_light({2,10,0});
   // create_light({-2,3,0});
   create_light({2,8,0});
@@ -115,12 +140,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
   // create_light({-5,3,0});
   
   // create_light({0,10,0});
-  // create_light({2,10,0});
+  // create_light({2,10,0});6
   // create_light({4,10,0});
 
 #else
-  create_light({0,30,0});
+  // create_light({0,30,0});
 #endif
+
+  create_dir_light({-1,-1,0});
 
   int RENDER_DEPTH = 0;
   while (window.running) {
@@ -143,7 +170,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     // offline rendering pass  
     render_scene();
-
 
     // online rendering pass
     if (RENDER_DEPTH == 0) {

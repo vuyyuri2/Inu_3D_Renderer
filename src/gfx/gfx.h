@@ -7,6 +7,16 @@
 #include "utils/mats.h"
 #include "utils/vectors.h"
 
+#define ALBEDO_IMG_TEX_SLOT 0
+#define METAL_ROUGH_IMG_TEX_SLOT 1
+#define NORMALS_IMG_TEX_SLOT 2
+#define OCC_IMG_TEX_SLOT 3
+#define EMISSION_IMG_TEX_SLOT 4
+#define LIGHT0_SHADOW_MAP_TEX 5
+#define LIGHT1_SHADOW_MAP_TEX 6
+#define LIGHT2_SHADOW_MAP_TEX 7
+#define DIR_LIGHT_SHADOW_MAP_TEX 8
+
 struct ebo_t {
 	GLuint id = 0;
 	int num_indicies = -1;
@@ -40,9 +50,11 @@ void delete_vao(const vao_t& vao);
 struct shader_t {
 	GLuint id = 0;
 	std::string vert_name;
+	std::string geom_name;
 	std::string frag_name;
 };
 shader_t create_shader(const char* vert_source_path, const char* frag_source_path);
+shader_t create_shader(const char* vert_source_path, const char* geom_source_path, const char* frag_source_path);
 void bind_shader(shader_t& shader);
 void unbind_shader();
 void shader_set_float(shader_t& shader, const char* var_name, float val);
@@ -59,7 +71,7 @@ struct texture_t {
 	int num_channels = -1;
 	std::string path;
 };
-int create_texture(const char* img_path);
+int create_texture(const char* img_path, int tex_slot);
 texture_t bind_texture(int tex_id);
 void unbind_texture();
 
@@ -123,16 +135,27 @@ int create_material(vec4 color, material_image_t base_color_img);
 material_t bind_material(int mat_idx);
 material_t get_material(int mat_idx);
 
+enum class FB_TYPE {
+	RENDER_BUFFER_DEPTH_STENCIL = 0,
+	TEXTURE_DEPTH_STENCIL,
+	// currently 3 depth textures deep
+	MULTIPLE_DEPTH_TEXTURE,
+	NO_COLOR_ATT_MULTIPLE_DEPTH_TEXTURE,
+};
+
 struct framebuffer_t {
 	GLuint id = -1;
 
+	FB_TYPE fb_type = FB_TYPE::RENDER_BUFFER_DEPTH_STENCIL;
 	GLuint color_att = -1;
 	GLuint depth_att = -1;
 
 	int width = -1;
 	int height = -1;
 };
-framebuffer_t create_framebuffer(int width, int height, bool use_depth_tex_not_rb = false);
+framebuffer_t create_framebuffer(int width, int height, FB_TYPE fb_type);
 void bind_framebuffer(framebuffer_t& fb);
 void clear_framebuffer(framebuffer_t& fb);
 void unbind_framebuffer();
+
+void get_gfx_error();
