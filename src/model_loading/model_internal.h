@@ -36,3 +36,4 @@ struct model_t {
 
 int register_model(model_t& model);
 int latest_model_id();
+model_t* get_model(int model_id);

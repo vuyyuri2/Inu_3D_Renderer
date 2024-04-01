@@ -17,6 +17,9 @@
 static float win_width = 1280.f;
 static float win_height = 960.f;
 
+bool update_dir_light_frustums = true;
+bool render_dir_orthos = true;
+
 extern window_t window;
 extern animation_globals_t animation_globals;
 extern framebuffer_t offline_fb;
@@ -160,9 +163,24 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     poll_events();
 
     // UPDATE PASS
+    if (window.input.left_mouse_up) {
+      render_dir_orthos = !render_dir_orthos;
+      if (RENDER_DIR_LIGHT_ORTHOS) {
+        dir_light_t* dir = get_dir_light(0);
+        for (int i = 0; i < NUM_SM_CASCADES; i++) {
+          if (render_dir_orthos && i == LIGHT_ORTHO_CASCADE_TO_VIEW) {
+            set_obj_as_parent(dir->debug_ortho_obj_ids[i]);
+          } else {
+            unset_obj_as_parent(dir->debug_ortho_obj_ids[i]);
+          }
+        }
+      }
+    }
+    //
     if (window.input.right_mouse_up) {
-      play_next_anim();
-      RENDER_DEPTH = 1-RENDER_DEPTH;
+      update_dir_light_frustums = !update_dir_light_frustums;
+      // play_next_anim();
+      // RENDER_DEPTH = 1-RENDER_DEPTH;
     }
     
     update_cam();

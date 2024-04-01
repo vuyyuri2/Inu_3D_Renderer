@@ -25,14 +25,16 @@ struct light_mat_data_t {
   mat4 light_projection;
 };
 
+#if 0
 struct dir_light_mat_data_t {
   mat4 light_views[NUM_CASCADES];
   mat4 light_projs[NUM_CASCADES];
   float cascade_depths[NUM_CASCADES+1];
 };
+uniform dir_light_mat_data_t dir_light_mat_data;
+#endif
 
 uniform light_mat_data_t lights_mat_data[3];
-uniform dir_light_mat_data_t dir_light_mat_data;
 
 out vec2 tex_coords[2];
 out vec3 color;
@@ -43,8 +45,13 @@ out vec4 light_rel_screen_pos0;
 out vec4 light_rel_screen_pos1;
 out vec4 light_rel_screen_pos2;
 
+#if 0
 out vec4 dir_light_rel_screen_pos;
 flat out int dir_light_layer;
+#else
+out vec4 global;
+out vec4 cam_rel_pos;
+#endif
 
 struct light_rel_data_t {
   vec4 screen_rel_pos;
@@ -56,6 +63,7 @@ light_rel_data_t calc_light_rel_data(mat4 light_projection, mat4 light_view, mat
   return data;
 }
 
+#if 0
 struct dir_light_rel_data_t {
   vec4 screen_rel_pos;
   // lower idx is higher precision
@@ -83,6 +91,7 @@ dir_light_rel_data_t calc_light_rel_data(dir_light_mat_data_t dir_light_mat_data
   rel_data.screen_rel_pos = light_projection * light_view * model * vec4(vert_pos, 1.0);
   return rel_data;
 }
+#endif
 
 void main() {
 
@@ -119,8 +128,9 @@ void main() {
     final_model = model;
   }
 
-  vec4 global = final_model * vec4(vert_pos, 1.0);
-  gl_Position = projection * view * global;
+  global = final_model * vec4(vert_pos, 1.0);
+  cam_rel_pos = view * global;
+  gl_Position = projection * cam_rel_pos;
 
   tex_coords[0] = tex0;
   tex_coords[1] = tex1;
@@ -138,8 +148,10 @@ void main() {
   light_rel_data_t light_rel_data2 = calc_light_rel_data(lights_mat_data[2].light_projection, lights_mat_data[2].light_view, final_model);
   light_rel_screen_pos2 = light_rel_data2.screen_rel_pos;
 
+#if 0
   dir_light_rel_data_t dir_rel_data = calc_light_rel_data(dir_light_mat_data, final_model);
   dir_light_rel_screen_pos = dir_rel_data.screen_rel_pos;
   dir_light_layer = dir_rel_data.highest_precision_cascade;
+#endif
 }
 

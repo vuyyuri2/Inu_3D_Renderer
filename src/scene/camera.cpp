@@ -6,6 +6,10 @@
 #include "utils/general.h"
 #include "utils/log.h"
 
+#include <math.h>
+
+extern bool update_dir_light_frustums;
+
 static camera_t cam;
 
 extern window_t window;
@@ -27,6 +31,12 @@ void update_cam() {
     cam_move_rotate(lat, vert);
   }
 
+  if (update_dir_light_frustums) {
+    cam.far_plane = 50.f;
+  } else {
+    cam.far_plane = 200.f;
+  }
+
 #define USE_PERS 1
 
   // cam.view = get_cam_view_mat();
@@ -34,7 +44,11 @@ void update_cam() {
 #if USE_PERS
   cam.proj = proj_mat(60.f, cam.near_plane, cam.far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
 #else
-  cam.proj = ortho_mat(-10.f, 10.f, -15.f, 15.f, -cam.far_plane, -cam.near_plane);
+  float mid = (cam.near_plane + cam.far_plane) / 2.f;
+  float multipler = 3.141526f / 180.f;
+  float top = mid * tan(60.f * multipler / 2.f);
+  float right = mid * static_cast<float>(window.window_dim.x) / window.window_dim.y;
+  cam.proj = ortho_mat(-right, right, -top, top, -cam.far_plane, -cam.near_plane);
 #endif
   // cam.proj = proj_mat(60.f, cam.near_plane, cam.far_plane, static_cast<float>(window.window_dim.x) / window.window_dim.y);
 #undef USE_PERS
@@ -42,7 +56,7 @@ void update_cam() {
 
 void create_camera(transform_t& t) {
   cam.near_plane = 0.01f;
-  cam.far_plane = 30.f;
+  cam.far_plane = 50.f;
 
   cam.transform.pos.x = t.pos.x;
   cam.transform.pos.y = t.pos.y;

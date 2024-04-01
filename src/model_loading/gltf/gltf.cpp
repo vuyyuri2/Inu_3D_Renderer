@@ -15,6 +15,8 @@
 #include "gfx/gfx.h"
 #include "scene/scene.h"
 
+#define SET_MESHES_TO_WHITE 0
+
 /*
  https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/README.md#showcase
  */
@@ -1345,7 +1347,12 @@ void gltf_load_file(const char* filepath) {
   // 3. LOAD INTO INTERNAL FORMAT/ LOAD RAW DATA
   for (gltf_material_t& mat : gltf_materials) {
     material_image_t base_color_img = gltf_mat_img_to_internal_mat_img(mat.pbr.base_color_tex_info, ALBEDO_IMG_TEX_SLOT);
+#if SET_MESHES_TO_WHITE == 0
     create_material(mat.pbr.base_color_factor, base_color_img);
+#else
+    material_image_t d;
+    create_material({1,1,1,1}, d);
+#endif
   }
  
   // mesh processing
@@ -1564,7 +1571,7 @@ void gltf_load_file(const char* filepath) {
         mesh.mat_idx = prim.material_idx;
       } else {
         vec4 color;
-#if 0
+#if 1
         color.x = 0;
         color.y = 0;
         color.z = 0;

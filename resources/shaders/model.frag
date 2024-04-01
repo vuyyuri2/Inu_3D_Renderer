@@ -37,13 +37,19 @@ struct light_data_t {
   float far_plane;
 };
 
+struct dir_light_mat_data_t {
+  mat4 light_views[NUM_CASCADES];
+  mat4 light_projs[NUM_CASCADES];
+  float cascade_depths[NUM_CASCADES+1];
+};
+uniform dir_light_mat_data_t dir_light_mat_data;
+
 struct dir_light_data_t {
   sampler2DArray shadow_map;
   int light_active;
 };
 
 uniform light_data_t lights_data[3];
-
 uniform dir_light_data_t dir_light_data;
 
 in vec2 tex_coords[2];
@@ -56,8 +62,13 @@ in vec4 light_rel_screen_pos0;
 in vec4 light_rel_screen_pos1;
 in vec4 light_rel_screen_pos2;
 
+#if 0
 in vec4 dir_light_rel_screen_pos;
 flat in int dir_light_layer;
+#else
+in vec4 global;
+in vec4 cam_rel_pos;
+#endif
 
 out vec4 frag_color;
 
@@ -156,7 +167,7 @@ struct is_in_dir_light_info_t {
   vec3 tex_coords;
 };
 
-is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data) {
+is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data, vec4 dir_light_rel_screen_pos, int dir_light_layer) {
   is_in_dir_light_info_t info;
 
   vec2 tex_coords = ((dir_light_rel_screen_pos.xy / dir_light_rel_screen_pos.w) + vec2(1)) / 2;
@@ -223,6 +234,48 @@ is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data) {
   return info;
 }
 
+struct dir_light_rel_data_t {
+  vec4 screen_rel_pos;
+  // lower idx is higher precision
+  int highest_precision_cascade;
+};
+
+dir_light_rel_data_t calc_light_rel_data(dir_light_mat_data_t dir_light_mat_data) {
+  dir_light_rel_data_t rel_data;
+  // rel_data.highest_precision_cascade = -1;
+  rel_data.highest_precision_cascade = 0;
+
+  vec4 norm_cam_rel_pos = cam_rel_pos / cam_rel_pos.w;
+
+#if 0
+  for (int i = 0; i < NUM_CASCADES; i++) {
+    // looking down -z axis in camera's eye space
+    if (-norm_cam_rel_pos.z >= dir_light_mat_data.cascade_depths[i] && -norm_cam_rel_pos.z <= dir_light_mat_data.cascade_depths[i+1]) {
+      rel_data.highest_precision_cascade = i; 
+      break;
+    }
+  }
+#else
+  for (int i = 0; i < NUM_CASCADES; i++) {
+    // looking down -z axis in camera's eye space
+    mat4 light_projection = dir_light_mat_data.light_projs[i];
+    mat4 light_view = dir_light_mat_data.light_views[i];
+    vec4 screen_rel_pos = light_projection * light_view * global;
+    vec2 tex_coords = ((screen_rel_pos.xy / screen_rel_pos.w) + vec2(1)) / 2;
+    bool highest_prec = tex_coords.x >= 0 && tex_coords.x <= 1 && tex_coords.y >= 0 && tex_coords.y <= 1;
+    if (highest_prec) {
+      rel_data.highest_precision_cascade = i; 
+      break;
+    }
+  }
+#endif
+
+  mat4 light_projection = dir_light_mat_data.light_projs[rel_data.highest_precision_cascade];
+  mat4 light_view = dir_light_mat_data.light_views[rel_data.highest_precision_cascade];
+  rel_data.screen_rel_pos = light_projection * light_view * global;
+  return rel_data;
+}
+
 void main() {
 
   if (base_color_tex.tex_id == -1) {
@@ -239,7 +292,8 @@ void main() {
   is_in_light_info_t in_light1 = is_in_light(lights_data[1], light_rel_screen_pos1);
   is_in_light_info_t in_light2 = is_in_light(lights_data[2], light_rel_screen_pos2);
 
-  is_in_dir_light_info_t in_dir0 = is_in_dir_light(dir_light_data);
+  dir_light_rel_data_t dir_light_rel_data = calc_light_rel_data(dir_light_mat_data);
+  is_in_dir_light_info_t in_dir0 = is_in_dir_light(dir_light_data, dir_light_rel_data.screen_rel_pos, dir_light_rel_data.highest_precision_cascade);
 
   float max_in_light = max(max(in_light0.amount_in_light, in_light1.amount_in_light), in_light2.amount_in_light);
 
@@ -308,4 +362,20 @@ void main() {
   if (override_color_bool == 1) {
     frag_color = vec4(1,1,1,1);
   }
+
+#if 0
+  int dir_light_layer = dir_light_rel_data.highest_precision_cascade;
+  if (dir_light_layer == 0) {
+    frag_color = vec4(1,0,0,1);
+  } 
+  else if (dir_light_layer == 1) {
+    frag_color = vec4(0,1,0,1);
+  } else if (dir_light_layer == 2) {
+    frag_color = vec4(0,0,1,1);
+  } else {
+    frag_color = vec4(1,1,1,1);
+  }
+
+  // frag_color = vec4(mesh_color, 1);
+#endif
 }

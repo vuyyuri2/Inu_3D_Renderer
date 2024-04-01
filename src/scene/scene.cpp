@@ -14,6 +14,8 @@
 std::vector<object_t> objs;
 std::vector<skin_t> skins;
 
+extern bool update_dir_light_frustums;
+
 static scene_t scene;
 float fb_width = 1280 / 1.f;
 float fb_height = 960 / 1.f;
@@ -71,6 +73,10 @@ void populate_parent_field_of_nodes() {
 
 void set_obj_as_parent(int obj_id) {
   scene.parent_objs.insert(obj_id);
+}
+
+void unset_obj_as_parent(int obj_id) {
+  scene.parent_objs.erase(obj_id);
 }
 
 mat4 get_obj_model_mat(int obj_id) {
@@ -173,6 +179,11 @@ void attach_skin_to_obj(int obj_id, int skin_id) {
 
 // void render_scene_obj(int obj_id, bool parent, bool light_pass) {
 void render_scene_obj(int obj_id, bool parent, bool light_pass, shader_t& shader) {
+
+  if (obj_id >= 28 && obj_id <= 30) {
+    int a = 5;
+  }
+
   object_t& obj = objs[obj_id];
 
 #if 0
@@ -299,6 +310,7 @@ void render_scene() {
   int num_dir_lights = 1;
   camera_t* cam = get_cam();
 
+#if 0
   for (int cascade = 0; cascade < NUM_SM_CASCADES; cascade++) {
     for (int i = 0; i < num_dir_lights; i++) {
       setup_dir_light_for_rendering_debug(i, cam, cascade);
@@ -315,6 +327,12 @@ void render_scene() {
 
       remove_dir_light_from_rendering_debug();
     }
+  }
+
+#endif
+
+  if (update_dir_light_frustums) {
+    gen_dir_light_matricies(0, cam); 
   }
 
   for (int i = 0; i < num_dir_lights; i++) {
@@ -345,8 +363,7 @@ void render_scene() {
   shader_set_mat4(material_t::associated_shader, "projection", proj);
   shader_set_mat4(material_t::associated_shader, "view", view);
 
-  // TODO: need to add support for dir light in the offline shader, right now it only supports cone lights
-
+  // spotlights
   int num_lights = get_num_lights();
   for (int i = 0; i < NUM_LIGHTS_SUPPORTED_IN_SHADER; i++) {
     mat4 identity = create_matrix(1.0f);
@@ -573,4 +590,9 @@ std::vector<int> get_bone_objs() {
     }
   }
   return bones;
+}
+
+vbo_t* get_obj_vbo(int obj_id, int mesh_idx) {
+  model_t* model = get_model(objs[obj_id].model_id);
+  return &model->meshes[mesh_idx].vbo;
 }
