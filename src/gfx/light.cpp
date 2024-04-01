@@ -439,7 +439,7 @@ void gen_dir_light_matricies(int light_id, camera_t* camera) {
       z_max = max(z_max, light_rel_view_pt.z);
     }
     // z_min and z_max will likely both be neative since we are looking down the negative z axis
-    float z_multiplier = 10.f;
+    float z_multiplier = 4.f;
     if (z_max < 0) {
       z_max = z_max / z_multiplier;
     } else {

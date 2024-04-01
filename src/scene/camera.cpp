@@ -32,7 +32,7 @@ void update_cam() {
   }
 
   if (update_dir_light_frustums) {
-    cam.far_plane = 50.f;
+    cam.far_plane = 100.f;
   } else {
     cam.far_plane = 200.f;
   }
@@ -56,7 +56,7 @@ void update_cam() {
 
 void create_camera(transform_t& t) {
   cam.near_plane = 0.01f;
-  cam.far_plane = 50.f;
+  cam.far_plane = 100.f;
 
   cam.transform.pos.x = t.pos.x;
   cam.transform.pos.y = t.pos.y;

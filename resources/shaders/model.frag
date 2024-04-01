@@ -14,6 +14,9 @@
 #define VIEW_LIGHT1_CALCULATED_UVs 0
 #define VIEW_LIGHT2_CALCULATED_UVs 0
 #define VIEW_NORMALS 0
+#define VIEW_DIR_LIGHT_CLOSEST_DEPTH 0
+#define VIEW_DIR_LIGHT_DEPTH 0
+#define VIEW_DIR_LIGHT_AMOUNT_IN_LIGHT 0
 #define ENABLE_QUANTIZING 0
 
 struct shader_tex {
@@ -175,61 +178,24 @@ is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data, vec4 dir
   info.tex_coords = vec3(tex_coords, dir_light_layer);
 
   float amount_in_light = 0.0;
-  float bias = 0.00001;
+  float bias = 0.001;
 
   // z position of the vertex relative to the light, still [-1,1] for near to far
   info.depth = dir_light_rel_screen_pos.z / dir_light_rel_screen_pos.w;
   // depth [0,1] relative to light
   info.depth = dir_light_data.light_active * ((info.depth+1)/2);
 
-#if 1
   info.closest_depth = 1;
   if (info.tex_coords.x >= 0 && info.tex_coords.x <= 1 && info.tex_coords.y >= 0 && info.tex_coords.y <= 1) {
     info.closest_depth = dir_light_data.light_active * texture(dir_light_data.shadow_map, info.tex_coords).r;
   }
 
-  if (info.depth < (info.closest_depth + bias)) {
+  if (info.depth <= (info.closest_depth + bias)) {
     // light
-    amount_in_light = 1.0;
+    info.amount_in_light = 1.0;
+  } else {
+    info.amount_in_light = 0.3;
   }
-#else
-  
-  info.closest_depth = 1;
-  if (tex_coords.x >= 0 && tex_coords.x <= 1 && tex_coords.y >= 0 && tex_coords.y <= 1) {
-    info.closest_depth = light_data.light_active * texture(light_data.depth_tex, info.tex_coords).r;
-  }
-
-  int pcf = 3;
-
-  for (int x_offset = -(pcf/2); x_offset <= (pcf/2); x_offset++) {
-    for (int y_offset = -(pcf/2); y_offset <= (pcf/2); y_offset++) {
-
-      vec2 new_tex_coord = tex_coords + vec2(x_offset / light_data.shadow_map_width, y_offset / light_data.shadow_map_height);
-      if (new_tex_coord.x < 0 || new_tex_coord.x > 1 || new_tex_coord.y < 0 || new_tex_coord.y > 1) continue;
-
-      // depth buffer stores 0 to 1, for near to far respectively
-      // so closest_depth is between 0 to 1
-      float closest_depth = light_data.light_active * textureOffset(light_data.depth_tex, tex_coords, ivec2(x_offset, y_offset)).r;
-
-      // z pos is closer to light than the texture sample says
-      if (info.depth < (closest_depth + bias)) {
-        // light
-        amount_in_light += (1.0 / max(0.1, float(pcf * pcf)));
-      }
-    }
-  }
-
-#if 0
-  info.amount_in_light = min(max(0.0, amount_in_light), 1.0) * light_data.light_active;
-#else
-  vec4 normalized_pos = pos / pos.w;
-  vec4 normal_norm = normal / normal.w;
-  float albedo_factor = max(0, dot(normalize(normal.xyz), normalize(light_data.pos - normalized_pos.xyz)));
-  info.amount_in_light = amount_in_light * albedo_factor;
-#endif
-
-
-#endif
 
   return info;
 }
@@ -295,7 +261,7 @@ void main() {
   dir_light_rel_data_t dir_light_rel_data = calc_light_rel_data(dir_light_mat_data);
   is_in_dir_light_info_t in_dir0 = is_in_dir_light(dir_light_data, dir_light_rel_data.screen_rel_pos, dir_light_rel_data.highest_precision_cascade);
 
-  float max_in_light = max(max(in_light0.amount_in_light, in_light1.amount_in_light), in_light2.amount_in_light);
+  float max_in_light = max(max(max(in_light0.amount_in_light, in_light1.amount_in_light), in_light2.amount_in_light), in_dir0.amount_in_light);
 
   // float shadow_damp_factor = 0.2;
   // float multiplier = ((1.0 - max_in_light) * shadow_damp_factor) + max_in_light;
@@ -353,6 +319,15 @@ void main() {
   // frag_color = vec4(in_light2.tex_coords.xy,0,1);
 #elif VIEW_NORMALS
   frag_color = normal_norm;
+#elif VIEW_DIR_LIGHT_CLOSEST_DEPTH
+  float v = pow(in_dir0.closest_depth, 2);
+  frag_color = vec4(v,v,v,1);
+#elif VIEW_DIR_LIGHT_DEPTH
+  float v = pow(in_dir0.depth, 1);
+  frag_color = vec4(v,v,v,1);
+#elif VIEW_DIR_LIGHT_AMOUNT_IN_LIGHT
+  float ail = in_dir0.amount_in_light;
+  frag_color = vec4(ail,ail,ail,1);
 #endif 
 
 #if ENABLE_QUANTIZING
