@@ -185,6 +185,7 @@ is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data, vec4 dir
   // depth [0,1] relative to light
   info.depth = dir_light_data.light_active * ((info.depth+1)/2);
 
+#if 0
   info.closest_depth = 1;
   if (info.tex_coords.x >= 0 && info.tex_coords.x <= 1 && info.tex_coords.y >= 0 && info.tex_coords.y <= 1) {
     info.closest_depth = dir_light_data.light_active * texture(dir_light_data.shadow_map, info.tex_coords).r;
@@ -196,6 +197,48 @@ is_in_dir_light_info_t is_in_dir_light(dir_light_data_t dir_light_data, vec4 dir
   } else {
     info.amount_in_light = 0.3;
   }
+#else
+  int pcf = 3;
+
+  ivec2 sm_dim = textureSize(dir_light_data.shadow_map, dir_light_layer).xy;
+  for (int x_offset = -(pcf/2); x_offset <= (pcf/2); x_offset++) {
+    for (int y_offset = -(pcf/2); y_offset <= (pcf/2); y_offset++) {
+
+      vec2 new_tex_coord = tex_coords + vec2(x_offset / float(sm_dim.x), y_offset / float(sm_dim.y));
+
+      if (new_tex_coord.x < 0 || new_tex_coord.x > 1 || new_tex_coord.y < 0 || new_tex_coord.y > 1) {
+        if (dir_light_layer == NUM_CASCADES-1) continue;
+        int less_precise_layer = dir_light_layer + 1;
+
+        mat4 light_projection = dir_light_mat_data.light_projs[less_precise_layer];
+        mat4 light_view = dir_light_mat_data.light_views[less_precise_layer];
+        vec4 new_screen_rel_pos = light_projection * light_view * global;
+        vec4 normed_info = ((new_screen_rel_pos / new_screen_rel_pos.w) + vec4(1)) / 2;
+        vec2 new_frag_tex_coord = normed_info.xy;
+        float new_frag_depth = normed_info.z;
+
+        float closest_depth = dir_light_data.light_active * texture(dir_light_data.shadow_map, vec3(new_frag_tex_coord, less_precise_layer)).r;
+        // z pos is closer to light than the texture sample says
+        if (new_frag_depth <= (closest_depth + bias)) {
+          // light
+          amount_in_light += (1.0 / max(0.1, float(pcf * pcf)));
+        }
+      } else {
+
+        // depth buffer stores 0 to 1, for near to far respectively
+        // so closest_depth is between 0 to 1
+        info.closest_depth = dir_light_data.light_active * texture(dir_light_data.shadow_map, vec3(new_tex_coord, dir_light_layer)).r;
+
+        // z pos is closer to light than the texture sample says
+        if (info.depth <= (info.closest_depth + bias)) {
+          // light
+          amount_in_light += (1.0 / max(0.1, float(pcf * pcf)));
+        }
+      }
+    }
+  }
+  info.amount_in_light = min(max(0.0, amount_in_light), 1.0) * dir_light_data.light_active;
+#endif
 
   return info;
 }
